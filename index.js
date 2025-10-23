@@ -4,6 +4,7 @@ import cors from "cors";
 import { connectDB } from "./config/db.js";
 import serverless from "serverless-http";
 import authRoutes from "./routes/auth.js";
+import testRoutes from "./routes/test.js";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/test", testRoutes);
 
 // Local server
 // const PORT = process.env.PORT || 5000;

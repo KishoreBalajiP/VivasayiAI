@@ -36,7 +36,7 @@ router.post("/google", async (req, res) => {
     const { email, name } = decoded;
 
     let user = await User.findOne({ email });
-    if (!user) user = await User.create({ name, email, language: "ta" });
+    if (!user) user = await User.create({ name, email});
 
     res.json({ message: "Login successful", user, id_token });
   } catch (err) {
