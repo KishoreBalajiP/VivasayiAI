@@ -6,7 +6,7 @@ import {
   getAllQueries,
   createContext,
   getAllContexts
-} from "../controllers/testController.js";
+} from "../controllers/test.controller.js";
 
 const router = express.Router();
 
