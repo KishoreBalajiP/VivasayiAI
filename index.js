@@ -6,6 +6,7 @@ import serverless from "serverless-http";
 import authRoutes from "./routes/auth.js";
 import testRoutes from "./routes/test.js";
 import chatRoutes from "./routes/chat.js";
+import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for chatSessions routes
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/test", testRoutes);
 app.use("/chat", chatRoutes);
+app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
 
 // Local server
 const PORT = process.env.PORT || 8000;
