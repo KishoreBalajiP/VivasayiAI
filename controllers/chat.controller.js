@@ -78,8 +78,8 @@ try {
   throw new Error("ChromaDB collection not found. Please run ingestion first.");
 }
 
-// RAG function using ChromaDB
-async function performRAG(userMessage) {
+// RAG function using ChromaDB with chat context
+async function performRAG(userMessage, chatHistory = []) {
   try {
     const messageEmbedding = await embeddings.embedQuery(userMessage);
     const results = await collection.query({
@@ -92,9 +92,26 @@ async function performRAG(userMessage) {
       context = results.documents[0].join("\n\n");
     }
 
-    const enhancedPrompt = context 
-      ? `${systemPrompt}\n\nYou have access to the following relevant agricultural data:\n\n${context}\n\nUse this information to provide accurate, data-driven advice.`
-      : systemPrompt;
+    // Build chat context from previous messages
+    let chatContext = "";
+    if (chatHistory && chatHistory.length > 0) {
+      // Get last 6 messages (3 user-AI pairs) to keep context manageable
+      const recentMessages = chatHistory.slice(-6);
+      chatContext = recentMessages
+        .map(msg => `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.text}`)
+        .join('\n');
+    }
+
+    // Enhanced prompt with both RAG context and chat history
+    let enhancedPrompt = systemPrompt;
+    
+    if (chatContext) {
+      enhancedPrompt += `\n\nPrevious conversation context:\n${chatContext}\n\nRemember this conversation history and provide contextually relevant responses.`;
+    }
+    
+    if (context) {
+      enhancedPrompt += `\n\nRelevant agricultural knowledge base:\n${context}\n\nUse this information to provide accurate, data-driven advice.`;
+    }
 
     const messages = [
       new SystemMessage(enhancedPrompt),
@@ -105,19 +122,34 @@ async function performRAG(userMessage) {
     return {
       response: result.generations[0][0].text,
       hasContext: context.length > 0,
-      sourceCount: results.documents?.[0]?.length || 0
+      hasChatHistory: chatHistory.length > 0,
+      sourceCount: results.documents?.[0]?.length || 0,
+      chatHistoryCount: chatHistory.length
     };
   } catch (error) {
     console.error("RAG Error:", error);
+    
+    // Fallback with chat context even if RAG fails
+    let fallbackPrompt = systemPrompt;
+    if (chatHistory && chatHistory.length > 0) {
+      const recentMessages = chatHistory.slice(-6);
+      const chatContext = recentMessages
+        .map(msg => `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.text}`)
+        .join('\n');
+      fallbackPrompt += `\n\nPrevious conversation context:\n${chatContext}`;
+    }
+    
     const messages = [
-      new SystemMessage(systemPrompt),
+      new SystemMessage(fallbackPrompt),
       new HumanMessage(userMessage),
     ];
     const result = await model.generate([messages]);
     return {
       response: result.generations[0][0].text,
       hasContext: false,
-      sourceCount: 0
+      hasChatHistory: chatHistory.length > 0,
+      sourceCount: 0,
+      chatHistoryCount: chatHistory.length
     };
   }
 }
@@ -129,11 +161,22 @@ const chat = asyncHandler(async (req, res) => {
   if (!userEmail) throw ApiError.badRequest("userEmail is required"); // ensures user identity
 
   try {
-    const result = await performRAG(message);
-
     let chatSession;
+    let chatHistory = [];
 
-    if (!chatId) {
+    // Get existing chat session and its history if chatId is provided
+    if (chatId) {
+      chatSession = await ChatSession.findById(chatId);
+      if (chatSession) {
+        chatHistory = chatSession.messages || [];
+      }
+    }
+
+    // Perform RAG with chat context
+    const result = await performRAG(message, chatHistory);
+
+    if (!chatId || !chatSession) {
+      // Create new chat session
       chatSession = await ChatSession.create({
         userEmail,
         title: message.slice(0, 50),
@@ -143,22 +186,11 @@ const chat = asyncHandler(async (req, res) => {
         ]
       });
     } else {
-      chatSession = await ChatSession.findById(chatId);
-      if (chatSession) {
-        chatSession.messages.push({ sender: "user", text: message });
-        chatSession.messages.push({ sender: "ai", text: result.response });
-        chatSession.updatedAt = new Date();
-        await chatSession.save();
-      } else {
-        chatSession = await ChatSession.create({
-          userEmail,
-          title: message.slice(0, 50),
-          messages: [
-            { sender: "user", text: message },
-            { sender: "ai", text: result.response }
-          ]
-        });
-      }
+      // Update existing chat session
+      chatSession.messages.push({ sender: "user", text: message });
+      chatSession.messages.push({ sender: "ai", text: result.response });
+      chatSession.updatedAt = new Date();
+      await chatSession.save();
     }
 
     return ApiResponse.success(res, "Chat response generated successfully", {
@@ -166,7 +198,9 @@ const chat = asyncHandler(async (req, res) => {
       messages: chatSession.messages,
       response: result.response,
       hasContext: result.hasContext,
+      hasChatHistory: result.hasChatHistory,
       sourceCount: result.sourceCount,
+      chatHistoryCount: result.chatHistoryCount,
       timestamp: new Date().toISOString(),
       session: chatSession
     });
@@ -176,4 +210,65 @@ const chat = asyncHandler(async (req, res) => {
   }
 });
 
-export default chat;
+// Get chat session by ID
+const getChatSession = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const { userEmail } = req.query;
+
+  if (!chatId) throw ApiError.badRequest("Chat ID is required");
+  if (!userEmail) throw ApiError.badRequest("User email is required");
+
+  try {
+    const chatSession = await ChatSession.findOne({
+      _id: chatId,
+      userEmail: userEmail
+    });
+
+    if (!chatSession) {
+      throw ApiError.notFound("Chat session not found");
+    }
+
+    return ApiResponse.success(res, "Chat session retrieved successfully", {
+      chatSession
+    });
+  } catch (error) {
+    console.error("Get Chat Session Error:", error);
+    throw ApiError.badRequest(error);
+  }
+});
+
+// Get all chat sessions for a user
+const getUserChatSessions = asyncHandler(async (req, res) => {
+  const { userEmail } = req.query;
+
+  if (!userEmail) throw ApiError.badRequest("User email is required");
+
+  try {
+    const chatSessions = await ChatSession.find({ userEmail })
+      .sort({ updatedAt: -1 })
+      .select('_id title updatedAt createdAt messages')
+      .limit(50); // Limit to recent 50 sessions
+
+    // Add message count and last message preview
+    const sessionsWithMeta = chatSessions.map(session => ({
+      _id: session._id,
+      title: session.title,
+      updatedAt: session.updatedAt,
+      createdAt: session.createdAt,
+      messageCount: session.messages.length,
+      lastMessage: session.messages.length > 0 
+        ? session.messages[session.messages.length - 1].text.slice(0, 100) + '...'
+        : 'No messages'
+    }));
+
+    return ApiResponse.success(res, "User chat sessions retrieved successfully", {
+      chatSessions: sessionsWithMeta,
+      total: sessionsWithMeta.length
+    });
+  } catch (error) {
+    console.error("Get User Chat Sessions Error:", error);
+    throw ApiError.badRequest(error);
+  }
+});
+
+export { chat as default, getChatSession, getUserChatSessions };

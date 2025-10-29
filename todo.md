@@ -41,12 +41,19 @@ Built with **Node.js**, **React**, **MongoDB**, and **Gemini AI**.
 ---
 
 ## 🔹 Phase 4: Core AI Integration (Gemini)
-- [ ] Connect backend to **Gemini API** (text + vision).
-- [ ] Create `/api/query` POST route:
+- [x] Connect backend to **Gemini API** (text + vision).
+- [x] Create `/api/chat` POST route with RAG integration:
   - Receives user query (text, language, location).
-  - Fetches weather + soil data.
-  - Builds AI prompt: *“Farmer in Tamil Nadu, district X, weather Y…”*
+  - Implements vector search with ChromaDB for agricultural knowledge.
+  - Builds AI prompt with contextual data.
   - Sends to Gemini → returns AI reply.
+- [x] **ENHANCED: Chat Context System** 
+  - AI now remembers conversation history within chat sessions
+  - Combines RAG (knowledge base) + chat context for better responses
+  - Last 6 messages used for context to maintain conversation flow
+  - References previous discussions for continuity
+- [x] MongoDB chat session storage with message history
+- [x] Add `/api/chat/session/:chatId` and `/api/chat/sessions` routes
 - [ ] Add `/api/image-query` route for photo-based diagnosis.
 - [ ] Ensure AI prompt handles **any farming problem**, not just pests.
 
