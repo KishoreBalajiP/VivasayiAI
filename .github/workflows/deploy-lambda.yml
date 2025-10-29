@@ -1,4 +1,4 @@
-name: Deploy Lambda
+name: Deploy Lambda via ECR
 
 on:
   push:
@@ -13,33 +13,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          node-version: '18'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Zip Lambda package
-        run: zip -r lambda-package.zip . -x "*.git*" "*.github*" "node_modules/aws-sdk/**"
-
-      # 🪣 Upload the zip file to S3
-      - name: Upload to S3
-        run: |
-          aws s3 cp lambda-package.zip s3://vivasayiai-lambda-deployment/lambda-builds/lambda-package.zip \
-            --region ap-south-1
+      - name: Build, Tag, and Push Docker image
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ECR_REGISTRY: 390403879095.dkr.ecr.ap-south-1.amazonaws.com
+          ECR_REPOSITORY: vivasayiai-lambda
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # 🚀 Deploy to Lambda using S3 source
-      - name: Deploy to AWS Lambda (via S3)
-        uses: appleboy/lambda-action@master
-        with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ap-south-1
-          function_name: tnFarmingAssistant
-          s3_bucket: vivasayiai-lambda-deployment
-          s3_key: lambda-builds/lambda-package.zip
+      - name: Update Lambda to use new ECR image
+        run: |
+          aws lambda update-function-code \
+            --function-name tnFarmingAssistant \
+            --image-uri 390403879095.dkr.ecr.ap-south-1.amazonaws.com/vivasayiai-lambda:latest \
+            --region ap-south-1
