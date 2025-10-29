@@ -28,7 +28,6 @@
     "jsonwebtoken": "^9.0.2",
     "langchain": "^1.0.1",
     "mongoose": "^8.19.2",
-    "multer": "^2.0.2",
     "serverless-http": "^4.0.0"
   },
   "devDependencies": {
