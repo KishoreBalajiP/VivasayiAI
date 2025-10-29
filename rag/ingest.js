@@ -10,9 +10,9 @@ import { Document } from "@langchain/core/documents";
 dotenv.config();
 
 const {
-  AWS_REGION,
-  AWS_ACCESS_KEY_ID,
-  AWS_SECRET_ACCESS_KEY,
+  MY_AWS_REGION,
+  MY_AWS_ACCESS_KEY_ID,
+  MY_AWS_SECRET_ACCESS_KEY,
   S3_BUCKET,
   COHERE_API_KEY,
   CHROMA_API_KEY,
@@ -20,7 +20,7 @@ const {
   CHROMA_DATABASE,
 } = process.env;
 
-if (!S3_BUCKET || !AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
+if (!S3_BUCKET || !MY_AWS_ACCESS_KEY_ID || !MY_AWS_SECRET_ACCESS_KEY) {
   throw new Error("❌ Missing AWS credentials or S3 bucket name in .env");
 }
 
@@ -34,10 +34,10 @@ if (!CHROMA_API_KEY || !CHROMA_TENANT || !CHROMA_DATABASE) {
 
 // ---------- AWS S3 Setup ----------
 const s3 = new S3Client({
-  region: AWS_REGION || "us-east-1",
+  region: MY_AWS_REGION || "us-east-1",
   credentials: {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    accessKeyId: MY_AWS_ACCESS_KEY_ID,
+    secretAccessKey: MY_AWS_SECRET_ACCESS_KEY,
   },
 });
 
