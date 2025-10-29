@@ -19,7 +19,7 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Zip Lambda package
         run: zip -r lambda-package.zip . -x "*.git*" "*.github*" "node_modules/aws-sdk/**"
