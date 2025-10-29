@@ -19,16 +19,27 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install
 
       - name: Zip Lambda package
         run: zip -r lambda-package.zip . -x "*.git*" "*.github*" "node_modules/aws-sdk/**"
 
-      - name: Deploy to AWS Lambda
+      # 🪣 Upload the zip file to S3
+      - name: Upload to S3
+        run: |
+          aws s3 cp lambda-package.zip s3://vivasayiai-lambda-deployment/lambda-builds/lambda-package.zip \
+            --region ap-south-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # 🚀 Deploy to Lambda using S3 source
+      - name: Deploy to AWS Lambda (via S3)
         uses: appleboy/lambda-action@master
         with:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ap-south-1
           function_name: tnFarmingAssistant
-          zip_file: lambda-package.zip
+          s3_bucket: vivasayiai-lambda-deployment
+          s3_key: lambda-builds/lambda-package.zip

@@ -36,8 +36,8 @@ app.use("/chat", chatRoutes);
 app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
 
 // Local server
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// const PORT = process.env.PORT || 8000;
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Lambda server
-//export const handler = serverless(app);
+export const handler = serverless(app);
