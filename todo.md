@@ -7,7 +7,10 @@ Built with **Node.js**, **React**, **MongoDB**, and **Gemini AI**.
 ---
 
 ## 🔹 Phase 1: Project Setup
-- [ ] Initialize Git repository and folder structure (`backend/`, `frontend/`, `whatsapp/`).
+- [x] Initialize Git repository and folder structure (`backend/`, `frontend/`, `whatsapp/`).
+- [x] Create controllers folder and implement MVC pattern
+- [x] Refactor routes to use controllers with proper error handling
+- [x] Update utils to use ES6 modules consistently
 - [ ] Create `.env` file for all API keys (Gemini, Google Cloud, OpenWeatherMap, WhatsApp API/Twilio).
 - [ ] Set up Node.js (Express) in `backend/`.
 - [ ] Set up React frontend (Vite or CRA) in `frontend/`.
