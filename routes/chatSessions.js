@@ -6,7 +6,7 @@ import ApiError from "../utils/ApiError.js";
 
 const router = express.Router();
 
-// ✅ Create a new chat session (must be ABOVE /:id route)
+// Create a new chat session
 router.post("/new", asyncHandler(async (req, res) => {
   const { userEmail, title } = req.body;
 
@@ -21,17 +21,19 @@ router.post("/new", asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Chat session created", { session: newSession });
 }));
 
-// ✅ List sessions for a user by email
+// List sessions for a user
 router.get("/list/:email", asyncHandler(async (req, res) => {
   const { email } = req.params;
   if (!email) throw ApiError.badRequest("Email required");
 
-  const sessions = await ChatSession.find({ userEmail: email }).sort({ updatedAt: -1 });
+  const sessions = await ChatSession
+    .find({ userEmail: email })
+    .sort({ updatedAt: -1 });
 
   return ApiResponse.success(res, "Sessions fetched", { sessions });
 }));
 
-// ✅ Add message to chat session
+// Add message to chat session (UPDATED)
 router.post("/:id/message", asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { sender, text } = req.body;
@@ -40,6 +42,11 @@ router.post("/:id/message", asyncHandler(async (req, res) => {
 
   const session = await ChatSession.findById(id);
   if (!session) throw ApiError.notFound("Chat session not found");
+
+  // AUTO-GENERATE TITLE FROM FIRST MESSAGE
+  if (session.messages.length === 0) {
+    session.title = text.substring(0, 40);
+  }
 
   session.messages.push({
     sender,
@@ -52,8 +59,7 @@ router.post("/:id/message", asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Message saved", { session });
 }));
 
-
-// ✅ Get a single session by ID
+// Get a session by ID
 router.get("/:id", asyncHandler(async (req, res) => {
   const session = await ChatSession.findById(req.params.id);
   if (!session) throw ApiError.badRequest("Session not found");
@@ -61,7 +67,7 @@ router.get("/:id", asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Session fetched", { session });
 }));
 
-// ✅ Delete a chat session by ID
+// Delete a chat session
 router.delete("/:id", asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { userEmail } = req.body;
@@ -69,7 +75,6 @@ router.delete("/:id", asyncHandler(async (req, res) => {
   const session = await ChatSession.findById(id);
   if (!session) throw ApiError.badRequest("Chat session not found");
 
-  // Ensure user owns the chat (protection)
   if (userEmail && session.userEmail !== userEmail) {
     throw ApiError.unauthorized("You cannot delete another user's chat");
   }
@@ -79,7 +84,7 @@ router.delete("/:id", asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Chat session deleted successfully");
 }));
 
-// ✅ Delete ALL chat sessions for a user
+// Clear all chats
 router.delete("/clear/all", asyncHandler(async (req, res) => {
   const { userEmail } = req.body;
   if (!userEmail) throw ApiError.badRequest("User email required");
