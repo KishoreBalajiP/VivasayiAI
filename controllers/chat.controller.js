@@ -187,10 +187,15 @@ const chat = asyncHandler(async (req, res) => {
       });
     } else {
       // Update existing chat session
-      chatSession.messages.push({ sender: "user", text: message });
-      chatSession.messages.push({ sender: "ai", text: result.response });
-      chatSession.updatedAt = new Date();
-      await chatSession.save();
+  if (chatSession.messages.length === 0) {
+    chatSession.title = message.substring(0, 40);
+  }
+
+  // Update existing chat session
+  chatSession.messages.push({ sender: "user", text: message });
+  chatSession.messages.push({ sender: "ai", text: result.response });
+  chatSession.updatedAt = new Date();
+  await chatSession.save();
     }
 
     return ApiResponse.success(res, "Chat response generated successfully", {
