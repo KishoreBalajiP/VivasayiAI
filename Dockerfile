@@ -1,5 +1,5 @@
 # Use Node.js 20 base image (official AWS Lambda base)
-FROM public.ecr.aws/lambda/nodejs:20
+FROM public.ecr.aws/lambda/nodejs:24
 
 # Set working directory
 WORKDIR /var/task
