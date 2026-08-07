@@ -1,5 +1,15 @@
 # 🌾 Tamil Nadu Farming Assistant – TODO (Web + WhatsApp AI-Powered Farming Helper)
 
+> **Metadata**
+> - **Title:** Original Capstone TODO (historical)
+> - **Version:** 1.0
+> - **Status:** `[SUPERSEDED]`
+> - **Owner:** PM (historical)
+> - **Last Reviewed:** 2026-08-07
+> - **Related Documents:** [05_Product_Roadmap](../product/05_Product_Roadmap.md) · [17_Backlog](17_Backlog.md)
+
+> **Status notice:** This is the original capstone plan. It is **superseded** by [05_Product_Roadmap.md](../product/05_Product_Roadmap.md) and [17_Backlog.md](17_Backlog.md). Several unchecked items here contradict current decisions (e.g., Firebase auth → AWS Cognito; OpenWeatherMap → Open-Meteo; Twilio → WhatsApp Business API; `react-router-dom` → single-page conditional render). Keep this document as historical reference only; do not use it for planning.
+
 An AI-based, bilingual (Tamil + English) farming assistant for Tamil Nadu farmers.  
 Supports **voice, text, and image input**, with **Google login** for web and **WhatsApp bot** access.  
 Built with **Node.js**, **React**, **MongoDB**, and **Gemini AI**.
