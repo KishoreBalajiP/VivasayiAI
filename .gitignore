@@ -3,3 +3,9 @@ node_modules/
 .vscode/
 .DS_Store
 docs/planning/todo.md
+
+# Ad-hoc verification scripts written to repo root during task validation (T-NNN-*.mjs).
+# Never required at runtime; promote intentional scripts under scripts/ instead.
+t*-verify.mjs
+t*-live.mjs
+t*-probe.mjs
