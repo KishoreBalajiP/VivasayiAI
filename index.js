@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors";
+import helmet from "helmet";
 import { connectDB } from "./config/db.js";
 import { validateEnv, SERVER_REQUIRED } from "./config/env.js";
 import serverless from "serverless-http";
@@ -8,15 +8,18 @@ import testRoutes from "./routes/test.js";
 import chatRoutes from "./routes/chat.js";
 import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for chatSessions routes
 import { notFoundHandler, errorHandler } from "./middlewares/error.js";
+import corsMiddleware from "./middlewares/cors.js";
+import { authLimiter, chatLimiter, chatDailyLimiter } from "./middlewares/rateLimit.js";
 
 validateEnv(SERVER_REQUIRED);
 
 const app = express();
 
-// Explicit CORS settings for frontend
-app.use(cors({
-  origin: "*",              // Allow all origins
-}));
+// Security headers
+app.use(helmet());
+
+// Strict CORS (allow-list; supports credentials for httpOnly cookie auth)
+app.use(corsMiddleware);
 
 app.use(express.json());
 
@@ -28,9 +31,9 @@ app.get("/", (req, res) => {
   res.json({ message: "Backend is Live!" });
 });
 
-app.use("/auth", authRoutes);
+app.use("/auth", authLimiter, authRoutes);
 app.use("/test", testRoutes);
-app.use("/chat", chatRoutes);
+app.use("/chat", chatLimiter, chatDailyLimiter, chatRoutes);
 app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
 
 app.use(notFoundHandler);
