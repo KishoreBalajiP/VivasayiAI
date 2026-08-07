@@ -1,0 +1,129 @@
+# 15 — Security
+
+> **Metadata**
+> - **Title:** 15 — Security
+> - **Version:** 1.0
+> - **Status:** `[ACTIVE]`
+> - **Owner:** Security / Backend
+> - **Last Reviewed:** 2026-08-07
+> - **Related Documents:** [12_Technical_Guidelines](12_Technical_Guidelines.md) · [13_Testing_Strategy](13_Testing_Strategy.md) · [14_Deployment](14_Deployment.md) · [18_DECISIONS](../decisions/18_DECISIONS.md) · [AI_Product_Principles](../product/AI_Product_Principles.md)
+
+> **Why this document exists:** Security is the difference between "a demo" and "a product we can put real farmers on." This document catalogues the current security posture honestly, ranks the risks, and defines the remediation plan. **Several findings are critical and must be fixed before any real users are onboarded (Phase 1).**
+
+---
+
+## 1. Risk summary (current state)
+
+| ID | Finding | Severity | Status |
+|---|---|---|---|
+| SEC-01 | Backend decodes Cognito ID token **without verifying signature/issuer/audience/expiry** (`jwt.decode`) — a forged JWT can impersonate any user | **Critical** | `[EXISTING]` — fix Phase 1 |
+| SEC-02 | **No authentication on any API.** Chat/session identity is a `userEmail` the client sends in body/query — spoofable (IDOR: read/delete/clear others' chats) | **Critical** | `[EXISTING]` — fix Phase 1 |
+| SEC-03 | `/test/*` endpoints publicly expose **all users (PII) and all queries** | **Critical** | `[EXISTING]` — remove Phase 1 |
+| SEC-04 | CORS `origin: "*"` on the API | High | `[EXISTING]` — fix |
+| SEC-05 | Error responses leak internal stack traces to clients (`asyncHandler`) | High | `[EXISTING]` — fix |
+| SEC-06 | `id_token` + user stored in `localStorage` (XSS → token theft; no refresh/expiry handling) | High | `[EXISTING]` — rework |
+| SEC-07 | Live secrets in plaintext `.env` on dev machines (Mongo, AWS, Gemini, Cohere, Chroma). `.env` is git-ignored (verified), but keys must be rotated & moved to a secret manager | High | `[EXISTING]` — rotate + migrate |
+| SEC-08 | No rate limiting on auth/chat → brute force + cost abuse of paid AI APIs | Med | `[EXISTING]` — fix |
+| SEC-09 | No input size caps on `message` (token/cost abuse) | Med | `[EXISTING]` — fix |
+| SEC-10 | Emails in URL paths (`/chatsessions/list/:email`) leak into logs | Med | `[EXISTING]` — fix |
+| SEC-11 | Prompt injection: user input + retrieved content share the prompt; no sanitization of RAG content | Med | `[EXISTING]` — harden |
+| SEC-12 | Auto-deploy to production on `push to main` with no tests/checks | Med | `[EXISTING]` — change pipeline |
+| SEC-13 | No data-retention or consent framework for farmer PII (planned profile/phone data) | Med | `[PLANNED]` — design now |
+
+---
+
+## 2. Authentication (today → target)
+
+**Today:** OAuth2 authorization-code flow. Frontend exchanges code for tokens; stores `id_token` in localStorage; backend `jwt.decode` (unverified); sessions keyed by email string.
+
+**Target (Phase 1):**
+```mermaid
+flowchart LR
+    FE[SPA] -->|authorize| COG[AWS Cognito]
+    COG -->|code| FE
+    FE -->|POST /auth/google {code}| API
+    API -->|server-side token exchange + verify signature/issuer/aud/exp| COG
+    API -->|issue signed session JWT (short-lived + refresh)| FE
+    FE -->|Bearer JWT| API
+    API -->|requireAuth: verify + derive userId| DB[(MongoDB)]
+```
+- Backend issues its own session JWT (or verifies Cognito tokens fully) with `cognitoSub` as the stable identity.
+- All routes except `auth`/`health` behind `requireAuth`.
+- Access token in memory or `httpOnly` cookie; refresh token flow; logout revokes server-side session.
+
+## 3. Authorization (every request)
+
+| Rule | Implementation |
+|---|---|
+| Identity is server-derived | `req.user` from verified token; never trust body/query identity fields |
+| Resource ownership | Every session query scoped `{ _id, user: req.user.id }` — returns 404 for others' resources |
+| No admin surface without roles | `/test/*` removed; admin roles (future) gated by role claim |
+| Negative test requirement | Cross-user read/delete/clear must be tested (13_Testing_Strategy §3) |
+
+## 4. Secrets management
+
+1. **Rotate now:** all keys in `.env` files (Mongo URI, AWS access keys, Gemini, Cohere, Chroma, Cognito) — treat as compromised since they exist in plaintext on developer machines.
+2. **Move to managed storage:** AWS Secrets Manager/SSM for Lambda; GitHub Actions secrets for CI (already used for AWS creds).
+3. **Commit `.env.example`** with placeholder values for both repos.
+4. Add **secret scanning** (e.g., gitleaks) to CI so credentials can never re-enter history.
+5. Never log secrets; never echo env in error responses.
+
+## 5. Input validation & rate limiting
+
+- **Validation:** express-validator/zod at route boundary — types, lengths, enums (`sender`, `language`), required fields. Current validation is manual and partial.
+- **Input caps:** `message` length (e.g., 2000 chars); image size/type; list page sizes.
+- **Rate limits:** auth attempts (per IP), chat (per user per minute/day), session mutations. Return `429` with `Retry-After`.
+- **Body size limit:** `express.json({ limit: '1mb' })` (currently default).
+
+## 6. Data privacy
+
+- **Minimization:** collect only what the product needs (district, crops — not precise GPS by default).
+- **Consent:** explicit, plain-language (Tamil) consent for any data used beyond providing the answer; opt-in for analytics/alerts.
+- **Retention:** define TTLs for logs, analytics, and inactive sessions.
+- **De-identification:** B2B analytics (future) uses aggregate/de-identified data only.
+- **PII handling:** phone numbers and precise locations encrypted at rest; never in logs/URLs.
+- **Rights:** support export/delete of user data (regulatory readiness: DPDP Act India).
+
+## 7. Transport & headers
+
+- HTTPS everywhere (Lambda URL + API Gateway with TLS; frontend on HTTPS).
+- HSTS, `X-Content-Type-Options`, CSP headers on the frontend.
+- `Referrer-Policy`, no `window.opener` exposure on redirect flows.
+
+## 8. AI-specific security
+
+- **Prompt injection:** treat RAG content as untrusted; separate instruction vs. content blocks; test adversarial inputs in the eval set.
+- **Output guardrails:** refuse out-of-scope (medical/veterinary/legal); never fabricate data/prices/schemes (prompt rule + eval enforcement).
+- **Cost abuse:** quotas + rate limits + alerting on anomalous usage (tie to SEC-08/SEC-09).
+- **Misuse logging:** flag and review unsafe/offensive queries (no PII).
+
+## 9. OWASP Top 10 checklist (current vs target)
+
+| OWASP | Area | Status today | Phase 1 target |
+|---|---|---|---|
+| A01 | Broken Access Control | **Fail** — IDOR via email claims, `/test` exposure | `requireAuth` + ownership scoping + remove `/test` |
+| A02 | Cryptographic Failures | **Fail** — unverified JWT, secrets in plaintext | Full token verification, secret manager, HTTPS |
+| A03 | Injection | Partial — Mongo via Mongoose is safe; prompt injection open | Input validation, prompt hardening |
+| A04 | Insecure Design | Partial — no rate limits/quotas | Rate limiting, quotas, misuse logging |
+| A05 | Security Misconfiguration | **Fail** — CORS `*`, verbose errors, auto-deploy | Tighten CORS, sanitize errors, gated deploys |
+| A06 | Vulnerable Components | Monitor | `npm audit` in CI, dependency update policy |
+| A07 | Identification/Auth Failures | **Fail** — decode-without-verify | Verified tokens + refresh lifecycle |
+| A08 | Software/Data Integrity | Partial — ECR images untagged by SHA | Tag images, pinned deps, SBOM (later) |
+| A09 | Logging/Monitoring | **Fail** — no structured logging/alerting | Structured logs, Sentry, alerts |
+| A10 | SSRF | Low (no fetch-on-user-URL today) | Keep validated external calls; no SSRF-prone patterns |
+
+## 10. Remediation plan (ordered)
+
+| Step | Effort | Blocks |
+|---|---|---|
+| 1. Remove `/test/*` routes + controller | S | SEC-03 |
+| 2. Verified JWT + `requireAuth` + ownership scoping | M | SEC-01, SEC-02 |
+| 3. Sanitize errors + strict CORS + body limits + rate limits | M | SEC-04/05/08/09 |
+| 4. Rotate all secrets; add `.env.example`; secret scanning in CI | S | SEC-07 |
+| 5. Frontend token handling rework (httpOnly/short-lived + refresh) | M | SEC-06 |
+| 6. PII-in-URL removal; request-id logging | S | SEC-10 |
+| 7. Prompt-injection tests + output guardrails in AI eval | M | SEC-11 |
+| 8. Gated releases (no direct-to-prod on push) | M | SEC-12 |
+| 9. Privacy/consent/retention framework documented | M | SEC-13 |
+
+> Every remediation is tracked in [17_Backlog.md](../planning/17_Backlog.md) and referenced from [18_DECISIONS.md](../decisions/18_DECISIONS.md).
