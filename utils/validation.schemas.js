@@ -73,6 +73,16 @@ const deleteBody = z.object({ userEmail: email().optional() });
 
 const clearAllBody = z.object({ userEmail: email("User email required") });
 
+// Weather (E2-S1). District is a free-form name resolved server-side via geocoding
+// (the 38-district reference set is seeded separately in E2-S2); we only cap length.
+const weatherDistrict = z
+  .string({ message: "District is required" })
+  .trim()
+  .min(1, "District is required")
+  .max(80, "District name exceeds 80 character limit");
+
+const weatherQuery = z.object({ district: weatherDistrict });
+
 export {
   googleLoginBody,
   chatBody,
@@ -84,4 +94,5 @@ export {
   sessionParams,
   deleteBody,
   clearAllBody,
+  weatherQuery,
 };
