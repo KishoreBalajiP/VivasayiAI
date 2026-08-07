@@ -75,6 +75,16 @@ export const env = Object.freeze({
   chromaApiKey: process.env.CHROMA_API_KEY,
   chromaTenant: process.env.CHROMA_TENANT,
   chromaDatabase: process.env.CHROMA_DATABASE,
+
+  // Weather service (E2-S1). All durations in milliseconds.
+  weatherCacheTtlMs: Number(process.env.WEATHER_CACHE_TTL_MS) || 30 * 60 * 1000,
+  weatherFetchTimeoutMs: Number(process.env.WEATHER_FETCH_TIMEOUT_MS) || 5000,
+  weatherStaleAfterMs: Number(process.env.WEATHER_STALE_AFTER_MS) || 60 * 60 * 1000,
+  openMeteoBase:
+    process.env.OPEN_METEO_BASE_URL || "https://api.open-meteo.com/v1",
+  openMeteoGeocodingBase:
+    process.env.OPEN_METEO_GEOCODING_BASE_URL ||
+    "https://geocoding-api.open-meteo.com/v1",
 });
 
 export function validateEnv(required = SERVER_REQUIRED) {

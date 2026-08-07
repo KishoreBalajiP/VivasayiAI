@@ -6,6 +6,7 @@ import serverless from "serverless-http";
 import authRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chat.js";
 import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for chatSessions routes
+import weatherRoutes from "./routes/weather.js";
 import { notFoundHandler, errorHandler } from "./middlewares/error.js";
 import corsMiddleware from "./middlewares/cors.js";
 import { authLimiter, chatLimiter, chatDailyLimiter } from "./middlewares/rateLimit.js";
@@ -47,6 +48,7 @@ app.get("/health", (req, res) => {
 app.use("/auth", authLimiter, authRoutes);
 app.use("/chat", chatLimiter, chatDailyLimiter, chatRoutes);
 app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
+app.use("/weather", weatherRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

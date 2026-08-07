@@ -30,6 +30,7 @@
 - **Error responses currently leak internal stack traces** via `asyncHandler`. Sanitization is scheduled (F-24).
 - Planned standardization (F-18/F-19): `/api/v1` prefix, `requireAuth`, OpenAPI/Swagger export, typed client generation.
 - **Vision-v2 (see [AI_Product_Principles.md](../product/AI_Product_Principles.md)):** the `/chat` contract evolves from "send text" to "submit an interaction the platform resolves with automatic context" — the Context Engine assembles farm context server-side (APP-03), the Model Adapter picks the provider (APP-05), and images enter the diagnosis pipeline (APP-07). New planned resources: farm profile, context snapshot, diagnosis, model-provider health.
+- **Weather (`/weather`)** is the first Context Engine slice (E2-S1, F-20): a read-only proxy over Open-Meteo with a Mongo cache and degrade-to-unknown semantics (D-15..D-18). It is the input that the Context Engine will inject into prompts.
 
 ---
 
@@ -197,7 +198,92 @@ Limited to 50 sessions, sorted by `updatedAt` desc. No pagination beyond the 50-
 
 ---
 
-## 5. Test / admin CRUD `[LEGACY — to be removed in Phase 1]`
+## 5. Weather (Context Engine — first slice)
+
+### 5.1 `GET /weather?district=<name>` — Current + 1-day forecast (Open-Meteo proxy)
+
+Backend proxy + Mongo cache for Open-Meteo. The frontend (login weather card) still uses Open-Meteo directly today; this endpoint exists so the Context Engine (F-20) can inject cached, fresh-labelled weather into prompts without each chat call hitting the upstream provider (E2-S1, D-15..D-18).
+
+**Query params:** `district` (required, 1–80 chars). Free-form name — resolved server-side via Open-Meteo geocoding; the 38-district reference set is a separate seed (E2-S2).
+
+**Success `200`:**
+```json
+{
+  "statusCode": 200,
+  "message": "Weather retrieved successfully",
+  "data": {
+    "district": "chennai",
+    "current": {
+      "temperature": 31.4,
+      "windspeed": 4.1,
+      "weatherCode": 2,
+      "isDay": 1,
+      "summary": "Partly cloudy"
+    },
+    "forecast": [
+      {
+        "date": "2026-08-08",
+        "temperatureMax": 34.2,
+        "temperatureMin": 26.8,
+        "weatherCode": 2,
+        "precipitation": 0.3,
+        "summary": "Partly cloudy"
+      }
+    ],
+    "source": "open-meteo",
+    "cached": true,
+    "ageSeconds": 142,
+    "freshness": "fresh"
+  }
+}
+```
+
+**Envelope fields:**
+- `district` — lowercased district key (cache key).
+- `current` — `null` when the provider failed and no cache exists.
+- `forecast` — 1-day daily array (current `forecast_days` is 1).
+- `source` — provider label (`open-meteo`).
+- `cached` — `true` when served from Mongo cache.
+- `ageSeconds` — seconds since the cached snapshot was written.
+- `freshness` — `"fresh"` (within `WEATHER_CACHE_TTL_MS`, default 30 min) or `"stale"` (within `WEATHER_STALE_AFTER_MS`, default 60 min, per D-18 hybrid).
+
+**Degraded responses (still `200`, per D-18 — never blocks the answer):**
+```json
+{
+  "statusCode": 200,
+  "message": "Weather retrieved successfully",
+  "data": {
+    "district": "atlantis",
+    "current": null,
+    "forecast": [],
+    "source": "open-meteo",
+    "cached": false,
+    "ageSeconds": 0,
+    "status": "unknown",
+    "note": "District could not be resolved; no weather data available."
+  }
+}
+```
+- `status: "unknown"` is set when the district fails to geocode, or when the provider fails and no stale cache exists.
+- A stale cache hit after provider failure is still labelled (`freshness: "stale"`, `cached: true`) so callers (and the future Context Engine snapshot) can hedge on time-sensitive advice.
+
+**Errors:**
+- `400` — `District is required` / `District name exceeds 80 character limit`.
+
+**Validation:** `district` required, trimmed, max 80. **Auth:** none today (interim; will move behind `requireAuth` with F-19/F-20 context assembly). **Rate limiting:** not mounted today (light public-style read; revisit if abuse observed).
+
+**Caching:** Mongo collection `weathercaches` with TTL index on `cachedAt` (auto-expire after `WEATHER_CACHE_TTL_MS` / 1000 seconds). Cache key is lowercased district name.
+
+**Configuration (`.env`):**
+- `WEATHER_CACHE_TTL_MS` (default `1800000` = 30 min)
+- `WEATHER_FETCH_TIMEOUT_MS` (default `5000`)
+- `WEATHER_STALE_AFTER_MS` (default `3600000` = 60 min)
+- `OPEN_METEO_BASE_URL` (default `https://api.open-meteo.com/v1`)
+- `OPEN_METEO_GEOCODING_BASE_URL` (default `https://geocoding-api.open-meteo.com/v1`)
+
+---
+
+## 6. Test / admin CRUD `[LEGACY — to be removed in Phase 1]`
 
 Exposed under `/test` for capstone demo. **No authentication. Must be removed or gated.**
 
@@ -214,7 +300,7 @@ Exposed under `/test` for capstone demo. **No authentication. Must be removed or
 
 ---
 
-## 6. Error reference
+## 7. Error reference
 
 | Code | Meaning | Common cases |
 |---|---|---|
@@ -225,7 +311,7 @@ Exposed under `/test` for capstone demo. **No authentication. Must be removed or
 | `500` | Server error | Cognito exchange failure, model/RAG errors |
 | `510` | Programmer error | Uncaught error in `asyncHandler` — returns stack trace to client (must be sanitized, F-24) |
 
-## 7. Request/response examples (curl)
+## 8. Request/response examples (curl)
 
 ```bash
 # Health
@@ -253,9 +339,12 @@ curl "http://localhost:8000/chatsessions/list/farmer@example.com"
 curl -X DELETE http://localhost:8000/chatsessions/670f8a5b1234567890abcdef \
   -H "Content-Type: application/json" \
   -d '{"userEmail":"farmer@example.com"}'
+
+# Weather (Context Engine — first slice)
+curl "http://localhost:8000/weather?district=Chennai"
 ```
 
-## 8. Planned API changes (Phase 1 + vision-v2)
+## 9. Planned API changes (Phase 1 + vision-v2)
 
 1. **Namespace:** `/api/v1/…` prefix; versioning.
 2. **Auth:** `Authorization: Bearer <JWT>`; `requireAuth` middleware; identity from token only.

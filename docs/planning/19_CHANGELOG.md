@@ -22,6 +22,9 @@
 - Complete documentation system under `docs/` in the backend (Product) repository: product, architecture, engineering, business, planning, decisions. `docs/README.md` is the hub. (2026-08-07)
 - Consolidated historical project docs into `docs/planning/todo.md` and `docs/architecture/CHAT_CONTEXT_GUIDE.md`.
 
+### Added (Phase 1 — T-201, E2-S1)
+- Weather proxy endpoint `GET /weather?district=<name>`: cache-first Open-Meteo (current + 1-day forecast) with Mongo TTL cache, stale-on-failure, and degrade-to-`unknown` semantics (D-15..D-18). New files: `config/weather.js`, `models/WeatherCache.js`, `services/weather.service.js`, `controllers/weather.controller.js`, `routes/weather.js`; updated `config/env.js`, `.env.example`, `index.js`, `utils/validation.schemas.js`, `docs/architecture/08_API_Documentation.md`. Verification: `t201-verify.mjs`, `t201-live.mjs`.
+
 ---
 
 ## Backend releases
