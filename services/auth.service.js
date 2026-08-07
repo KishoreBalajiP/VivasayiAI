@@ -1,6 +1,7 @@
 import axios from "axios";
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
+import logger from "../utils/logger.js";
 import { verifyToken } from "../utils/token.js";
 import { env } from "../config/env.js";
 
@@ -40,7 +41,7 @@ const googleSignIn = async (code) => {
 
     return { user, id_token };
   } catch (error) {
-    console.error("Auth error:", error.response?.data || error.message);
+    logger.error({ err: error }, "Auth error");
     throw new ApiError(500, "Authentication failed");
   }
 };

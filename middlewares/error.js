@@ -1,5 +1,6 @@
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import logger, { maskUrl } from "../utils/logger.js";
 
 const notFoundHandler = (req, res) => {
   res.status(404).json(new ApiResponse(404, "Route not found", {}));
@@ -14,7 +15,18 @@ const errorHandler = (err, req, res, next) => {
     : isBodyParseError
     ? "Invalid JSON payload"
     : "Internal server error";
-  console.error(`[Error] ${req.method} ${req.originalUrl} -> ${statusCode}`, err);
+
+  logger.error(
+    {
+      requestId: req && req.requestId,
+      method: req && req.method,
+      url: req && maskUrl(req.originalUrl),
+      statusCode,
+      err,
+    },
+    "request failed"
+  );
+
   res.status(statusCode).json(new ApiResponse(statusCode, message, {}));
 };
 

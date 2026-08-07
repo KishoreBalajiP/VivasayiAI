@@ -9,6 +9,7 @@ import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for cha
 import { notFoundHandler, errorHandler } from "./middlewares/error.js";
 import corsMiddleware from "./middlewares/cors.js";
 import { authLimiter, chatLimiter, chatDailyLimiter } from "./middlewares/rateLimit.js";
+import requestLogger from "./middlewares/requestLogger.js";
 import ApiResponse from "./utils/ApiResponse.js";
 
 validateEnv(SERVER_REQUIRED);
@@ -20,6 +21,9 @@ app.use(helmet());
 
 // Strict CORS (allow-list; supports credentials for httpOnly cookie auth)
 app.use(corsMiddleware);
+
+// Request logging + correlation (runs before body-parse so parse errors get a requestId)
+app.use(requestLogger);
 
 app.use(express.json());
 

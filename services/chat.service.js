@@ -3,6 +3,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { CohereEmbeddings } from "@langchain/cohere";
 import { CloudClient } from "chromadb";
 import ApiError from "../utils/ApiError.js";
+import logger from "../utils/logger.js";
 import systemPrompt from "../utils/prompts.js";
 import ChatSession from "../models/ChatSession.js";
 import { env, validateEnv, CHAT_REQUIRED } from "../config/env.js";
@@ -34,10 +35,10 @@ try {
   collection = await chromaClient.getCollection({
     name: "farming-documents"
   });
-  console.log("✅ Connected to ChromaDB collection: farming-documents");
-  console.log("🔕 Note: Embedding warnings are expected - we use Cohere embeddings externally");
+  logger.info("Connected to ChromaDB collection: farming-documents");
+  logger.info("Note: Embedding warnings are expected - we use Cohere embeddings externally");
 } catch (error) {
-  console.error("❌ Failed to connect to ChromaDB collection:", error.message);
+  logger.error({ err: error }, "Failed to connect to ChromaDB collection");
   throw new Error("ChromaDB collection not found. Please run ingestion first.");
 }
 
@@ -90,7 +91,7 @@ async function performRAG(userMessage, chatHistory = []) {
       chatHistoryCount: chatHistory.length
     };
   } catch (error) {
-    console.error("RAG Error:", error);
+    logger.error({ err: error }, "RAG Error");
     
     // Fallback with chat context even if RAG fails
     let fallbackPrompt = systemPrompt;
@@ -167,7 +168,7 @@ const generateResponse = async ({ message, chatId, userEmail }) => {
       session: chatSession
     };
   } catch (error) {
-    console.error("AI Model Error:", error);
+    logger.error({ err: error }, "AI Model Error");
     throw ApiError.internal("Failed to generate chat response");
   }
 };

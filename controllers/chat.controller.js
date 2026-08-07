@@ -1,6 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import logger from "../utils/logger.js";
 import { generateResponse } from "../services/chat.service.js";
 import { getForUser, listRecentForUser } from "../services/chatSession.service.js";
 
@@ -26,7 +27,7 @@ const getChatSession = asyncHandler(async (req, res) => {
       chatSession
     });
   } catch (error) {
-    console.error("Get Chat Session Error:", error);
+    logger.error({ err: error }, "Get Chat Session Error");
     throw ApiError.internal("Failed to retrieve chat session");
   }
 });
@@ -55,7 +56,7 @@ const getUserChatSessions = asyncHandler(async (req, res) => {
       total: sessionsWithMeta.length
     });
   } catch (error) {
-    console.error("Get User Chat Sessions Error:", error);
+    logger.error({ err: error }, "Get User Chat Sessions Error");
     throw ApiError.internal("Failed to retrieve chat sessions");
   }
 });
