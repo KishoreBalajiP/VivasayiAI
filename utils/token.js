@@ -31,6 +31,7 @@ const buildUserContext = (payload) => ({
   id: payload?.sub || null,
   email: payload?.email || null,
   name: payload?.name || null,
+  role: payload?.role || null,
 });
 
 export { extractToken, verifyToken, buildUserContext };
