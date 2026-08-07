@@ -175,7 +175,7 @@ const chat = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error("AI Model Error:", error);
-    throw ApiError.badRequest(error);
+    throw ApiError.internal("Failed to generate chat response");
   }
 });
 
@@ -202,7 +202,7 @@ const getChatSession = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error("Get Chat Session Error:", error);
-    throw ApiError.badRequest(error);
+    throw ApiError.internal("Failed to retrieve chat session");
   }
 });
 
@@ -236,7 +236,7 @@ const getUserChatSessions = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error("Get User Chat Sessions Error:", error);
-    throw ApiError.badRequest(error);
+    throw ApiError.internal("Failed to retrieve chat sessions");
   }
 });
 
