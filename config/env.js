@@ -47,6 +47,16 @@ export const INGEST_REQUIRED = [
 
 export const env = Object.freeze({
   port: Number(process.env.PORT) || 8000,
+  corsOrigins: (process.env.CORS_ORIGINS || "http://localhost:5173")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+  authRateLimitWindowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 60000,
+  authRateLimitMax: Number(process.env.AUTH_RATE_LIMIT_MAX) || 10,
+  chatRateLimitWindowMs: Number(process.env.CHAT_RATE_LIMIT_WINDOW_MS) || 60000,
+  chatRateLimitMax: Number(process.env.CHAT_RATE_LIMIT_MAX) || 30,
+  chatDailyRateLimitWindowMs: Number(process.env.CHAT_DAILY_RATE_LIMIT_WINDOW_MS) || 86400000,
+  chatDailyRateLimitMax: Number(process.env.CHAT_DAILY_RATE_LIMIT_MAX) || 300,
   mongoUri: process.env.MONGO_URI,
   cognitoClientId: process.env.COGNITO_CLIENT_ID,
   cognitoClientSecret: process.env.COGNITO_CLIENT_SECRET,
