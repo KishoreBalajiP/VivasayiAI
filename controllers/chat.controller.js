@@ -6,64 +6,28 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import systemPrompt from "../utils/prompts.js";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 import ChatSession from "../models/ChatSession.js"; // added only this import
+import { env, validateEnv, CHAT_REQUIRED } from "../config/env.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const envPath = path.resolve(__dirname, "..", ".env");
-const result = dotenv.config({ path: envPath });
-
-if (result.error) {
-  console.warn("dotenv: no .env loaded from", envPath, "— continuing (maybe using real env vars)");
-} else {
-  console.log("dotenv loaded .env from:", envPath);
-}
-
-function sanitizeApiKey(raw) {
-  if (raw === undefined || raw === null) return null;
-  let s = typeof raw === "string" ? raw : String(raw);
-  s = s.trim();
-  if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1);
-  if (s.startsWith("'") && s.endsWith("'")) s = s.slice(1, -1);
-  return s;
-}
-
-const rawApiKey = process.env.GOOGLE_API_KEY;
-const apiKey = sanitizeApiKey(rawApiKey);
-const { CHROMA_API_KEY, CHROMA_TENANT, CHROMA_DATABASE } = process.env;
-
-if (!apiKey) {
-    console.error(
-        "Missing GOOGLE_API_KEY. Make sure you have a valid key in the environment or in",
-        envPath,
-    );
-    throw new Error("Missing GOOGLE_API_KEY in environment");
-}
-
-if (!CHROMA_API_KEY || !CHROMA_TENANT || !CHROMA_DATABASE) {
-    throw new Error("Missing ChromaDB cloud credentials in environment");
-}
+validateEnv(CHAT_REQUIRED);
 
 const model = new ChatGoogleGenerativeAI({
-    apiKey,
+    apiKey: env.googleApiKey,
     model: "gemini-2.5-flash",
     maxOutputTokens: 2048,
 });
 
 // Use Cohere embeddings (same as ingestion) - 1024 dimensions
 const embeddings = new CohereEmbeddings({
-  apiKey: process.env.COHERE_API_KEY,
+  apiKey: env.cohereApiKey,
   model: "embed-english-v3.0"
 });
 
 // Initialize ChromaDB cloud client
 const chromaClient = new CloudClient({
-  apiKey: CHROMA_API_KEY,
-  tenant: CHROMA_TENANT,
-  database: CHROMA_DATABASE
+  apiKey: env.chromaApiKey,
+  tenant: env.chromaTenant,
+  database: env.chromaDatabase
 });
 
 let collection;
