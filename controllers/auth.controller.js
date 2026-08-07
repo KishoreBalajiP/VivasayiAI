@@ -9,10 +9,6 @@ import { env } from "../config/env.js";
 // Google OAuth login
 const googleLogin = asyncHandler(async (req, res) => {
   const { code } = req.body;
-  
-  if (!code) {
-    throw ApiError.badRequest("Missing authorization code");
-  }
 
   const clientId = env.cognitoClientId;
   const clientSecret = env.cognitoClientSecret || "";

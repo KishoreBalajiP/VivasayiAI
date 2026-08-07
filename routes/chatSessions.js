@@ -3,14 +3,21 @@ import ChatSession from "../models/ChatSession.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
+import validate from "../middlewares/validate.js";
+import {
+  createSessionBody,
+  listParams,
+  messageBody,
+  sessionParams,
+  deleteBody,
+  clearAllBody
+} from "../utils/validation.schemas.js";
 
 const router = express.Router();
 
 // Create a new chat session
-router.post("/new", asyncHandler(async (req, res) => {
+router.post("/new", validate(createSessionBody), asyncHandler(async (req, res) => {
   const { userEmail, title } = req.body;
-
-  if (!userEmail) throw ApiError.badRequest("User email required");
 
   const newSession = await ChatSession.create({
     userEmail,
@@ -22,9 +29,8 @@ router.post("/new", asyncHandler(async (req, res) => {
 }));
 
 // List sessions for a user
-router.get("/list/:email", asyncHandler(async (req, res) => {
+router.get("/list/:email", validate(listParams, "params"), asyncHandler(async (req, res) => {
   const { email } = req.params;
-  if (!email) throw ApiError.badRequest("Email required");
 
   const sessions = await ChatSession
     .find({ userEmail: email })
@@ -34,11 +40,9 @@ router.get("/list/:email", asyncHandler(async (req, res) => {
 }));
 
 // Add message to chat session (UPDATED)
-router.post("/:id/message", asyncHandler(async (req, res) => {
+router.post("/:id/message", validate(sessionParams, "params"), validate(messageBody), asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { sender, text } = req.body;
-
-  if (!text || !sender) throw ApiError.badRequest("Sender and text required");
 
   const session = await ChatSession.findById(id);
   if (!session) throw ApiError.notFound("Chat session not found");
@@ -60,7 +64,7 @@ router.post("/:id/message", asyncHandler(async (req, res) => {
 }));
 
 // Get a session by ID
-router.get("/:id", asyncHandler(async (req, res) => {
+router.get("/:id", validate(sessionParams, "params"), asyncHandler(async (req, res) => {
   const session = await ChatSession.findById(req.params.id);
   if (!session) throw ApiError.badRequest("Session not found");
 
@@ -68,7 +72,7 @@ router.get("/:id", asyncHandler(async (req, res) => {
 }));
 
 // Delete a chat session
-router.delete("/:id", asyncHandler(async (req, res) => {
+router.delete("/:id", validate(sessionParams, "params"), validate(deleteBody), asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { userEmail } = req.body;
 
@@ -85,9 +89,8 @@ router.delete("/:id", asyncHandler(async (req, res) => {
 }));
 
 // Clear all chats
-router.delete("/clear/all", asyncHandler(async (req, res) => {
+router.delete("/clear/all", validate(clearAllBody), asyncHandler(async (req, res) => {
   const { userEmail } = req.body;
-  if (!userEmail) throw ApiError.badRequest("User email required");
 
   const result = await ChatSession.deleteMany({ userEmail });
 

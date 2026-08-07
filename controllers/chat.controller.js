@@ -121,9 +121,6 @@ async function performRAG(userMessage, chatHistory = []) {
 const chat = asyncHandler(async (req, res) => {
   const { message, chatId, userEmail } = req.body; // added chatId & userEmail
 
-  if (!message) throw ApiError.badRequest("Message is required");
-  if (!userEmail) throw ApiError.badRequest("userEmail is required"); // ensures user identity
-
   try {
     let chatSession;
     let chatHistory = [];
@@ -184,9 +181,6 @@ const getChatSession = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
   const { userEmail } = req.query;
 
-  if (!chatId) throw ApiError.badRequest("Chat ID is required");
-  if (!userEmail) throw ApiError.badRequest("User email is required");
-
   try {
     const chatSession = await ChatSession.findOne({
       _id: chatId,
@@ -209,8 +203,6 @@ const getChatSession = asyncHandler(async (req, res) => {
 // Get all chat sessions for a user
 const getUserChatSessions = asyncHandler(async (req, res) => {
   const { userEmail } = req.query;
-
-  if (!userEmail) throw ApiError.badRequest("User email is required");
 
   try {
     const chatSessions = await ChatSession.find({ userEmail })
