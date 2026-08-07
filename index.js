@@ -4,12 +4,12 @@ import { connectDB } from "./config/db.js";
 import { validateEnv, SERVER_REQUIRED } from "./config/env.js";
 import serverless from "serverless-http";
 import authRoutes from "./routes/auth.js";
-import testRoutes from "./routes/test.js";
 import chatRoutes from "./routes/chat.js";
 import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for chatSessions routes
 import { notFoundHandler, errorHandler } from "./middlewares/error.js";
 import corsMiddleware from "./middlewares/cors.js";
 import { authLimiter, chatLimiter, chatDailyLimiter } from "./middlewares/rateLimit.js";
+import ApiResponse from "./utils/ApiResponse.js";
 
 validateEnv(SERVER_REQUIRED);
 
@@ -31,8 +31,16 @@ app.get("/", (req, res) => {
   res.json({ message: "Backend is Live!" });
 });
 
+// Health check for deployment, uptime monitoring and health checks
+app.get("/health", (req, res) => {
+  ApiResponse.success(res, "OK", {
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use("/auth", authLimiter, authRoutes);
-app.use("/test", testRoutes);
 app.use("/chat", chatLimiter, chatDailyLimiter, chatRoutes);
 app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
 
