@@ -1,14 +1,14 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
+import { validateEnv, SERVER_REQUIRED } from "./config/env.js";
 import serverless from "serverless-http";
 import authRoutes from "./routes/auth.js";
 import testRoutes from "./routes/test.js";
 import chatRoutes from "./routes/chat.js";
 import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for chatSessions routes
 
-dotenv.config();
+validateEnv(SERVER_REQUIRED);
 
 const app = express();
 

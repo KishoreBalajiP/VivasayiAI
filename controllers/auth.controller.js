@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { env } from "../config/env.js";
 
 // Google OAuth login
 const googleLogin = asyncHandler(async (req, res) => {
@@ -13,10 +14,10 @@ const googleLogin = asyncHandler(async (req, res) => {
     throw ApiError.badRequest("Missing authorization code");
   }
 
-  const clientId = process.env.COGNITO_CLIENT_ID;
-  const clientSecret = process.env.COGNITO_CLIENT_SECRET || "";
-  const redirectUri = process.env.COGNITO_REDIRECT_URI;
-  const domain = process.env.COGNITO_DOMAIN;
+  const clientId = env.cognitoClientId;
+  const clientSecret = env.cognitoClientSecret || "";
+  const redirectUri = env.cognitoRedirectUri;
+  const domain = env.cognitoDomain;
 
   const params = new URLSearchParams();
   params.append("grant_type", "authorization_code");
