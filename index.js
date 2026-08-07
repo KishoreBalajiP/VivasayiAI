@@ -25,7 +25,7 @@ app.use(corsMiddleware);
 // Request logging + correlation (runs before body-parse so parse errors get a requestId)
 app.use(requestLogger);
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 // MongoDB connection
 await connectDB();
