@@ -57,6 +57,7 @@ export const env = Object.freeze({
   chatRateLimitMax: Number(process.env.CHAT_RATE_LIMIT_MAX) || 30,
   chatDailyRateLimitWindowMs: Number(process.env.CHAT_DAILY_RATE_LIMIT_WINDOW_MS) || 86400000,
   chatDailyRateLimitMax: Number(process.env.CHAT_DAILY_RATE_LIMIT_MAX) || 300,
+  messageMaxLength: Number(process.env.MESSAGE_MAX_LENGTH) || 2000,
   sessionCookieName: process.env.SESSION_COOKIE_NAME || "session",
   mongoUri: process.env.MONGO_URI,
   cognitoClientId: process.env.COGNITO_CLIENT_ID,
