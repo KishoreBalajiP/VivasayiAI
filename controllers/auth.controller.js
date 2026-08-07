@@ -1,9 +1,9 @@
 import axios from "axios";
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { verifyToken } from "../utils/token.js";
 import { env } from "../config/env.js";
 
 // Google OAuth login
@@ -34,10 +34,10 @@ const googleLogin = asyncHandler(async (req, res) => {
     );
 
     const { id_token } = tokenRes.data;
-    const decoded = jwt.decode(id_token);
+    const decoded = verifyToken(id_token);
 
     if (!decoded) {
-      throw new ApiError(401, "Invalid ID token");
+      throw ApiError.unauthorized("Invalid ID token");
     }
 
     const { email, name } = decoded;
