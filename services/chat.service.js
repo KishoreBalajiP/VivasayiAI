@@ -15,6 +15,7 @@ import {
 import { selectTemplate } from "../src/ai/PromptTemplates.js";
 import { cleanupResponse } from "../src/ai/ResponseCleanup.js";
 import AIConfig from "../src/ai/AIConfig.js";
+import { assembleContextAndRender } from "./context.service.js";
 
 validateEnv(CHAT_REQUIRED);
 
@@ -73,7 +74,7 @@ async function performRAG(userMessage, chatHistory = []) {
   }
 }
 
-const generateResponse = async ({ message, chatId, userEmail }) => {
+const generateResponse = async ({ message, chatId, userEmail, district }) => {
   const conversationId = chatId || `new-${userEmail || "anon"}`;
   const template = selectTemplate(message);
   const startedAt = Date.now();
@@ -90,6 +91,10 @@ const generateResponse = async ({ message, chatId, userEmail }) => {
       }
     }
 
+    // Context Engine slice (E2-S3): assemble weather + soil + farm profile + crop into a
+    // labelled Context block, degrading missing domains to "unknown" (ADR-014). Never throws.
+    const renderedContext = await assembleContextAndRender({ district, userMessage: message });
+
     // Perform RAG with chat context
     const rag = await performRAG(message, chatHistory);
     const hasRag = !!rag.context;
@@ -101,8 +106,9 @@ const generateResponse = async ({ message, chatId, userEmail }) => {
           history: chatHistory,
           context: rag.context,
           template,
+          assembledContext: renderedContext,
         })
-      : buildFallbackPrompt({ userMessage: message, history: chatHistory });
+      : buildFallbackPrompt({ userMessage: message, history: chatHistory, assembledContext: renderedContext });
 
     const lmMessages = messages.map((m) =>
       m.role === "system" ? new SystemMessage(m.content) : new HumanMessage(m.content)
@@ -137,6 +143,7 @@ const generateResponse = async ({ message, chatId, userEmail }) => {
         model: AIConfig.model,
         template,
         latency,
+        district: district || null,
         ...tokens,
         hasRag,
         sourceCount: rag.sourceCount,
