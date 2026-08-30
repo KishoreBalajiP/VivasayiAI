@@ -37,6 +37,9 @@
 ### Deferred (Phase 2 — E2-S5, RAG metadata filters)
 - **Not implemented — deferred by product decision.** E2-S5 ("ChromaDB filter by district/crop/season at query time", Dep: E2-S3) is blocked on missing authoritative data: `rag/ingest.js` stores only `source`/`chunk_index`/`filename` per chunk — no `district`/`crop`/`season` tags exist to filter on (09_AI_Architecture §3 defect; D-28 states tags require the curated content-store migration, out of scope; `season` is domain 6 of the full F-46 engine, unimplemented). Filters would either return zero chunks or require inventing classification of generic CSVs (prohibited). Revisit after the D-28 curated, sourced content store with per-item district/crop/season tags ships.
 
+### Added (Phase 1 — E1-S2, verified authentication)
+- Replaced the unverified `jwt.decode` with real server-side Cognito ID-token verification (SEC-01). `verifyToken` is now async and verifies: signature against the user pool's JWKS (derived from the token's `iss` constrained to the AWS Cognito issuer family, fetched over HTTPS with a bounded timeout), _RS256-only_ algorithm, audience (= Cognito app client id), and expiry. Fails closed (`null`) on any signature/issuer/audience/expiry/algorithm/malformed/key-fetch failure — no fallback to unverified decoding. JWKS keys are cached per-issuer (60-min TTL) and only refetched on cache miss or unknown `kid` (rotation). New file: `utils/jwks.js`; updated `utils/token.js`, `services/auth.service.js` (awaits verification), `middlewares/auth.js` (awaits verification). Security: no tokens/headers/secrets logged. Verification: `t205-verify.mjs`.
+
 ---
 
 ## Backend releases
