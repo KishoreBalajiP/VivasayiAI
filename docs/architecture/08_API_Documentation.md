@@ -90,7 +90,8 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
   "message": "How should I water my tomatoes?",
   "chatId": "670f8a5b1234567890abcdef",   // optional — continue existing session
   "userEmail": "farmer@example.com",       // required today
-  "language": "en"                          // accepted by client; ignored by backend (response language is inferred from the question)
+  "language": "en",                        // accepted by client; ignored by backend (response language is inferred from the question)
+  "district": "Thanjavur"                  // optional — farmer district captured by the client; feeds Context assembly (E2-S3)
 }
 ```
 
@@ -119,12 +120,13 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
 **Behavior:**
 - If `chatId` is provided and exists: loads history, appends user+AI messages, saves.
 - Otherwise: creates a new session, title = first message (truncated).
+- **Context assembly (E2-S3):** when `district` is provided, the backend assembles weather (E2-S1 proxy, cache-first), soil/region (E2-S2 `districts` reference) and crop (detected from the message) into a labelled plain-text "Context" block that is injected into the system prompt. Missing domains degrade to explicit `unknown` markers (ADR-014, D-03) and never cause a 5xx. Farm profile is `unknown` until E2-S4.
 - RAG + chat memory (last 6 messages) → prompt → Gemini → response. RAG failure falls back to chat-context-only.
 
 **Errors:**
 - `400` — `Message is required` / `userEmail is required` / model error payload
 
-**Validation:** `message` (required), `userEmail` (required today). No length cap yet (planned F-24).
+**Validation:** `message` (required), `userEmail` (required today), `district` (optional, 1–80 chars); `message` length capped at `MESSAGE_MAX_LENGTH`. No other length caps yet (planned F-24).
 
 ### 3.2 `GET /chat/session/:chatId` — Get one session `[DEPRECATED — duplicates 4.4]`
 

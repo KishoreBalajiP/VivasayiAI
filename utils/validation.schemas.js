@@ -47,11 +47,21 @@ const authCode = z
 
 const googleLoginBody = z.object({ code: authCode });
 
+// Reusable free-form district name validator (E2-S1 weather + E2-S3 chat context assembly).
+// Resolved server-side via geocoding / the `districts` reference collection; we only cap length.
+const weatherDistrict = z
+  .string({ message: "District is required" })
+  .trim()
+  .min(1, "District is required")
+  .max(80, "District name exceeds 80 character limit");
+
 const chatBody = z.object({
   message: requiredText("Message is required"),
   userEmail: email("userEmail is required"),
   chatId: mongoId("Invalid chat ID format").optional(),
   language: language.optional(),
+  // Context assembly input (E2-S3): optional farmer district captured by the client.
+  district: weatherDistrict.optional(),
 });
 
 const chatParams = z.object({ chatId: mongoId("Invalid chat ID format") });
@@ -72,14 +82,6 @@ const sessionParams = z.object({ id: mongoId("Invalid session ID format") });
 const deleteBody = z.object({ userEmail: email().optional() });
 
 const clearAllBody = z.object({ userEmail: email("User email required") });
-
-// Weather (E2-S1). District is a free-form name resolved server-side via geocoding
-// (the 38-district reference set is seeded separately in E2-S2); we only cap length.
-const weatherDistrict = z
-  .string({ message: "District is required" })
-  .trim()
-  .min(1, "District is required")
-  .max(80, "District name exceeds 80 character limit");
 
 const weatherQuery = z.object({ district: weatherDistrict });
 

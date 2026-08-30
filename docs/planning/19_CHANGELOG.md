@@ -28,6 +28,9 @@
 ### Added (Phase 1 — T-202, E2-S2)
 - Seeded the `districts` reference collection server-side from the frontend `tamilnaduDistricts.ts` config: `District` model (`name` unique, `lat`, `lon`, `regionType`; `soilType`/`crops` reserved-but-empty, D-19, never fabricated) + idempotent seed script `scripts/seedDistricts.js` (`npm run seed:districts`) + `config/districts.js` (server-side single source of truth, 07_Database_Design §8). New files: `models/District.js`, `config/districts.js`, `scripts/seedDistricts.js`, `t202-verify.mjs`; updated `package.json`. **Note:** the source config carries 37 districts (docs reference 38; Mayiladuthurai's 38th counterpart is not yet in the frontend config) — all 37 are seeded, with the discrepancy flagged for resolution.
 
+### Added (Phase 1 — T-203, E2-S3)
+- Context assembly layer (Context Engine first slice, F-20/ADR-014/D-01/D-03): assemble weather (E2-S1 `getWeather`, cache-first) + soil/region (E2-S2 `districts` collection) + crop (detected from the message) + farm profile (degrades to `unknown` until E2-S4) into a labelled plain-text "Context" block injected into the system prompt. Missing domains degrade to explicit `unknown` markers and never 5xx. Removed the dead `{{...}}` placeholders from `src/ai/SystemInstructions.js`. New file: `services/context.service.js`; updated `src/ai/PromptBuilder.js`, `services/chat.service.js`, `utils/validation.schemas.js` (optional `district` on `POST /chat`), `docs/architecture/08_API_Documentation.md`. Verification: `t203-verify.mjs`.
+
 ---
 
 ## Backend releases

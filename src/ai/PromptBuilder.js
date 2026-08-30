@@ -10,8 +10,9 @@ import ApiError from "../../utils/ApiError.js";
 // Builds:
 //   [ { role: 'system', content }, { role: 'user', content } ]
 // History + RAG context are embedded in the system content — identical to the
-// current prompt shape so model behaviour is preserved. Future Context Engine
-// (F-46) can inject additional context blocks here without touching services.
+// current prompt shape so model behaviour is preserved. The Context Engine slice
+// (E2-S3, services/context.service.js) supplies `assembledContext` — a labelled
+// plain-text Context block injected into the system content (ADR-014, D-03).
 
 const buildHistoryBlock = (history) => {
   const text = formatHistory(history);
@@ -29,7 +30,12 @@ const buildContextBlock = (context) => {
     : "";
 };
 
-export const buildPrompt = ({ userMessage, history, context, template }) => {
+const buildAssembledContextBlock = (assembledContext) =>
+  assembledContext && String(assembledContext).trim()
+    ? `\n\n${String(assembledContext).trim()}`
+    : "";
+
+export const buildPrompt = ({ userMessage, history, context, template, assembledContext }) => {
   if (!userMessage || !String(userMessage).trim()) {
     throw ApiError.badRequest("Message is required");
   }
@@ -38,7 +44,8 @@ export const buildPrompt = ({ userMessage, history, context, template }) => {
   const system =
     getSystemPrompt() +
     `\n\nTask focus: ${focus}` +
-    buildHistoryBlock(history || []);
+    buildHistoryBlock(history || []) +
+    buildAssembledContextBlock(assembledContext);
 
   if (context) {
     // RAG succeeded path — context block is appended (mirrors current behaviour).
@@ -55,7 +62,7 @@ export const buildPrompt = ({ userMessage, history, context, template }) => {
   ];
 };
 
-export const buildFallbackPrompt = ({ userMessage, history }) => {
+export const buildFallbackPrompt = ({ userMessage, history, assembledContext }) => {
   // RAG failure recovery: system + history only (matches current fallback path).
   const focus = selectTemplate(userMessage);
   return [
@@ -64,7 +71,8 @@ export const buildFallbackPrompt = ({ userMessage, history }) => {
       content:
         getSystemPrompt() +
         `\n\nTask focus: ${focus}` +
-        buildHistoryBlock(history || []),
+        buildHistoryBlock(history || []) +
+        buildAssembledContextBlock(assembledContext),
     },
     { role: "user", content: String(userMessage || "").trim() },
   ];
