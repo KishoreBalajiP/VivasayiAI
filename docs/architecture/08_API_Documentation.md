@@ -26,7 +26,7 @@
 
 ## 0. Security & standards note (read first)
 
-- **There is no enforced authentication on any endpoint today.** Identity is an `email`/`userEmail` field the client sends. The Phase 1 `requireAuth` middleware will replace this (F-19). Until then, these contracts are **interim** and must not be assumed safe.
+- **Authentication (E1-S4):** All application routes — `/chat`, `/chatsessions`, `/weather`, `/profile` — require `Authorization: Bearer <session JWT>` (obtained from `POST /auth/google`, E1-S3). Requests without a valid token return `401`. The public set is limited to `/`, `/health`, and `/auth`. Identity is derived from the verified token (`req.user`); **ownership is still keyed by the `userEmail` the client sends** until the E1-S5 `cognitoSub` ownership migration (D-35), so these contracts remain interim.
 - **Error responses currently leak internal stack traces** via `asyncHandler`. Sanitization is scheduled (F-24).
 - Planned standardization (F-18/F-19): `/api/v1` prefix, `requireAuth`, OpenAPI/Swagger export, typed client generation.
 - **Vision-v2 (see [AI_Product_Principles.md](../product/AI_Product_Principles.md)):** the `/chat` contract evolves from "send text" to "submit an interaction the platform resolves with automatic context" — the Context Engine assembles farm context server-side (APP-03), the Model Adapter picks the provider (APP-05), and images enter the diagnosis pipeline (APP-07). New planned resources: farm profile, context snapshot, diagnosis, model-provider health.
