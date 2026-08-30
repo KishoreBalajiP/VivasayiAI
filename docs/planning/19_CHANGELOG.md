@@ -34,6 +34,9 @@
 ### Added (Phase 2 — E2-S4, farm profile MVP)
 - Farm profile MVP (F-21, D-10 Option 1): `profiles` collection + CRUD API keyed by `userEmail` (upsert `POST /profile`, `GET /profile/:email`, `DELETE /profile/:email`), storing onboarding district + crops + acres (soil/phone deliberately excluded per APP-10/D-19/E6). The Context Engine now auto-loads the profile for the caller (D-14): its district and first crop drive weather/soil/crop context, the `Farm profile: known` line renders district/crops/acres at the top of the Context block, and a missing profile gracefully degrades to `unknown`. New files: `models/FarmProfile.js`, `services/farmProfile.service.js`, `controllers/farmProfile.controller.js`, `routes/farmProfile.js`; updated `index.js`, `services/context.service.js`, `services/chat.service.js`, `src/ai/SystemInstructions.js`, `utils/validation.schemas.js`, `docs/architecture/08_API_Documentation.md`. Verification: `t204-verify.mjs`.
 
+### Deferred (Phase 2 — E2-S5, RAG metadata filters)
+- **Not implemented — deferred by product decision.** E2-S5 ("ChromaDB filter by district/crop/season at query time", Dep: E2-S3) is blocked on missing authoritative data: `rag/ingest.js` stores only `source`/`chunk_index`/`filename` per chunk — no `district`/`crop`/`season` tags exist to filter on (09_AI_Architecture §3 defect; D-28 states tags require the curated content-store migration, out of scope; `season` is domain 6 of the full F-46 engine, unimplemented). Filters would either return zero chunks or require inventing classification of generic CSVs (prohibited). Revisit after the D-28 curated, sourced content store with per-item district/crop/season tags ships.
+
 ---
 
 ## Backend releases
