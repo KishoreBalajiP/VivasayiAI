@@ -4,14 +4,17 @@
 // never fabricate), and renders a labelled plain-text "Context" block for the prompt builder.
 //
 // Domains in this slice:
-//   1. Farm profile  — E2-S4 not built yet -> always `unknown`
+//   1. Farm profile  — E2-S4 `profiles` collection, auto-loaded for a user (D-14). Its district
+//                      and crops drive the other domains (zero-question continuity). Missing -> `unknown`.
 //   2. Weather       — E2-S1 `getWeather` (cache-first, never throws)
 //   3. Soil / region — E2-S2 `districts` collection (soilType reservation is empty -> `unknown`; regionType present)
-//   4. Crop          — inferred from the user message when a known TN crop is named, else `unknown`
+//   4. Crop          — from the farm profile when present, else inferred from the user message when a
+//                      known TN crop is named, else `unknown`
 // RAG is assembled separately in chat.service and appended by the prompt builder.
 import logger from "../utils/logger.js";
 import { getWeather } from "./weather.service.js";
 import District from "../models/District.js";
+import * as farmProfileService from "./farmProfile.service.js";
 
 // A small set of the dominant Tamil Nadu crops used only to detect an explicit crop mention
 // (matches the legacy {{crop_name}} placeholder intent). This is NOT a soil/crop reference
@@ -40,8 +43,9 @@ const detectCrop = (message) => {
 const fmt = (value) => (value === undefined || value === null || value === "" ? null : value);
 
 // Resolve all domains into a plain snapshot. Never throws on a single-domain failure — each
-// resolver degrades to `unknown` (ADR-014 rule 1).
-export const assembleContext = async ({ district, userMessage } = {}) => {
+// resolver degrades to `unknown` (ADR-014 rule 1). `userEmail` auto-loads the farm profile
+// (D-14); when present, the profile's district and crops drive weather/soil/crop resolution.
+export const assembleContext = async ({ district, userEmail, userMessage } = {}) => {
   const startedAt = Date.now();
   const snapshot = {
     farmProfile: { status: "unknown", note: "No farm profile yet (E2-S4)." },
@@ -51,12 +55,35 @@ export const assembleContext = async ({ district, userMessage } = {}) => {
     district: fmt(district) || "unknown",
   };
 
-  // Domain: farm profile (not built) -> unknown. Resolver present so E2-S4 fills it.
+  // Domain: farm profile (E2-S4). Auto-load for the caller; its district/crops become the
+  // authoritative context (D-14), overriding any request-supplied district.
+  let profileDistrict = district;
+  try {
+    if (userEmail) {
+      const p = await farmProfileService.getByUser(userEmail);
+      if (p) {
+        snapshot.farmProfile = {
+          status: "ok",
+          district: p.district,
+          crops: p.crops,
+          acres: p.acres,
+        };
+        profileDistrict = p.district;
+        // Crops from the profile drive the crop domain (first listed crop).
+        if (Array.isArray(p.crops) && p.crops.length > 0) snapshot.crop = p.crops[0];
+        snapshot.district = p.district;
+      }
+    }
+  } catch (error) {
+    logger.warn({ userEmail, err: error }, "context.farm_profile_resolution_failed");
+    snapshot.farmProfile = { status: "unknown", note: "Farm profile resolution failed." };
+  }
+  const effectiveDistrict = profileDistrict || fmt(district);
 
   // Domain: weather (E2-S1). Never throws; getWeather degrades to status "unknown".
   try {
-    if (district) {
-      const w = await getWeather(district);
+    if (effectiveDistrict) {
+      const w = await getWeather(effectiveDistrict);
       if (w && w.status !== "unknown" && w.current) {
         snapshot.weather = {
           status: "ok",
@@ -71,15 +98,15 @@ export const assembleContext = async ({ district, userMessage } = {}) => {
       snapshot.weather = { status: "unknown", note: "No district provided." };
     }
   } catch (error) {
-    logger.warn({ district, err: error }, "context.weather_resolution_failed");
+    logger.warn({ district: effectiveDistrict, err: error }, "context.weather_resolution_failed");
     snapshot.weather = { status: "unknown", note: "Weather resolution failed." };
   }
 
   // Domain: soil / region (E2-S2 `districts` collection). soilType is a reserved-but-empty
   // field (D-19) -> regionType is authoritative, soilType degrades to unknown (D-21).
   try {
-    if (district) {
-      const d = await District.findOne({ name: district }).lean().exec();
+    if (effectiveDistrict) {
+      const d = await District.findOne({ name: effectiveDistrict }).lean().exec();
       if (d) {
         snapshot.soil = {
           status: "ok",
@@ -88,17 +115,17 @@ export const assembleContext = async ({ district, userMessage } = {}) => {
         };
         snapshot.district = d.name;
       } else {
-        snapshot.soil = { status: "unknown", note: `District "${district}" not in reference data.` };
+        snapshot.soil = { status: "unknown", note: `District "${effectiveDistrict}" not in reference data.` };
       }
     } else {
       snapshot.soil = { status: "unknown", note: "No district provided." };
     }
   } catch (error) {
-    logger.warn({ district, err: error }, "context.soil_resolution_failed");
+    logger.warn({ district: effectiveDistrict, err: error }, "context.soil_resolution_failed");
     snapshot.soil = { status: "unknown", note: "Soil resolution failed." };
   }
 
-  logger.info({ district: snapshot.district, durationMs: Date.now() - startedAt }, "context.assembled");
+  logger.info({ district: snapshot.district, farmProfile: snapshot.farmProfile.status, durationMs: Date.now() - startedAt }, "context.assembled");
   return snapshot;
 };
 
@@ -108,7 +135,12 @@ export const renderContextBlock = (snapshot) => {
   const lines = [];
   lines.push("Context:");
   lines.push(`- District: ${snapshot.district}`);
-  lines.push(`- Farm profile: ${snapshot.farmProfile.status === "ok" ? "known" : "unknown"}`);
+  if (snapshot.farmProfile.status === "ok") {
+    const cropList = snapshot.farmProfile.crops || [];
+    lines.push(`- Farm profile: known (district ${snapshot.farmProfile.district}, crops: ${cropList.join(", ")}, area: ${snapshot.farmProfile.acres} acres)`);
+  } else {
+    lines.push("- Farm profile: unknown");
+  }
   if (snapshot.weather.status === "ok") {
     lines.push(`- Weather: ${snapshot.weather.summary}, ${snapshot.weather.temperature}°C, wind ${snapshot.weather.windspeed} km/h`);
   } else {
@@ -125,7 +157,7 @@ export const renderContextBlock = (snapshot) => {
   return lines.join("\n");
 };
 
-export const assembleContextAndRender = async ({ district, userMessage }) =>
-  renderContextBlock(await assembleContext({ district, userMessage }));
+export const assembleContextAndRender = async ({ district, userEmail, userMessage }) =>
+  renderContextBlock(await assembleContext({ district, userEmail, userMessage }));
 
 export default { assembleContext, renderContextBlock, assembleContextAndRender };

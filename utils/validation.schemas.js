@@ -85,6 +85,23 @@ const clearAllBody = z.object({ userEmail: email("User email required") });
 
 const weatherQuery = z.object({ district: weatherDistrict });
 
+// Farm profile (E2-S4, D-10 Option 1): district + non-empty crops + positive acres.
+// Soil type and phone are excluded per APP-10 minimization (D-10) — not collected.
+const crop = requiredText("Crop name is required", 100);
+const farmProfileBody = z.object({
+  userEmail: email("userEmail is required"),
+  district: weatherDistrict,
+  crops: z
+    .array(crop, { message: "crops must be a non-empty array of crop names" })
+    .min(1, "At least one crop is required")
+    .max(20, "Too many crops listed"),
+  acres: z
+    .number({ message: "acres is required" })
+    .positive("Acres must be greater than 0")
+    .max(1e6, "Acres too large"),
+  language: language.optional(),
+});
+
 export {
   googleLoginBody,
   chatBody,
@@ -97,4 +114,5 @@ export {
   deleteBody,
   clearAllBody,
   weatherQuery,
+  farmProfileBody,
 };
