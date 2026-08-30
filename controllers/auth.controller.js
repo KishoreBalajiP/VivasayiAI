@@ -6,9 +6,15 @@ import { googleSignIn } from "../services/auth.service.js";
 const googleLogin = asyncHandler(async (req, res) => {
   const { code } = req.body;
 
-  const { user, id_token } = await googleSignIn(code);
+  // E1-S3: returns backend-issued session tokens (access + refresh) instead of the raw Cognito
+  // id_token (ADR-013 / D-34; SEC-06). Refresh endpoint/logout are later stories.
+  const { user, accessToken, refreshToken } = await googleSignIn(code);
 
-  return ApiResponse.success(res, "Login successful", { user, id_token });
+  return ApiResponse.success(res, "Login successful", {
+    user,
+    accessToken,
+    refreshToken,
+  });
 });
 
 export { googleLogin };

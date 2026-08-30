@@ -26,6 +26,7 @@ export const SERVER_REQUIRED = [
   "CHROMA_API_KEY",
   "CHROMA_TENANT",
   "CHROMA_DATABASE",
+  "SESSION_JWT_SECRET",
 ];
 
 export const CHAT_REQUIRED = [
@@ -59,6 +60,10 @@ export const env = Object.freeze({
   chatDailyRateLimitMax: Number(process.env.CHAT_DAILY_RATE_LIMIT_MAX) || 300,
   messageMaxLength: Number(process.env.MESSAGE_MAX_LENGTH) || 2000,
   sessionCookieName: process.env.SESSION_COOKIE_NAME || "session",
+  // E1-S3: backend-issued session tokens (ADR-013, D-34). HMAC HS256 signing secret.
+  sessionJwtSecret: process.env.SESSION_JWT_SECRET || undefined,
+  accessTokenTtlMs: Number(process.env.ACCESS_TOKEN_TTL_MS) || 15 * 60 * 1000,
+  refreshTokenTtlMs: Number(process.env.REFRESH_TOKEN_TTL_MS) || 30 * 24 * 60 * 60 * 1000,
   mongoUri: process.env.MONGO_URI,
   cognitoClientId: process.env.COGNITO_CLIENT_ID,
   cognitoClientSecret: process.env.COGNITO_CLIENT_SECRET,

@@ -44,7 +44,7 @@
 - **Known gaps:**
   - No phone number, district, crops, or farm profile (planned F-21).
   - `language` is never updated server-side (`updateUserLanguage` is client-only).
-  - Identity is email-string-based; must become `cognitoSub` (immutable, non-spoofable) in Phase 1 (F-19).
+  - Identity is email-string-based; must become `cognitoSub` (immutable, non-spoofable) in Phase 1 (F-19). **Done in E1-S3:** `User.cognitoSub` added (unique, sparse) and set at login; remaining collections (`profiles`/`chatsessions`) still keyed by `userEmail` pending E1-S4/(D-35) ownership scoping.
 
 ## 3. Collection: `chatsessions`
 
@@ -236,7 +236,7 @@ erDiagram
 ```
 
 ### Planned changes (rationale)
-- **Immutable user identity:** add `cognitoSub` (unique); keep `email` for display. Prevents email-spoofing across all queries (security).
+- **Immutable user identity:** `cognitoSub` (unique) added in E1-S3; keep `email` for display. Prevents email-spoofing across all queries (security).
 - **Normalize messages** into a `messages` collection (or TTL-capped archive) to avoid unbounded documents and enable pagination (F-28).
 - **Farm profile collections** (`profiles`, `farms`) to power personalization (F-21) and the Context Engine (F-46).
 - **Farm Memory collection** (`farmmemory`): season-by-season crop history, decisions, and outcomes — the core memory capability (F-47, ADR-016).

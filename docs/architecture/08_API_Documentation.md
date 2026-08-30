@@ -65,18 +65,19 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
   "message": "Login successful",
   "data": {
     "user": { "_id": "…", "name": "Kishore", "email": "farmer@example.com" },
-    "id_token": "eyJhbGciOi…"
+    "accessToken": "eyJhbGciOiJIUzI1NiIs…",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs…"
   }
 }
 ```
 
 **Errors:**
 - `400` — `Missing authorization code`
-- `500` — `Authentication failed` (Cognito exchange/decode error)
+- `500` — `Authentication failed` (Cognito exchange/verify error)
 
 **Validation:** `code` required. **Auth:** none (this is the login endpoint).
 
-> ⚠️ **Interim implementation:** the backend calls `jwt.decode(id_token)` **without signature verification**, then upserts `User` by email. The returned `id_token` is what the frontend stores. This flow is replaced in Phase 1 (see [15_Security.md](../engineering/15_Security.md), [18_DECISIONS.md ADR-002](../decisions/18_DECISIONS.md)).
+> **E1-S2/E1-S3 (implemented):** the backend exchanges the code and **verifies** the Cognito ID token (signature/issuer/audience/expiry via JWKS, RS256-only — SEC-01), upserts `User` by `cognitoSub`, and returns **backend-issued session tokens** (`accessToken` short-lived ~15 min; `refreshToken` ~30 days, HS256-signed) rather than the raw Cognito `id_token`. The client presents `accessToken` as `Authorization: Bearer <token>` to `requireAuth`. The `POST /auth/refresh` endpoint and refresh-token rotation/revocation are deferred to later stories (D-34/E1-S12).
 
 ---
 
