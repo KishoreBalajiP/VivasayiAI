@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
+import { isCognitoIssuer, getKey } from "./jwks.js";
 
 const extractToken = (req) => {
   const header = req.headers?.authorization;
@@ -21,10 +22,39 @@ const extractToken = (req) => {
   return null;
 };
 
-// Seam: E1-S2 replaces jwt.decode with JWKS signature/issuer/audience/expiry verification
-const verifyToken = (token) => {
+// E1-S2: replace jwt.decode with real server-side verification.
+// Returns the verified payload, or `null` on ANY failure (fail closed). Never falls back to
+// unverified decoding. Auth flow: signature (Cognito JWKS via the token's constrained issuer),
+// issuer family, audience (= Cognito app client id), expiry, and RS256-only.
+const verifyToken = async (token) => {
   if (!token || typeof token !== "string") return null;
-  return jwt.decode(token);
+
+  let header;
+  let payload;
+  try {
+    header = jwt.decode(token, { complete: true })?.header;
+    payload = jwt.decode(token);
+  } catch {
+    return null;
+  }
+  if (!header || typeof header.kid !== "string") return null;
+  if (!payload || typeof payload.iss !== "string") return null;
+
+  // Restrict the issuer to the AWS Cognito family before trusting its JWKS (SSRF + forgery guard).
+  if (!isCognitoIssuer(payload.iss)) return null;
+
+  const key = await getKey(payload.iss, header.kid);
+  if (!key) return null;
+
+  try {
+    const verified = jwt.verify(token, key, {
+      algorithms: ["RS256"],
+      audience: env.cognitoClientId,
+    });
+    return verified;
+  } catch {
+    return null;
+  }
 };
 
 const buildUserContext = (payload) => ({

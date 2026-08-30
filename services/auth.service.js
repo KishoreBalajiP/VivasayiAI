@@ -26,7 +26,7 @@ const googleSignIn = async (code) => {
     );
 
     const { id_token } = tokenRes.data;
-    const decoded = verifyToken(id_token);
+    const decoded = await verifyToken(id_token);
 
     if (!decoded) {
       throw ApiError.unauthorized("Invalid ID token");
