@@ -285,7 +285,61 @@ Backend proxy + Mongo cache for Open-Meteo. The frontend (login weather card) st
 
 ---
 
-## 6. Test / admin CRUD `[LEGACY — to be removed in Phase 1]`
+## 6. Farm profile (Context Engine second slice)
+
+The farm profile is the farmer's onboarding identity context (E2-S4, F-21, D-10 Option 1). It holds
+`district`, `crops`, and `acres` — the minimal PII set per APP-10. Soil type and phone are deliberately
+not collected (soil is district-derived per D-19; phone is PII deferred to WhatsApp, E6). A profile is
+1:1 with a user (keyed by `userEmail`, the only identity available today; `cognitoSub` is planned in
+E1-S3). The Context Engine auto-loads it for the caller (D-14) so a returning farmer is not re-asked
+(APP-02) and its district/crops drive weather/soil/crop context.
+
+### 6.1 `POST /profile` — Upsert (create or update) a farm profile
+
+| Field | Type | Rules |
+|---|---|---|
+| `userEmail` | string | Required, valid email |
+| `district` | string | Required, 1–80 chars (same validator as `/weather`) |
+| `crops` | string[] | Required, 1–20 crop names, each 1–100 chars |
+| `acres` | number | Required, positive, ≤ 1e6 |
+| `language` | string | Optional, `"en"` \| `"ta"` |
+
+```json
+{ "userEmail": "farmer@example.com", "district": "Trichy", "crops": ["paddy", "groundnut"], "acres": 4.5 }
+```
+
+**Response `200`:**
+```json
+{ "statusCode": 200, "message": "Farm profile saved", "data": { "profile": { "_id": "...", "userEmail": "farmer@example.com", "district": "Trichy", "crops": ["paddy", "groundnut"], "acres": 4.5 } } }
+```
+
+**Errors:** `400` invalid fields.
+
+### 6.2 `GET /profile/:email` — Get a farm profile
+
+**Response `200`:**
+```json
+{ "statusCode": 200, "message": "Farm profile fetched", "data": { "profile": { "...": "..." } } }
+```
+
+**Errors:** `400` invalid email, `404` profile not found.
+
+### 6.3 `DELETE /profile/:email` — Delete a farm profile
+
+**Response `200`:** `{ "statusCode": 200, "message": "Farm profile deleted" }`
+
+**Errors:** `400` invalid email, `404` profile not found.
+
+### 6.4 Integration with chat
+
+When a caller sends `POST /chat`, the backend passes `userEmail` to the Context Engine. If a profile
+exists, its `district` and first crop drive weather/soil/crop context and the `Farm profile: known`
+line (with district, crops, acres) is rendered at the top of the Context block. If no profile exists,
+the farm-profile line renders `unknown` and no profile data is used.
+
+---
+
+## 7. Test / admin CRUD `[LEGACY — to be removed in Phase 1]`
 
 Exposed under `/test` for capstone demo. **No authentication. Must be removed or gated.**
 
@@ -302,7 +356,7 @@ Exposed under `/test` for capstone demo. **No authentication. Must be removed or
 
 ---
 
-## 7. Error reference
+## 8. Error reference
 
 | Code | Meaning | Common cases |
 |---|---|---|
@@ -313,7 +367,7 @@ Exposed under `/test` for capstone demo. **No authentication. Must be removed or
 | `500` | Server error | Cognito exchange failure, model/RAG errors |
 | `510` | Programmer error | Uncaught error in `asyncHandler` — returns stack trace to client (must be sanitized, F-24) |
 
-## 8. Request/response examples (curl)
+## 9. Request/response examples (curl)
 
 ```bash
 # Health

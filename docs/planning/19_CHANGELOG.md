@@ -31,6 +31,9 @@
 ### Added (Phase 1 — T-203, E2-S3)
 - Context assembly layer (Context Engine first slice, F-20/ADR-014/D-01/D-03): assemble weather (E2-S1 `getWeather`, cache-first) + soil/region (E2-S2 `districts` collection) + crop (detected from the message) + farm profile (degrades to `unknown` until E2-S4) into a labelled plain-text "Context" block injected into the system prompt. Missing domains degrade to explicit `unknown` markers and never 5xx. Removed the dead `{{...}}` placeholders from `src/ai/SystemInstructions.js`. New file: `services/context.service.js`; updated `src/ai/PromptBuilder.js`, `services/chat.service.js`, `utils/validation.schemas.js` (optional `district` on `POST /chat`), `docs/architecture/08_API_Documentation.md`. Verification: `t203-verify.mjs`.
 
+### Added (Phase 2 — E2-S4, farm profile MVP)
+- Farm profile MVP (F-21, D-10 Option 1): `profiles` collection + CRUD API keyed by `userEmail` (upsert `POST /profile`, `GET /profile/:email`, `DELETE /profile/:email`), storing onboarding district + crops + acres (soil/phone deliberately excluded per APP-10/D-19/E6). The Context Engine now auto-loads the profile for the caller (D-14): its district and first crop drive weather/soil/crop context, the `Farm profile: known` line renders district/crops/acres at the top of the Context block, and a missing profile gracefully degrades to `unknown`. New files: `models/FarmProfile.js`, `services/farmProfile.service.js`, `controllers/farmProfile.controller.js`, `routes/farmProfile.js`; updated `index.js`, `services/context.service.js`, `services/chat.service.js`, `src/ai/SystemInstructions.js`, `utils/validation.schemas.js`, `docs/architecture/08_API_Documentation.md`. Verification: `t204-verify.mjs`.
+
 ---
 
 ## Backend releases

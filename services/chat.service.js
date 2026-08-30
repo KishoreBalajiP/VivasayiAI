@@ -91,9 +91,10 @@ const generateResponse = async ({ message, chatId, userEmail, district }) => {
       }
     }
 
-    // Context Engine slice (E2-S3): assemble weather + soil + farm profile + crop into a
-    // labelled Context block, degrading missing domains to "unknown" (ADR-014). Never throws.
-    const renderedContext = await assembleContextAndRender({ district, userMessage: message });
+    // Context Engine slice (E2-S3/E2-S4): assemble weather + soil + farm profile + crop into a
+    // labelled Context block. The farm profile is auto-loaded for the caller (D-14, E2-S4) and
+    // its district/crops drive resolution; missing domains degrade to "unknown" (ADR-014). Never throws.
+    const renderedContext = await assembleContextAndRender({ district, userEmail, userMessage: message });
 
     // Perform RAG with chat context
     const rag = await performRAG(message, chatHistory);
