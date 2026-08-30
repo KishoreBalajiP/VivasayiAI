@@ -20,7 +20,7 @@
 | SEC-02 | **No authentication on any API.** Chat/session identity is a `userEmail` the client sends in body/query — spoofable (IDOR: read/delete/clear others' chats) | **Critical** | `[EXISTING]` — fix Phase 1 |
 | SEC-03 | `/test/*` endpoints publicly expose **all users (PII) and all queries** | **Critical** | `[EXISTING]` — remove Phase 1 |
 | SEC-04 | CORS `origin: "*"` on the API | High | `[EXISTING]` — fix |
-| SEC-05 | Error responses leak internal stack traces to clients (`asyncHandler`) | High | `[EXISTING]` — fix |
+| SEC-05 | Error responses leak internal stack traces to clients (`asyncHandler`) | High | `[RESOLVED]` E1-S6 — `errorHandler` returns generic messages (`ApiResponse` only); no stack/cause/message reaches clients; t209 proves it |
 | SEC-06 | `id_token` + user stored in `localStorage` (XSS → token theft; no refresh/expiry handling) | High | `[EXISTING]` — rework |
 | SEC-07 | Live secrets in plaintext `.env` on dev machines (Mongo, AWS, Gemini, Cohere, Chroma). `.env` is git-ignored (verified), but keys must be rotated & moved to a secret manager | High | `[EXISTING]` — rotate + migrate |
 | SEC-08 | No rate limiting on auth/chat → brute force + cost abuse of paid AI APIs | Med | `[EXISTING]` — fix |
@@ -56,7 +56,7 @@ flowchart LR
 | Rule | Implementation |
 |---|---|
 | Identity is server-derived | `req.user` from verified token; never trust body/query identity fields |
-| Resource ownership | Every session query scoped `{ _id, user: req.user.id }` — returns 404 for others' resources |
+| Resource ownership | Every session/profile query scoped by the authenticated `cognitoSub` (`req.user.id`) — returns 404 for others' resources (**implemented E1-S5, ADR-018**) |
 | No admin surface without roles | `/test/*` removed; admin roles (future) gated by role claim |
 | Negative test requirement | Cross-user read/delete/clear must be tested (13_Testing_Strategy §3) |
 
@@ -101,11 +101,11 @@ flowchart LR
 
 | OWASP | Area | Status today | Phase 1 target |
 |---|---|---|---|
-| A01 | Broken Access Control | **Fail** — IDOR via email claims, `/test` exposure | `requireAuth` + ownership scoping + remove `/test` |
+| A01 | Broken Access Control | **Partial** — IDOR via email claims fixed (E1-S5); legacy `/test` exposure remains | `requireAuth` + ownership scoping (E1-S4/S5) + remove `/test` |
 | A02 | Cryptographic Failures | **Fail** — unverified JWT, secrets in plaintext | Full token verification, secret manager, HTTPS |
 | A03 | Injection | Partial — Mongo via Mongoose is safe; prompt injection open | Input validation, prompt hardening |
 | A04 | Insecure Design | Partial — no rate limits/quotas | Rate limiting, quotas, misuse logging |
-| A05 | Security Misconfiguration | **Fail** — CORS `*`, verbose errors, auto-deploy | Tighten CORS, sanitize errors, gated deploys |
+| A05 | Security Misconfiguration | Partial — CORS allow-list configurable; error responses sanitized (E1-S6); auto-deploy remains | Tighten CORS default, enforce body limits + rate limits (E1-S7/S8), gated deploys |
 | A06 | Vulnerable Components | Monitor | `npm audit` in CI, dependency update policy |
 | A07 | Identification/Auth Failures | **Fail** — decode-without-verify | Verified tokens + refresh lifecycle |
 | A08 | Software/Data Integrity | Partial — ECR images untagged by SHA | Tag images, pinned deps, SBOM (later) |
@@ -118,7 +118,7 @@ flowchart LR
 |---|---|---|
 | 1. Remove `/test/*` routes + controller | S | SEC-03 |
 | 2. Verified JWT + `requireAuth` + ownership scoping | M | SEC-01, SEC-02 |
-| 3. Sanitize errors + strict CORS + body limits + rate limits | M | SEC-04/05/08/09 |
+| 3. Strict CORS + body limits + rate limits (error sanitization done — E1-S6) | M | SEC-04/08/09 |
 | 4. Rotate all secrets; add `.env.example`; secret scanning in CI | S | SEC-07 |
 | 5. Frontend token handling rework (httpOnly/short-lived + refresh) | M | SEC-06 |
 | 6. PII-in-URL removal; request-id logging | S | SEC-10 |

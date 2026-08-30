@@ -49,9 +49,9 @@ app.get("/health", (req, res) => {
 
 app.use("/auth", authLimiter, authRoutes);
 
-// E1-S4: protect all application routes (except auth/health — and root `/` stays a public
+// E1-S4/E1-S5: protect all application routes (except auth/health — and root `/` stays a public
 // liveness probe). requireAuth validates the session Bearer token (HS256) and populates req.user
-// from the token; ownership stays keyed by userEmail until E1-S5.
+// from the token; ownership is scoped by req.user.id (cognitoSub) per E1-S5 (D-35).
 app.use(requireAuth);
 app.use("/chat", chatLimiter, chatDailyLimiter, chatRoutes);
 app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes

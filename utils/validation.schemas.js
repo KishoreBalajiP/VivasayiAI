@@ -57,7 +57,6 @@ const weatherDistrict = z
 
 const chatBody = z.object({
   message: requiredText("Message is required"),
-  userEmail: email("userEmail is required"),
   chatId: mongoId("Invalid chat ID format").optional(),
   language: language.optional(),
   // Context assembly input (E2-S3): optional farmer district captured by the client.
@@ -66,11 +65,7 @@ const chatBody = z.object({
 
 const chatParams = z.object({ chatId: mongoId("Invalid chat ID format") });
 
-const userEmailQuery = z.object({ userEmail: email("User email is required") });
-
-const createSessionBody = z.object({ userEmail: email("User email required"), title });
-
-const listParams = z.object({ email: email("Email required") });
+const createSessionBody = z.object({ title });
 
 const messageBody = z.object({
   sender,
@@ -79,17 +74,13 @@ const messageBody = z.object({
 
 const sessionParams = z.object({ id: mongoId("Invalid session ID format") });
 
-const deleteBody = z.object({ userEmail: email().optional() });
-
-const clearAllBody = z.object({ userEmail: email("User email required") });
-
 const weatherQuery = z.object({ district: weatherDistrict });
 
 // Farm profile (E2-S4, D-10 Option 1): district + non-empty crops + positive acres.
 // Soil type and phone are excluded per APP-10 minimization (D-10) — not collected.
+// E1-S5 (D-35): ownership derives from the verified token (req.user), not the body.
 const crop = requiredText("Crop name is required", 100);
 const farmProfileBody = z.object({
-  userEmail: email("userEmail is required"),
   district: weatherDistrict,
   crops: z
     .array(crop, { message: "crops must be a non-empty array of crop names" })
@@ -106,13 +97,9 @@ export {
   googleLoginBody,
   chatBody,
   chatParams,
-  userEmailQuery,
   createSessionBody,
-  listParams,
   messageBody,
   sessionParams,
-  deleteBody,
-  clearAllBody,
   weatherQuery,
   farmProfileBody,
 };

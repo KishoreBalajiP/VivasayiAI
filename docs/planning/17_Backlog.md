@@ -25,7 +25,7 @@
 | E1-S3 | Session JWT issuance | Backend issues short-lived session JWT (+ refresh); stable `cognitoSub` identity; `User.cognitoSub` field | P0 | 5 | E1-S2 | TODO |
 | E1-S4 | `requireAuth` middleware | All routes (except auth/health) require `Bearer` token; identity from token only | P0 | 3 | E1-S3 | TODO |
 | E1-S5 | Ownership scoping | All session queries scoped by authenticated user; 404 for foreign resources | P0 | 3 | E1-S4 | TODO |
-| E1-S6 | Error sanitization | `asyncHandler` returns generic errors; no stack/cause to clients | P0 | 2 | — | TODO |
+| E1-S6 | Error sanitization | `asyncHandler` returns generic errors; no stack/cause to clients | P0 | 2 | E1-S4 | DONE (E1-S6) |
 | E1-S7 | CORS + body limits | Restrict CORS origin; `express.json({limit})` | P0 | 1 | — | TODO |
 | E1-S8 | Rate limiting | Auth + chat + session mutation rate limits; `429` responses | P0 | 3 | E1-S4 | TODO |
 | E1-S9 | Input validation | zod/express-validator for body/query; message length cap | P0 | 3 | — | TODO |

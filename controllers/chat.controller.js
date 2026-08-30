@@ -5,17 +5,20 @@ import { generateResponse } from "../services/chat.service.js";
 import { getForUser, listRecentForUser } from "../services/chatSession.service.js";
 
 const chat = asyncHandler(async (req, res) => {
-  const result = await generateResponse(req.body);
+  const result = await generateResponse({
+    ...req.body,
+    cognitoSub: req.user.id,
+    email: req.user.email,
+  });
 
   return ApiResponse.success(res, "Chat response generated successfully", result);
 });
 
-// Get chat session by ID
+// Get chat session by ID (owned only)
 const getChatSession = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
-  const { userEmail } = req.query;
 
-  const chatSession = await getForUser(chatId, userEmail);
+  const chatSession = await getForUser(chatId, req.user.id);
 
   if (!chatSession) {
     throw ApiError.notFound("Chat session not found");
@@ -26,11 +29,9 @@ const getChatSession = asyncHandler(async (req, res) => {
   });
 });
 
-// Get all chat sessions for a user
+// Get all chat sessions for the caller
 const getUserChatSessions = asyncHandler(async (req, res) => {
-  const { userEmail } = req.query;
-
-  const chatSessions = await listRecentForUser(userEmail);
+  const chatSessions = await listRecentForUser(req.user.id);
 
   // Add message count and last message preview
   const sessionsWithMeta = chatSessions.map(session => ({

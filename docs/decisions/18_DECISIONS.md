@@ -204,6 +204,26 @@
 
 ---
 
+## ADR-018 — Ownership scoping by cognitoSub (SEC-02 remediation)
+- **Status:** ACCEPTED (implementation: E1-S5, D-35 Option 1) · **Date:** 2026-08-30 · **Deciders:** Founding team + Product Owner
+
+**Problem:** SEC-02 (OWASP A01 Broken Access Control) — identity and resource ownership were keyed by a **client-supplied `userEmail`** in request bodies/query/path. Any authenticated user could read/list/modify/delete another user's chat sessions and farm profile by supplying that user's email (IDOR).
+
+**Options (D-35):**
+1. **`requireAuth` + ownership scoping** — `{ _id, user: req.user.id }` everywhere; foreign resources return **404**; identity from token only; reserved `role` field for future admin, no role logic in Phase 1.
+2. Option 1 + roles (admin).
+3. Fine-grained policy engine (ABAC).
+
+**Chosen:** Option 1. Ownership is derived **only from the verified session token** (`req.user.id` = the stable, immutable `cognitoSub` from ADR-013); every chat-session/profile query/update/delete is scoped by `cognitoSub`; foreign/unowned resources return **404** (not 403, to avoid resource-existence disclosure). A reserved `role` claim exists on the user context but is unused in Phase 1.
+
+**Reason:** Fixes SEC-02 with minimal code; `cognitoSub` is non-spoofable (unlike email); 404-for-foreign matches 12_Technical_Guidelines §5 and avoids existence disclosure; no admin surface exists until Phase 3+ so no role logic is wired yet.
+
+**Data/legacy:** `chatsessions` and `profiles` gain a `cognitoSub` ownership key (indexed; unique+sparse on profiles for 1:1). `userEmail` is **retained as a display/legacy dual-key** (set server-side only). Existing email-keyed rows are **backfilled** from the `users` collection (`User.email → User.cognitoSub`) via `scripts/backfillOwnership.js` (idempotent; per 07_Database_Design §8 migration note); rows with no known user mapping are re-keyed on the user's next login.
+
+**Tradeoffs:** Breaking API contract — client-supplied `userEmail` is removed from `/chat`, `/chatsessions/*`, `/profile/*` (identity from token only); legacy pre-backfill rows are unscoped until backfill/login. Related: ADR-013 (cognitoSub identity), D-34 (token transport), SEC-02.
+
+---
+
 ## Decision log conventions
 
 - New decisions: create a new ADR entry, update this file, and link it from affected docs.

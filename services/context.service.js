@@ -43,9 +43,9 @@ const detectCrop = (message) => {
 const fmt = (value) => (value === undefined || value === null || value === "" ? null : value);
 
 // Resolve all domains into a plain snapshot. Never throws on a single-domain failure — each
-// resolver degrades to `unknown` (ADR-014 rule 1). `userEmail` auto-loads the farm profile
+// resolver degrades to `unknown` (ADR-014 rule 1). `cognitoSub` auto-loads the caller's farm profile
 // (D-14); when present, the profile's district and crops drive weather/soil/crop resolution.
-export const assembleContext = async ({ district, userEmail, userMessage } = {}) => {
+export const assembleContext = async ({ district, cognitoSub, userMessage } = {}) => {
   const startedAt = Date.now();
   const snapshot = {
     farmProfile: { status: "unknown", note: "No farm profile yet (E2-S4)." },
@@ -55,12 +55,12 @@ export const assembleContext = async ({ district, userEmail, userMessage } = {})
     district: fmt(district) || "unknown",
   };
 
-  // Domain: farm profile (E2-S4). Auto-load for the caller; its district/crops become the
-  // authoritative context (D-14), overriding any request-supplied district.
+  // Domain: farm profile (E2-S4). Auto-load for the caller (scoped by cognitoSub, E1-S5/D-35);
+  // its district/crops become the authoritative context (D-14), overriding any request-supplied district.
   let profileDistrict = district;
   try {
-    if (userEmail) {
-      const p = await farmProfileService.getByUser(userEmail);
+    if (cognitoSub) {
+      const p = await farmProfileService.getByUser(cognitoSub);
       if (p) {
         snapshot.farmProfile = {
           status: "ok",
@@ -75,7 +75,7 @@ export const assembleContext = async ({ district, userEmail, userMessage } = {})
       }
     }
   } catch (error) {
-    logger.warn({ userEmail, err: error }, "context.farm_profile_resolution_failed");
+    logger.warn({ cognitoSub, err: error }, "context.farm_profile_resolution_failed");
     snapshot.farmProfile = { status: "unknown", note: "Farm profile resolution failed." };
   }
   const effectiveDistrict = profileDistrict || fmt(district);
@@ -157,7 +157,7 @@ export const renderContextBlock = (snapshot) => {
   return lines.join("\n");
 };
 
-export const assembleContextAndRender = async ({ district, userEmail, userMessage }) =>
-  renderContextBlock(await assembleContext({ district, userEmail, userMessage }));
+export const assembleContextAndRender = async ({ district, cognitoSub, userMessage }) =>
+  renderContextBlock(await assembleContext({ district, cognitoSub, userMessage }));
 
 export default { assembleContext, renderContextBlock, assembleContextAndRender };

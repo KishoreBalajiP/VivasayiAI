@@ -1,31 +1,35 @@
 import ChatSession from "../models/ChatSession.js";
-import ApiError from "../utils/ApiError.js";
+
+// E1-S5 (D-35): all session queries are scoped by the authenticated user's cognitoSub
+// (derived from the verified token via req.user.id). Foreign resources return null (404).
+// userEmail is retained as a display/legacy dual-key; it is set server-side, never from the client.
 
 // Shared title truncation (per-call-site lengths preserved: 50 on create, 40 on first append)
 const deriveTitle = (text, maxLength) => text.slice(0, maxLength);
 
-const create = async ({ userEmail, title }) =>
+const create = async ({ cognitoSub, email, title }) =>
   ChatSession.create({
-    userEmail,
+    cognitoSub,
+    userEmail: email ?? null,
     title: title || "New Chat",
     messages: []
   });
 
-const getById = async (id) => ChatSession.findById(id);
+// Owned read: returns null for foreign/unowned sessions (404 upstream).
+const getForUser = async (chatId, cognitoSub) =>
+  ChatSession.findOne({ _id: chatId, cognitoSub });
 
-const getForUser = async (chatId, userEmail) =>
-  ChatSession.findOne({ _id: chatId, userEmail });
+const sessionsByUserQuery = (cognitoSub) =>
+  ChatSession.find({ cognitoSub }).sort({ updatedAt: -1 });
 
-const sessionsByUserQuery = (email) =>
-  ChatSession.find({ userEmail: email }).sort({ updatedAt: -1 });
+const listForUser = (cognitoSub) => sessionsByUserQuery(cognitoSub);
 
-const listForUser = (email) => sessionsByUserQuery(email);
+const listRecentForUser = (cognitoSub) =>
+  sessionsByUserQuery(cognitoSub).select("_id title updatedAt createdAt messages").limit(50);
 
-const listRecentForUser = (email) =>
-  sessionsByUserQuery(email).select("_id title updatedAt createdAt messages").limit(50);
-
-const appendMessage = async (id, { sender, text }) => {
-  const session = await ChatSession.findById(id);
+// Append only to a session owned by the caller; foreign sessions return null (404 upstream).
+const appendMessage = async (id, cognitoSub, { sender, text }) => {
+  const session = await ChatSession.findOne({ _id: id, cognitoSub });
   if (!session) return null;
 
   // AUTO-GENERATE TITLE FROM FIRST MESSAGE
@@ -44,25 +48,17 @@ const appendMessage = async (id, { sender, text }) => {
   return session;
 };
 
-const remove = async (id, userEmail) => {
-  const session = await ChatSession.findById(id);
-  if (!session) return null;
-
-  if (userEmail && session.userEmail !== userEmail) {
-    throw ApiError.unauthorized("You cannot delete another user's chat");
-  }
-
-  await session.deleteOne();
-
+// Delete only the caller's session; foreign sessions return null (404 upstream).
+const remove = async (id, cognitoSub) => {
+  const session = await ChatSession.findOneAndDelete({ _id: id, cognitoSub });
   return session;
 };
 
-const clearForUser = async (userEmail) => ChatSession.deleteMany({ userEmail });
+const clearForUser = async (cognitoSub) => ChatSession.deleteMany({ cognitoSub });
 
 export {
   deriveTitle,
   create,
-  getById,
   getForUser,
   listForUser,
   listRecentForUser,

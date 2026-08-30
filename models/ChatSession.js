@@ -7,7 +7,10 @@ const messageSchema = new mongoose.Schema({
 }, { _id: false });
 
 const chatSessionSchema = new mongoose.Schema({
-  userEmail: { type: String, required: true, index: true },
+  // E1-S5 (D-35): ownership scoped by the authenticated user's stable cognitoSub (immutable,
+  // non-spoofable). userEmail retained as a display/legacy dual-key (07_Database_Design §6).
+  cognitoSub: { type: String, required: true, index: true },
+  userEmail: { type: String, index: true },
   title: { type: String, default: "New Chat" },
   messages: { type: [messageSchema], default: [] },
 }, { timestamps: true });

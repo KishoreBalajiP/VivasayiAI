@@ -16,8 +16,10 @@ const authLimiter = rateLimit({
   handler: handleLimitExceeded,
 });
 
+// E1-S5 (D-35): rate-limit keyed by the authenticated user's cognitoSub (req.user.id), never a
+// client-supplied email. Runs after requireAuth, so req.user is populated.
 const chatKeyGenerator = (req) =>
-  req.body?.userEmail || ipKeyGenerator(req.ip || "unknown");
+  req.user?.id || ipKeyGenerator(req.ip || "unknown");
 
 const chatLimiter = rateLimit({
   windowMs: env.chatRateLimitWindowMs,
