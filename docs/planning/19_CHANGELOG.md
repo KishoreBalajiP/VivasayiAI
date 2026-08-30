@@ -25,6 +25,9 @@
 ### Added (Phase 1 — T-201, E2-S1)
 - Weather proxy endpoint `GET /weather?district=<name>`: cache-first Open-Meteo (current + 1-day forecast) with Mongo TTL cache, stale-on-failure, and degrade-to-`unknown` semantics (D-15..D-18). New files: `config/weather.js`, `models/WeatherCache.js`, `services/weather.service.js`, `controllers/weather.controller.js`, `routes/weather.js`; updated `config/env.js`, `.env.example`, `index.js`, `utils/validation.schemas.js`, `docs/architecture/08_API_Documentation.md`. Verification: `t201-verify.mjs`, `t201-live.mjs`.
 
+### Added (Phase 1 — T-202, E2-S2)
+- Seeded the `districts` reference collection server-side from the frontend `tamilnaduDistricts.ts` config: `District` model (`name` unique, `lat`, `lon`, `regionType`; `soilType`/`crops` reserved-but-empty, D-19, never fabricated) + idempotent seed script `scripts/seedDistricts.js` (`npm run seed:districts`) + `config/districts.js` (server-side single source of truth, 07_Database_Design §8). New files: `models/District.js`, `config/districts.js`, `scripts/seedDistricts.js`, `t202-verify.mjs`; updated `package.json`. **Note:** the source config carries 37 districts (docs reference 38; Mayiladuthurai's 38th counterpart is not yet in the frontend config) — all 37 are seeded, with the discrepancy flagged for resolution.
+
 ---
 
 ## Backend releases
