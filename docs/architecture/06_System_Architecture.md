@@ -70,7 +70,7 @@ flowchart LR
 | Aspect | Detail |
 |---|---|---|
 | Framework | Express 5 (ESM), `serverless-http` wrapper |
-| Entry | `index.js` — CORS `*`, `express.json()`, top-level `await connectDB()`, mounts `/auth`, `/test`, `/chat`, `/chatsessions` |
+| Entry | `index.js` — strict CORS allow-list (`CORS_ORIGINS`), `express.json({ limit: '1mb' })`, top-level `await connectDB()`, mounts `/auth`, `/chat`, `/chatsessions`, `/weather`, `/profile` |
 | Runtime | Node 24 (AWS Lambda base image), Docker → ECR |
 | Module structure | `config/` · `controllers/` · `models/` · `routes/` · `rag/` · `utils/` |
 | Deployment | GitHub Actions (`deploy-lambda.yml`) builds image, pushes to ECR, updates Lambda `tnFarmingAssistant` on push to `main` |
