@@ -94,7 +94,7 @@ src/
 - Use `import`/`export` (project is `"type": "module"`). No `require`.
 - **Controllers:** no business logic outside services (target). Controllers call `service` methods, wrap in `asyncHandler`.
 - **AI:** model calls only via the Model Adapter (§2b); context only via the Context Engine (§2c). Never call a vendor SDK from a controller/service.
-- **Errors:** throw `ApiError` (with `statusCode`); never leak stack traces to clients (fix `asyncHandler` — F-24).
+- **Errors:** throw `ApiError` (with `statusCode`); never leak stack traces/causes to clients (`asyncHandler` → `errorHandler` sanitizes — E1-S6).
 - **Env access:** read env at module top via a validated `config` module; no magic strings. Add `.env.example`.
 - **Async:** always `try/catch` or `asyncHandler`; no unhandled rejections. Avoid top-level side effects at import time (Lambda cold-start concern).
 - **PII/logging:** never log emails, tokens, full messages, or precise GPS coordinates verbatim; log message lengths/hashes.
@@ -126,8 +126,8 @@ src/
 ## 6. Error handling
 
 - Domain errors → `ApiError(statusCode, message)` thrown in services.
-- `asyncHandler` catches → maps to JSON; **strip `cause`/stack from production responses** (current behavior leaks them — fix in F-24).
-- Unknown errors → log full detail server-side, return generic `500`.
+- `asyncHandler` catches → `next(err)` → `errorHandler` maps to a safe envelope `{ statusCode, message, data:{} }`; `cause`/stack are stripped from client responses (logged server-side only) — E1-S6.
+- Unknown errors → log full detail server-side, return generic `500` `"Internal server error"`.
 - Frontend: every `fetch`/`api` call has error + empty + loading states (many present; standardize).
 
 ## 7. Logging

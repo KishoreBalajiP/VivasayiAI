@@ -140,7 +140,7 @@ These architecture choices are settled in the ADR log and treated as fixed input
 
 ### D-06 — Model failure, retry & degradation semantics
 **Current Status:** `PENDING PRODUCT APPROVAL`
-**Why this decision matters:** Today a model failure returns a 500 with a leaked stack (SEC-05). With the Context Engine + adapter, we need a defined policy so a provider outage degrades the product instead of breaking it.
+**Why this decision matters:** A model failure today returns a sanitized `500` `"Internal server error"` (no stack leak, E1-S6/SEC-05 resolved). With the Context Engine + adapter, we need a defined policy so a provider outage degrades the product instead of breaking it.
 **Available options:**
 1. Single provider, fail → sanitized error; keep today's RAG-off fallback.
 2. + automatic provider failover to a second provider with a circuit breaker.
@@ -618,7 +618,7 @@ These architecture choices are settled in the ADR log and treated as fixed input
 ---
 
 ### D-35 — Authorization & ownership model
-**Current Status:** `PENDING PRODUCT APPROVAL`
+**Current Status:** `APPROVED — implemented in E1-S5 (owned by cognitoSub, see ADR-018)`
 **Why this decision matters:** SEC-02 is critical: identity today is a client-supplied email. We must define the post-auth authorization model.
 **Available options:**
 1. **`requireAuth` middleware + ownership scoping** — `{ _id, user: req.user.id }` everywhere; foreign resources return 404; identity from token only.
@@ -627,6 +627,8 @@ These architecture choices are settled in the ADR log and treated as fixed input
 **Advantages:** (1) fixes SEC-02 with minimal code; (2) prepares admin surfaces; (3) flexible.
 **Disadvantages:** (1) no roles (fine — none needed); (3) enterprise complexity; (2) unused role plumbing.
 **Recommendation:** **Option 1**, with a single reserved `role` field for future admin (no role logic in Phase 1). *Why:* SEC-02 remediation is ownership scoping; there is no admin surface until Phase 3+ (08 §5 `/test` is being removed, not replaced). Policy engines are premature.
+
+**Outcome (product-approved, E1-S5 → ADR-018):** Option 1 adopted. Ownership key = **`cognitoSub`** (non-spoofable, from the verified token's `sub`); foreign/unowned resources return **404**; `userEmail` retained as a display/legacy dual-key (server-set only); legacy email-keyed rows backfilled from `User.email → cognitoSub` via `scripts/backfillOwnership.js`; client-supplied `userEmail` removed from `/chat`, `/chatsessions/*`, `/profile/*` contracts.
 **Risks:** Missed query paths — covered by mandatory negative tests (cross-user read/delete/clear) in 13 §3.
 **Dependencies:** E1-S4, E1-S5, D-34.
 **Future impact:** Admin (Phase 3) gates by role claim without rearchitecting.

@@ -44,14 +44,15 @@
 - **Known gaps:**
   - No phone number, district, crops, or farm profile (planned F-21).
   - `language` is never updated server-side (`updateUserLanguage` is client-only).
-  - Identity is email-string-based; must become `cognitoSub` (immutable, non-spoofable) in Phase 1 (F-19). **Done in E1-S3:** `User.cognitoSub` added (unique, sparse) and set at login; remaining collections (`profiles`/`chatsessions`) still keyed by `userEmail` pending E1-S4/(D-35) ownership scoping.
+  - Identity is email-string-based; must become `cognitoSub` (immutable, non-spoofable) in Phase 1 (F-19). **Done in E1-S3/E1-S5 (D-35):** `User.cognitoSub` added (unique, sparse) and set at login; `chatsessions`/`profiles` now scope ownership by `cognitoSub` (kept `userEmail` as a display/legacy dual-key).
 
 ## 3. Collection: `chatsessions`
 
 ```js
 {
-  userEmail: String,             // owner key (today) — required, indexed
-  title:     String,             // default "New Chat"; set from first message
+  cognitoSub: String,            // OWNER KEY (E1-S5/D-35) — required, indexed; from verified token
+  userEmail:  String,            // display/legacy dual-key (server-set only) — indexed
+  title:      String,            // default "New Chat"; set from first message
   messages: [                    // EMBEDDED ARRAY
     {
       sender:    "user" | "ai" | "system",   // enum, required
@@ -65,16 +66,19 @@
 }
 ```
 
-- **Indexes:** `userEmail` (1). No compound index.
-- **Relationships:** N → 1 `users` (by `userEmail`).
-- **API surface:** created via `POST /chatsessions/new`, appended via `POST /chatsessions/:id/message` or the `/chat` controller; listed via `GET /chatsessions/list/:email` and `GET /chat/sessions`.
+- **Indexes:** `cognitoSub` (1). `userEmail` (1, legacy/backfill). No compound index.
+- **Relationships:** N → 1 `users` (by `cognitoSub`; ownership scope).
+- **API surface:** created via `POST /chatsessions/new`, appended via `POST /chatsessions/:id/message` or the `/chat` controller; listed via `GET /chatsessions/list` and `GET /chat/sessions`. All scoped to the caller's `cognitoSub` from the token (E1-S5/D-35); unowned/foreign ids return 404.
+
+### Migration note (E1-S5 / ADR-018)
+`chatsessions` and `profiles` gain a `cognitoSub` ownership key (indexed; unique+sparse on `profiles` for 1:1). Legacy email-keyed rows are backfilled from the `users` collection (`User.email → User.cognitoSub`) via `scripts/backfillOwnership.js` (idempotent; `--dry-run` available). Rows with no known user mapping are re-keyed on the user's next login (auth upsert). Runs after the `users` collection has `cognitoSub` populated (E1-S3+).
 
 ### Known gaps & risks
 | Issue | Impact | Plan |
 |---|---|---|
 | Messages stored as an **unbounded embedded array** | One document grows with every message; `slice(-6)` still loads the whole doc; Mongo 16MB doc limit is reachable in extreme cases | F-28: normalize `messages` into their own collection (or capped + archived) |
 | No `_id` on messages | Frontend React keys fall back to indices; no stable message identity for edits/feedback | Part of F-28 |
-| No pagination on list | `GET /chatsessions/list/:email` returns all sessions | Add limit/offset + cursor |
+| No pagination on list | `GET /chatsessions/list` returns all sessions | Add limit/offset + cursor |
 | No per-user limits | Storage growth with no cap | Add session/message quotas |
 | `updatedAt` not bumped consistently by all endpoints | `POST /chatsessions/:id/message` relies on explicit saves; some paths set `updatedAt` manually | Rely on Mongoose timestamps |
 
@@ -123,12 +127,13 @@
 
 ```mermaid
 erDiagram
-    USER ||--o{ CHATSESSION : "owns (userEmail)"
+    USER ||--o{ CHATSESSION : "owns (cognitoSub, E1-S5)"
     USER ||--o{ QUERY : "owns (userId, legacy)"
     CONTEXT ||--o{ QUERY : "referenced (contextId, legacy)"
     CHATSESSION {
         ObjectId _id PK
-        string userEmail FK
+        string cognitoSub FK
+        string userEmail
         string title
         array messages
         date createdAt
@@ -136,6 +141,7 @@ erDiagram
     }
     USER {
         ObjectId _id PK
+        string cognitoSub UK
         string email UK
         string name
         string language
@@ -236,7 +242,7 @@ erDiagram
 ```
 
 ### Planned changes (rationale)
-- **Immutable user identity:** `cognitoSub` (unique) added in E1-S3; keep `email` for display. Prevents email-spoofing across all queries (security).
+- **Immutable user identity:** `cognitoSub` (unique) added in E1-S3; keep `email` for display. **E1-S5 (ADR-018):** `chatsessions` and `profiles` scope ownership by `cognitoSub`; `userEmail` retained as a display/legacy dual-key. Prevents email-spoofing across all queries (security).
 - **Normalize messages** into a `messages` collection (or TTL-capped archive) to avoid unbounded documents and enable pagination (F-28).
 - **Farm profile collections** (`profiles`, `farms`) to power personalization (F-21) and the Context Engine (F-46).
 - **Farm Memory collection** (`farmmemory`): season-by-season crop history, decisions, and outcomes — the core memory capability (F-47, ADR-016).

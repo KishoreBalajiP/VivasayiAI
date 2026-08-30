@@ -6,7 +6,7 @@ import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
 import ChatSession from "../models/ChatSession.js";
 import { env, validateEnv, CHAT_REQUIRED } from "../config/env.js";
-import { deriveTitle, getById } from "./chatSession.service.js";
+import { deriveTitle, getForUser } from "./chatSession.service.js";
 import {
   buildPrompt,
   buildFallbackPrompt,
@@ -74,8 +74,10 @@ async function performRAG(userMessage, chatHistory = []) {
   }
 }
 
-const generateResponse = async ({ message, chatId, userEmail, district }) => {
-  const conversationId = chatId || `new-${userEmail || "anon"}`;
+// E1-S5 (D-35): ownership derives from the authenticated caller's cognitoSub (req.user.id); the
+// client never supplies an ownership email. userEmail is retained server-side as a display key.
+const generateResponse = async ({ message, chatId, cognitoSub, email, district }) => {
+  const conversationId = chatId || `new-${cognitoSub || "anon"}`;
   const template = selectTemplate(message);
   const startedAt = Date.now();
 
@@ -83,9 +85,11 @@ const generateResponse = async ({ message, chatId, userEmail, district }) => {
     let chatSession;
     let chatHistory = [];
 
-    // Get existing chat session and its history if chatId is provided
+    // Get an existing chat session and its history if chatId is provided — but only if it is
+    // owned by the caller. Foreign/unowned ids are treated as absent (no cross-user data leak);
+    // the flow falls back to creating a new session for the caller.
     if (chatId) {
-      chatSession = await getById(chatId);
+      chatSession = await getForUser(chatId, cognitoSub);
       if (chatSession) {
         chatHistory = chatSession.messages || [];
       }
@@ -94,7 +98,7 @@ const generateResponse = async ({ message, chatId, userEmail, district }) => {
     // Context Engine slice (E2-S3/E2-S4): assemble weather + soil + farm profile + crop into a
     // labelled Context block. The farm profile is auto-loaded for the caller (D-14, E2-S4) and
     // its district/crops drive resolution; missing domains degrade to "unknown" (ADR-014). Never throws.
-    const renderedContext = await assembleContextAndRender({ district, userEmail, userMessage: message });
+    const renderedContext = await assembleContextAndRender({ district, cognitoSub, userMessage: message });
 
     // Perform RAG with chat context
     const rag = await performRAG(message, chatHistory);
@@ -153,9 +157,10 @@ const generateResponse = async ({ message, chatId, userEmail, district }) => {
     );
 
     if (!chatId || !chatSession) {
-      // Create new chat session
+      // Create new chat session (owned by the caller's cognitoSub)
       chatSession = await ChatSession.create({
-        userEmail,
+        cognitoSub,
+        userEmail: email ?? null,
         title: deriveTitle(message, 50),
         messages: [
           { sender: "user", text: message },

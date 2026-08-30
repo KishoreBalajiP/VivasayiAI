@@ -20,14 +20,15 @@
 }
 ```
 
-**Conventions:** JSON bodies, `Content-Type: application/json`. Errors thrown by `ApiError` produce `{ statusCode, message, cause, error, icon }` (note: the current `asyncHandler` returns the stack as `cause` — see **Security note** below).
+**Conventions:** JSON bodies, `Content-Type: application/json`. Errors produce a safe envelope `{ statusCode, message, data:{} }` — `message` is a controlled literal for `ApiError`, or a fixed generic for internal/parse errors; no stack/cause is ever sent to clients (E1-S6, SEC-05 resolved; see **Security note** below).
 
 ---
 
 ## 0. Security & standards note (read first)
 
-- **Authentication (E1-S4):** All application routes — `/chat`, `/chatsessions`, `/weather`, `/profile` — require `Authorization: Bearer <session JWT>` (obtained from `POST /auth/google`, E1-S3). Requests without a valid token return `401`. The public set is limited to `/`, `/health`, and `/auth`. Identity is derived from the verified token (`req.user`); **ownership is still keyed by the `userEmail` the client sends** until the E1-S5 `cognitoSub` ownership migration (D-35), so these contracts remain interim.
-- **Error responses currently leak internal stack traces** via `asyncHandler`. Sanitization is scheduled (F-24).
+- **Authentication (E1-S4):** All application routes — `/chat`, `/chatsessions`, `/weather`, `/profile` — require `Authorization: Bearer <session JWT>` (obtained from `POST /auth/google`, E1-S3). Requests without a valid token return `401`. The public set is limited to `/`, `/health`, and `/auth`. Identity derives only from the verified token (`req.user`).
+- **Ownership (E1-S5 / ADR-018 / D-35):** all `/chat`, `/chatsessions`, and `/profile` resources are scoped by the authenticated user's `cognitoSub` (`req.user.id`) — **never** a client-supplied `userEmail`. The client **no longer sends** `userEmail` in bodies/query/path on these routes; foreign/unowned resources return `404`. This replaces the interim email-keyed ownership that E1-S4 noted.
+- **Error sanitization (E1-S6 / SEC-05 resolved):** error responses never leak internal stack traces or causes to clients. `errorHandler` (registered last in `index.js`) returns `ApiError.message` (controlled literals) for business errors, `"Internal server error"` for unexpected/internal failures, and `"Invalid JSON payload"` for body-parse failures — each with `data:{}`, no `stack`/`cause` in the body. Full `err` (with stack) is logged **server-side** only. Verified by `t209-verify.mjs`.
 - Planned standardization (F-18/F-19): `/api/v1` prefix, `requireAuth`, OpenAPI/Swagger export, typed client generation.
 - **Vision-v2 (see [AI_Product_Principles.md](../product/AI_Product_Principles.md)):** the `/chat` contract evolves from "send text" to "submit an interaction the platform resolves with automatic context" — the Context Engine assembles farm context server-side (APP-03), the Model Adapter picks the provider (APP-05), and images enter the diagnosis pipeline (APP-07). New planned resources: farm profile, context snapshot, diagnosis, model-provider health.
 - **Weather (`/weather`)** is the first Context Engine slice (E2-S1, F-20): a read-only proxy over Open-Meteo with a Mongo cache and degrade-to-unknown semantics (D-15..D-18). It is the input that the Context Engine will inject into prompts.
@@ -90,11 +91,11 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
 {
   "message": "How should I water my tomatoes?",
   "chatId": "670f8a5b1234567890abcdef",   // optional — continue existing session
-  "userEmail": "farmer@example.com",       // required today
   "language": "en",                        // accepted by client; ignored by backend (response language is inferred from the question)
   "district": "Thanjavur"                  // optional — farmer district captured by the client; feeds Context assembly (E2-S3)
 }
 ```
+> Ownership is derived from the verified token (`req.user`); the client does **not** send `userEmail` (E1-S5/ADR-018).
 
 **Success `200`:**
 ```json
@@ -113,7 +114,7 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
     "sourceCount": 3,
     "chatHistoryCount": 4,
     "timestamp": "2026-08-07T10:30:00.000Z",
-    "session": { "_id": "…", "userEmail": "farmer@example.com", "title": "How should I water my tomatoes?", "messages": [ … ] }
+    "session": { "_id": "…", "cognitoSub": "…", "userEmail": "farmer@example.com", "title": "How should I water my tomatoes?", "messages": [ … ] }
   }
 }
 ```
@@ -125,20 +126,20 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
 - RAG + chat memory (last 6 messages) → prompt → Gemini → response. RAG failure falls back to chat-context-only.
 
 **Errors:**
-- `400` — `Message is required` / `userEmail is required` / model error payload
+- `400` — `Message is required` / model error payload
 
-**Validation:** `message` (required), `userEmail` (required today), `district` (optional, 1–80 chars); `message` length capped at `MESSAGE_MAX_LENGTH`. No other length caps yet (planned F-24).
+**Validation:** `message` (required), `district` (optional, 1–80 chars); `message` length capped at `MESSAGE_MAX_LENGTH`. No other length caps yet (planned F-24).
 
 ### 3.2 `GET /chat/session/:chatId` — Get one session `[DEPRECATED — duplicates 4.4]`
 
-**Query params:** `userEmail` (required today).
+**Params:** `chatId` (path). Scope = caller's `cognitoSub` (token); unowned → 404.
 
 **Success `200`:** `data.chatSession` = full session document.
-**Errors:** `400` — missing ids; `404` — `Chat session not found`.
+**Errors:** `404` — `Chat session not found`.
 
-### 3.3 `GET /chat/sessions?userEmail=…` — List sessions `[DEPRECATED — duplicates 4.3]`
+### 3.3 `GET /chat/sessions` — List sessions `[DEPRECATED — duplicates 4.3]`
 
-**Query params:** `userEmail` (required today).
+Scope = caller's `cognitoSub` (token).
 
 **Success `200`:**
 ```json
@@ -159,7 +160,7 @@ Limited to 50 sessions, sorted by `updatedAt` desc. No pagination beyond the 50-
 
 ### 4.1 `POST /chatsessions/new` — Create empty session
 
-**Request body:** `{ "userEmail": "farmer@example.com", "title": "New Chat" }` (`title` optional)
+**Request body:** `{ "title": "New Chat" }` (`title` optional). Ownership = caller's `cognitoSub` (token).
 
 **Success `200`:** `data.session` = new session (empty `messages`).
 
@@ -173,27 +174,24 @@ Limited to 50 sessions, sorted by `updatedAt` desc. No pagination beyond the 50-
 
 > Note: the `/chat` controller also appends messages; both paths write to the same embedded array. Consolidation planned (F-18).
 
-### 4.3 `GET /chatsessions/list/:email` — List a user's sessions
+### 4.3 `GET /chatsessions/list` — List the caller's sessions
 
-**Success `200`:** `data.sessions` = all sessions (sorted `updatedAt` desc) — **no pagination** (planned F-28).
+**Success `200`:** `data.sessions` = all sessions owned by `req.user` (sorted `updatedAt` desc) — **no pagination** (planned F-28).
 
 ### 4.4 `GET /chatsessions/:id` — Get a session
 
 **Success `200`:** `data.session` = full session with messages.
-**Errors:** `400` — `Session not found`.
+**Errors:** `404` — `Session not found` (unowned/foreign ids also 404).
 
 ### 4.5 `DELETE /chatsessions/:id` — Delete a session
 
-**Request body:** `{ "userEmail": "farmer@example.com" }` *(used for ownership check)*
+**Success `200`:** `Chat session deleted successfully`. Deletes only the caller's session (`cognitoSub`); unowned/foreign → 404.
+**Errors:** `404` — `Chat session not found`.
+> E1-S5 (ADR-018): ownership from the token; no `userEmail` in the body. Foreign/deleted → 404, never 403.
 
-**Success `200`:** `Chat session deleted successfully`.
-**Errors:** `400` — not found; `401` — `You cannot delete another user's chat` (only enforced when body email differs).
+### 4.6 `DELETE /chatsessions/clear/all` — Clear all sessions for the caller
 
-> ⚠️ Ownership check is client-supplied — spoofable. Replaced by token-derived identity in Phase 1 (F-19).
-
-### 4.6 `DELETE /chatsessions/clear/all` — Clear all sessions for a user
-
-**Request body:** `{ "userEmail": "farmer@example.com" }`
+Clears all sessions owned by `req.user` (`cognitoSub`). No request body.
 
 **Success `200`:** `All chat sessions deleted (N chats removed)`.
 
@@ -291,49 +289,49 @@ Backend proxy + Mongo cache for Open-Meteo. The frontend (login weather card) st
 The farm profile is the farmer's onboarding identity context (E2-S4, F-21, D-10 Option 1). It holds
 `district`, `crops`, and `acres` — the minimal PII set per APP-10. Soil type and phone are deliberately
 not collected (soil is district-derived per D-19; phone is PII deferred to WhatsApp, E6). A profile is
-1:1 with a user (keyed by `userEmail`, the only identity available today; `cognitoSub` is planned in
-E1-S3). The Context Engine auto-loads it for the caller (D-14) so a returning farmer is not re-asked
+1:1 with a user, **owned/scoped by the caller's `cognitoSub` from the token** (E1-S5/ADR-018; `userEmail` is a retained display/legacy dual-key set server-side). The Context Engine auto-loads it for the caller (D-14) so a returning farmer is not re-asked
 (APP-02) and its district/crops drive weather/soil/crop context.
 
-### 6.1 `POST /profile` — Upsert (create or update) a farm profile
+### 6.1 `POST /profile` — Upsert (create or update) the caller's farm profile
 
 | Field | Type | Rules |
 |---|---|---|
-| `userEmail` | string | Required, valid email |
 | `district` | string | Required, 1–80 chars (same validator as `/weather`) |
 | `crops` | string[] | Required, 1–20 crop names, each 1–100 chars |
 | `acres` | number | Required, positive, ≤ 1e6 |
 | `language` | string | Optional, `"en"` \| `"ta"` |
 
 ```json
-{ "userEmail": "farmer@example.com", "district": "Trichy", "crops": ["paddy", "groundnut"], "acres": 4.5 }
+{ "district": "Trichy", "crops": ["paddy", "groundnut"], "acres": 4.5 }
 ```
+
+> Ownership/`userEmail` derive from the token; the client does **not** send `userEmail` (E1-S5/ADR-018).
 
 **Response `200`:**
 ```json
-{ "statusCode": 200, "message": "Farm profile saved", "data": { "profile": { "_id": "...", "userEmail": "farmer@example.com", "district": "Trichy", "crops": ["paddy", "groundnut"], "acres": 4.5 } } }
+{ "statusCode": 200, "message": "Farm profile saved", "data": { "profile": { "_id": "...", "cognitoSub": "...", "userEmail": "farmer@example.com", "district": "Trichy", "crops": ["paddy", "groundnut"], "acres": 4.5 } } }
 ```
 
 **Errors:** `400` invalid fields.
 
-### 6.2 `GET /profile/:email` — Get a farm profile
+### 6.2 `GET /profile` — Get the caller's farm profile
 
 **Response `200`:**
 ```json
 { "statusCode": 200, "message": "Farm profile fetched", "data": { "profile": { "...": "..." } } }
 ```
 
-**Errors:** `400` invalid email, `404` profile not found.
+**Errors:** `404` — no profile for the caller.
 
-### 6.3 `DELETE /profile/:email` — Delete a farm profile
+### 6.3 `DELETE /profile` — Delete the caller's farm profile
 
 **Response `200`:** `{ "statusCode": 200, "message": "Farm profile deleted" }`
 
-**Errors:** `400` invalid email, `404` profile not found.
+**Errors:** `404` — no profile for the caller.
 
 ### 6.4 Integration with chat
 
-When a caller sends `POST /chat`, the backend passes `userEmail` to the Context Engine. If a profile
+When a caller sends `POST /chat`, the backend looks up the caller's profile **by `cognitoSub` from the token** (E1-S5/ADR-018). If a profile
 exists, its `district` and first crop drive weather/soil/crop context and the `Farm profile: known`
 line (with district, crops, acres) is rendered at the top of the Context block. If no profile exists,
 the farm-profile line renders `unknown` and no profile data is used.
@@ -365,8 +363,8 @@ Exposed under `/test` for capstone demo. **No authentication. Must be removed or
 | `400` | Bad request | Missing/invalid fields, model errors, session not found (inconsistently used) |
 | `401` | Unauthorized | Ownership mismatch on delete (today); will be auth failures post-Phase 1 |
 | `404` | Not found | Session not found (used by some endpoints) |
-| `500` | Server error | Cognito exchange failure, model/RAG errors |
-| `510` | Programmer error | Uncaught error in `asyncHandler` — returns stack trace to client (must be sanitized, F-24) |
+| `500` | Server error | Cognito exchange failure, model/RAG errors → returns fixed generic `"Internal server error"`, no stack/cause (E1-S6) |
+| `510` | (removed) | Uncaught error in `asyncHandler` — deprecated. `asyncHandler` forwards all errors to `errorHandler`, which sanitizes and returns `500`. No stack traces reach clients (E1-S6, SEC-05) |
 
 ## 9. Request/response examples (curl)
 
@@ -379,23 +377,25 @@ curl -X POST http://localhost:8000/auth/google \
   -H "Content-Type: application/json" \
   -d '{"code":"AUTH_CODE"}'
 
-# New chat (RAG + context)
+# New chat (RAG + context) — ownership from the Bearer token (E1-S5)
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"Best fertilizer for paddy in delta region?","userEmail":"farmer@example.com"}'
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -d '{"message":"Best fertilizer for paddy in delta region?"}'
 
 # Follow-up with context
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"How often should I apply it?","chatId":"670f8a5b1234567890abcdef","userEmail":"farmer@example.com"}'
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -d '{"message":"How often should I apply it?","chatId":"670f8a5b1234567890abcdef"}'
 
-# List sessions
-curl "http://localhost:8000/chatsessions/list/farmer@example.com"
+# List the caller's sessions
+curl "http://localhost:8000/chatsessions/list" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 
-# Delete session (interim ownership check)
+# Delete the caller's session
 curl -X DELETE http://localhost:8000/chatsessions/670f8a5b1234567890abcdef \
-  -H "Content-Type: application/json" \
-  -d '{"userEmail":"farmer@example.com"}'
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 
 # Weather (Context Engine — first slice)
 curl "http://localhost:8000/weather?district=Chennai"
