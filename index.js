@@ -9,6 +9,7 @@ import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for cha
 import weatherRoutes from "./routes/weather.js";
 import farmProfileRoutes from "./routes/farmProfile.js";
 import { notFoundHandler, errorHandler } from "./middlewares/error.js";
+import requireAuth from "./middlewares/auth.js";
 import corsMiddleware from "./middlewares/cors.js";
 import { authLimiter, chatLimiter, chatDailyLimiter } from "./middlewares/rateLimit.js";
 import requestLogger from "./middlewares/requestLogger.js";
@@ -47,6 +48,11 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/auth", authLimiter, authRoutes);
+
+// E1-S4: protect all application routes (except auth/health — and root `/` stays a public
+// liveness probe). requireAuth validates the session Bearer token (HS256) and populates req.user
+// from the token; ownership stays keyed by userEmail until E1-S5.
+app.use(requireAuth);
 app.use("/chat", chatLimiter, chatDailyLimiter, chatRoutes);
 app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
 app.use("/weather", weatherRoutes);
