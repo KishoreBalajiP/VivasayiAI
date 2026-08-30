@@ -139,7 +139,7 @@ src/
 ## 8. Security (engineering view — full doc: 15_Security.md)
 
 - `requireAuth` middleware on all routes except auth/health (Phase 1).
-- Rate limit auth + chat; cap input sizes; strict CORS (not `*`).
+- Rate limit auth + chat; cap input sizes (E1-S8/S9); strict CORS allow-list + 1MB body limit (done — E1-S7).
 - Secrets rotated + moved to managed store; `.env.example` committed, `.env` ignored (already ignored — verify).
 - No PII in URLs (replace `/chatsessions/list/:email`).
 

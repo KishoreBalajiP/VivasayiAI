@@ -19,7 +19,7 @@
 | SEC-01 | Backend decodes Cognito ID token **without verifying signature/issuer/audience/expiry** (`jwt.decode`) — a forged JWT can impersonate any user | **Critical** | `[EXISTING]` — fix Phase 1 |
 | SEC-02 | **No authentication on any API.** Chat/session identity is a `userEmail` the client sends in body/query — spoofable (IDOR: read/delete/clear others' chats) | **Critical** | `[EXISTING]` — fix Phase 1 |
 | SEC-03 | `/test/*` endpoints publicly expose **all users (PII) and all queries** | **Critical** | `[EXISTING]` — remove Phase 1 |
-| SEC-04 | CORS `origin: "*"` on the API | High | `[EXISTING]` — fix |
+| SEC-04 | CORS `origin: "*"` on the API | High | `[RESOLVED]` E1-S7 — strict allow-list from `CORS_ORIGINS` (`credentials:true`), disallowed origins rejected; t210 proves allow/deny/preflight/no-bypass |
 | SEC-05 | Error responses leak internal stack traces to clients (`asyncHandler`) | High | `[RESOLVED]` E1-S6 — `errorHandler` returns generic messages (`ApiResponse` only); no stack/cause/message reaches clients; t209 proves it |
 | SEC-06 | `id_token` + user stored in `localStorage` (XSS → token theft; no refresh/expiry handling) | High | `[EXISTING]` — rework |
 | SEC-07 | Live secrets in plaintext `.env` on dev machines (Mongo, AWS, Gemini, Cohere, Chroma). `.env` is git-ignored (verified), but keys must be rotated & moved to a secret manager | High | `[EXISTING]` — rotate + migrate |
@@ -105,7 +105,7 @@ flowchart LR
 | A02 | Cryptographic Failures | **Fail** — unverified JWT, secrets in plaintext | Full token verification, secret manager, HTTPS |
 | A03 | Injection | Partial — Mongo via Mongoose is safe; prompt injection open | Input validation, prompt hardening |
 | A04 | Insecure Design | Partial — no rate limits/quotas | Rate limiting, quotas, misuse logging |
-| A05 | Security Misconfiguration | Partial — CORS allow-list configurable; error responses sanitized (E1-S6); auto-deploy remains | Tighten CORS default, enforce body limits + rate limits (E1-S7/S8), gated deploys |
+| A05 | Security Misconfiguration | Partial — CORS allow-list + 1MB body limit enforced (E1-S7); error responses sanitized (E1-S6); auto-deploy remains | Rate limits (E1-S8), gated deploys |
 | A06 | Vulnerable Components | Monitor | `npm audit` in CI, dependency update policy |
 | A07 | Identification/Auth Failures | **Fail** — decode-without-verify | Verified tokens + refresh lifecycle |
 | A08 | Software/Data Integrity | Partial — ECR images untagged by SHA | Tag images, pinned deps, SBOM (later) |
@@ -118,7 +118,7 @@ flowchart LR
 |---|---|---|
 | 1. Remove `/test/*` routes + controller | S | SEC-03 |
 | 2. Verified JWT + `requireAuth` + ownership scoping | M | SEC-01, SEC-02 |
-| 3. Strict CORS + body limits + rate limits (error sanitization done — E1-S6) | M | SEC-04/08/09 |
+| 3. Rate limits (CORS + body limits done — E1-S7) | M | SEC-08/09 |
 | 4. Rotate all secrets; add `.env.example`; secret scanning in CI | S | SEC-07 |
 | 5. Frontend token handling rework (httpOnly/short-lived + refresh) | M | SEC-06 |
 | 6. PII-in-URL removal; request-id logging | S | SEC-10 |
