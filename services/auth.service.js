@@ -2,7 +2,7 @@ import axios from "axios";
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
-import { verifyToken } from "../utils/token.js";
+import { verifyToken, signAccessToken, signRefreshToken } from "../utils/token.js";
 import { env } from "../config/env.js";
 
 const googleSignIn = async (code) => {
@@ -33,13 +33,25 @@ const googleSignIn = async (code) => {
     }
 
     const { email, name } = decoded;
+    const cognitoSub = decoded.sub;
 
-    let user = await User.findOne({ email });
+    // E1-S3: stable identity = cognitoSub (07_Database_Design §6). Look up by cognitoSub first; if
+    // that misses, fall back to the legacy email-based record and backfill its cognitoSub, else create.
+    let user = await User.findOne({ cognitoSub });
     if (!user) {
-      user = await User.create({ name, email });
+      user = await User.findOne({ email });
+      if (user) {
+        user.cognitoSub = cognitoSub;
+        await user.save();
+      } else {
+        user = await User.create({ name, email, cognitoSub });
+      }
     }
 
-    return { user, id_token };
+    const accessToken = signAccessToken({ cognitoSub, email, name });
+    const refreshToken = signRefreshToken({ cognitoSub });
+
+    return { user, accessToken, refreshToken };
   } catch (error) {
     logger.error({ err: error }, "Auth error");
     throw new ApiError(500, "Authentication failed");
