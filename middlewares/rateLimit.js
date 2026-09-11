@@ -39,4 +39,13 @@ const chatDailyLimiter = rateLimit({
   keyGenerator: chatKeyGenerator,
 });
 
-export { authLimiter, chatLimiter, chatDailyLimiter };
+const sessionMutationLimiter = rateLimit({
+  windowMs: env.sessionMutationRateLimitWindowMs,
+  limit: env.sessionMutationRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: handleLimitExceeded,
+  keyGenerator: chatKeyGenerator,
+});
+
+export { authLimiter, chatLimiter, chatDailyLimiter, sessionMutationLimiter };

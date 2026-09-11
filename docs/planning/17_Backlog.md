@@ -27,7 +27,7 @@
 | E1-S5 | Ownership scoping | All session queries scoped by authenticated user; 404 for foreign resources | P0 | 3 | E1-S4 | TODO |
 | E1-S6 | Error sanitization | `asyncHandler` returns generic errors; no stack/cause to clients | P0 | 2 | E1-S4 | DONE (E1-S6) |
 | E1-S7 | CORS + body limits | Restrict CORS origin; `express.json({limit})` | P0 | 1 | — | DONE (E1-S7) |
-| E1-S8 | Rate limiting | Auth + chat + session mutation rate limits; `429` responses | P0 | 3 | E1-S4 | TODO |
+| E1-S8 | Rate limiting | Auth + chat + session mutation rate limits; `429` responses | P0 | 3 | E1-S4 | DONE (E1-S8) |
 | E1-S9 | Input validation | zod/express-validator for body/query; message length cap | P0 | 3 | — | TODO |
 | E1-S10 | Secrets rotation & `.env.example` | Rotate all keys; add `.env.example` both repos; move to Secrets Manager | P0 | 3 | — | TODO |
 | E1-S11 | Secret scanning CI | gitleaks in GitHub Actions | P0 | 1 | E1-S10 | TODO |

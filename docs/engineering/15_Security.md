@@ -23,7 +23,7 @@
 | SEC-05 | Error responses leak internal stack traces to clients (`asyncHandler`) | High | `[RESOLVED]` E1-S6 — `errorHandler` returns generic messages (`ApiResponse` only); no stack/cause/message reaches clients; t209 proves it |
 | SEC-06 | `id_token` + user stored in `localStorage` (XSS → token theft; no refresh/expiry handling) | High | `[EXISTING]` — rework |
 | SEC-07 | Live secrets in plaintext `.env` on dev machines (Mongo, AWS, Gemini, Cohere, Chroma). `.env` is git-ignored (verified), but keys must be rotated & moved to a secret manager | High | `[EXISTING]` — rotate + migrate |
-| SEC-08 | No rate limiting on auth/chat → brute force + cost abuse of paid AI APIs | Med | `[EXISTING]` — fix |
+| SEC-08 | No rate limiting on auth/chat → brute force + cost abuse of paid AI APIs | Med | `[RESOLVED]` E1-S8 — auth (per IP, 10/60s), chat (per user, 30/60s + 300/24h), session mutations (per user, 30/60s: POST /new, POST /:id/message, DELETE /:id, DELETE /clear/all); reads unthrottled; 429 + `Retry-After`; t211 |
 | SEC-09 | No input size caps on `message` (token/cost abuse) | Med | `[EXISTING]` — fix |
 | SEC-10 | Emails in URL paths (`/chatsessions/list/:email`) leak into logs | Med | `[EXISTING]` — fix |
 | SEC-11 | Prompt injection: user input + retrieved content share the prompt; no sanitization of RAG content | Med | `[EXISTING]` — harden |
