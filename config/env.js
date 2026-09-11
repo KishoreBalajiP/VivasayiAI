@@ -58,6 +58,8 @@ export const env = Object.freeze({
   chatRateLimitMax: Number(process.env.CHAT_RATE_LIMIT_MAX) || 30,
   chatDailyRateLimitWindowMs: Number(process.env.CHAT_DAILY_RATE_LIMIT_WINDOW_MS) || 86400000,
   chatDailyRateLimitMax: Number(process.env.CHAT_DAILY_RATE_LIMIT_MAX) || 300,
+  sessionMutationRateLimitWindowMs: Number(process.env.SESSION_MUTATION_RATE_LIMIT_WINDOW_MS) || 60000,
+  sessionMutationRateLimitMax: Number(process.env.SESSION_MUTATION_RATE_LIMIT_MAX) || 30,
   messageMaxLength: Number(process.env.MESSAGE_MAX_LENGTH) || 2000,
   sessionCookieName: process.env.SESSION_COOKIE_NAME || "session",
   // E1-S3: backend-issued session tokens (ADR-013, D-34). HMAC HS256 signing secret.
