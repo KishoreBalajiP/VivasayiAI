@@ -66,9 +66,9 @@
 }
 ```
 
-- **Indexes:** `cognitoSub` (1). `userEmail` (1, legacy/backfill). No compound index.
+- **Indexes:** `cognitoSub` (1) · `userEmail` (1, legacy/backfill) · compound `{ cognitoSub: 1, updatedAt: -1 }` (serves `GET /chatsessions/list` — filter by user, sort by recency — added in the production-hardening pass, 2026-09-11).
 - **Relationships:** N → 1 `users` (by `cognitoSub`; ownership scope).
-- **API surface:** created via `POST /chatsessions/new`, appended via `POST /chatsessions/:id/message` or the `/chat` controller; listed via `GET /chatsessions/list` and `GET /chat/sessions`. All scoped to the caller's `cognitoSub` from the token (E1-S5/D-35); unowned/foreign ids return 404.
+- **API surface:** created via `POST /chatsessions/new`, appended via `POST /chatsessions/:id/message` or the `/chat` controller; listed via `GET /chatsessions/list`; fetched/removed via `GET/DELETE /chatsessions/:id`; cleared via `DELETE /chatsessions/clear/all`. The legacy `GET /chat/session|sessions` duplicates were removed (E4-S3). All scoped to the caller's `cognitoSub` from the token (E1-S5/D-35); unowned/foreign ids return 404.
 
 ### Migration note (E1-S5 / ADR-018)
 `chatsessions` and `profiles` gain a `cognitoSub` ownership key (indexed; unique+sparse on `profiles` for 1:1). Legacy email-keyed rows are backfilled from the `users` collection (`User.email → User.cognitoSub`) via `scripts/backfillOwnership.js` (idempotent; `--dry-run` available). Rows with no known user mapping are re-keyed on the user's next login (auth upsert). Runs after the `users` collection has `cognitoSub` populated (E1-S3+).
@@ -119,7 +119,7 @@
 ```
 
 - **Indexes:** `districtName` (unique).
-- **Status:** schema + CRUD exist, unused. The TN district coordinates currently live in the **frontend** (`src/config/tamilnaduDistricts.ts`, 38 districts) — the backend has no geo/soil data. Under vision-v2, this becomes the **Context Engine reference data store** (district → lat/lon/soil/crops/season) seeded server-side in Phase 1 (F-20, E2-S2) — the source of truth for automatic context (APP-03).
+- **Status:** schema + CRUD exist, unused (legacy). Superseded by the `districts` reference collection shipped under **E2-S2**: server-side source of truth in `config/districts.js` (37 TN districts mirrored from the frontend `tamilnaduDistricts.ts`), seeded via `node scripts/seedDistricts.js` (deploy step), and read by the Context Engine for soil/region (`services/context.service.js`). Per-district soil/crop detail is **not fabricated**; the schema reserves those fields and D-19 backfills them from the TNAU soil table + published crop lists. The Context Engine degrades to `unknown` when a district is not in reference data.
 
 ---
 

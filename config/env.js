@@ -61,6 +61,10 @@ export const env = Object.freeze({
   sessionMutationRateLimitWindowMs: Number(process.env.SESSION_MUTATION_RATE_LIMIT_WINDOW_MS) || 60000,
   sessionMutationRateLimitMax: Number(process.env.SESSION_MUTATION_RATE_LIMIT_MAX) || 30,
   messageMaxLength: Number(process.env.MESSAGE_MAX_LENGTH) || 2000,
+  // E3-S1 (D-22 Option 1): multipart image upload — per-user rate limit and in-memory size cap.
+  uploadRateLimitWindowMs: Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_MS) || 60000,
+  uploadRateLimitMax: Number(process.env.UPLOAD_RATE_LIMIT_MAX) || 10,
+  imageUploadMaxBytes: Number(process.env.IMAGE_UPLOAD_MAX_BYTES) || 5 * 1024 * 1024,
   sessionCookieName: process.env.SESSION_COOKIE_NAME || "session",
   // E1-S3: backend-issued session tokens (ADR-013, D-34). HMAC HS256 signing secret.
   sessionJwtSecret: process.env.SESSION_JWT_SECRET || undefined,

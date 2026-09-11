@@ -84,7 +84,7 @@ See [03_Target_Users.md](03_Target_Users.md) for detailed personas.
 - Backend deployed to AWS Lambda via Docker → ECR with a GitHub Actions pipeline.
 
 ### 6.2 Present in UI but not wired end-to-end
-- Image upload: selectable and previewed, but **not transmitted** to the backend for AI analysis.
+- Image upload: selectable and previewed; backend accepts authenticated multipart upload (E3-S1 transport); S3 storage is E3-S2 (D-23 pending).
 - Audio playback of answers: a UI affordance exists, but no text-to-speech is implemented.
 - Chat session APIs: two parallel route families exist (`/chat/*` and `/chatsessions/*`) with overlapping behavior.
 

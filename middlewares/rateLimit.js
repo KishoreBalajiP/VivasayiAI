@@ -48,4 +48,21 @@ const sessionMutationLimiter = rateLimit({
   keyGenerator: chatKeyGenerator,
 });
 
-export { authLimiter, chatLimiter, chatDailyLimiter, sessionMutationLimiter };
+// E3-S1: uploads are per-user rate limited (multipart bytes hit Lambda memory; bounded by
+// limit + body-size cap — D-22/D-38). Runs after requireAuth, so keyed by req.user.id.
+const uploadLimiter = rateLimit({
+  windowMs: env.uploadRateLimitWindowMs,
+  limit: env.uploadRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: handleLimitExceeded,
+  keyGenerator: chatKeyGenerator,
+});
+
+export {
+  authLimiter,
+  chatLimiter,
+  chatDailyLimiter,
+  sessionMutationLimiter,
+  uploadLimiter,
+};

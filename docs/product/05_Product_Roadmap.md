@@ -42,16 +42,16 @@ Turn the capstone prototype into an investable, onboardable product: write down 
 The current prototype has a working core loop but cannot carry real users: auth is forgeable, the advertised "weather/location-aware" context is not delivered, images are not analyzed, and there is zero testing. Phase 1 fixes security and delivers the core promise.
 
 ### Features
-- **Security & auth:** verify JWT (signature/issuer/audience/expiry), `requireAuth` middleware, user identity from token only, rate limiting, input caps, sanitized errors, strict CORS, remove `/test` routes. `[PLANNED]`
+- **Security & auth:** verify JWT (signature/issuer/audience/expiry), `requireAuth` middleware, user identity from token only, rate limiting, input caps, sanitized errors, strict CORS, remove `/test` routes. `[DONE]`
 - **Model Adapter:** extract all model access behind a provider-agnostic layer (interface `ask`/`stream`/`vision`/`embed`); Gemini becomes one configurable provider, not the only one (F-45, ADR-015, APP-05). `[PLANNED]`
-- **Context Engine — first slice:** backend weather/location/soil/farm-profile auto-assembly injected into prompts (replaces dead `{{...}}` placeholders); zero-question onboarding (F-20; the full nine-domain engine F-46 completes in Phase 2 — see below, ADR-014, APP-02/03). `[PLANNED]`
-- **Farm profile:** district/crops/acres onboarding as the Context Engine + Farm Memory seed (F-21). `[PLANNED]`
-- **AI diagnosis pipeline:** upload → vision analysis **fused with weather/soil/crop/location context** → structured diagnosis (F-22, ADR-017, APP-07). `[PLANNED]`
-- **Streaming chat (SSE).** `[PLANNED]`
+- **Context Engine — first slice:** backend weather/location/soil/farm-profile auto-assembly injected into prompts (replaces dead `{{...}}` placeholders); zero-question onboarding (F-20; the full nine-domain engine F-46 completes in Phase 2 — see below, ADR-014, APP-02/03). `[DONE]`
+- **Farm profile:** district/crops/acres onboarding as the Context Engine + Farm Memory seed (F-21). `[DONE]`
+- **AI diagnosis pipeline:** upload → vision analysis **fused with weather/soil/crop/location context** → structured diagnosis (F-22, ADR-017, APP-07). E3-S1 transport DONE. E3-S2 blocked (D-23: S3 storage, D-24: EXIF/consent pending).
+- **Streaming chat (SSE).** `[BLOCKED]` — Lambda + `serverless-http` buffers responses; needs D-05 (SSE transport) + `RESPONSE_STREAM` deploy infra (17_Backlog E4-S1)
 - **Tamil-first onboarding:** language selection before login, suggested questions; **no re-asking for what GPS/profile can resolve** (APP-02). `[PLANNED]`
 - **Testing:** unit + integration + AI evaluation harness (Tamil/English golden set, incl. context-aware rubric). `[PLANNED]`
 - **Observability:** structured logs, error tracking, $/conversation dashboard. `[PLANNED]`
-- **Cleanup:** dedupe session APIs, remove dead models/endpoints. `[PLANNED]`
+- **Cleanup:** dedupe session APIs, remove dead models/endpoints. `[DONE]` — E4-S3 (deduped) + E1-S1 (dead endpoints removed)
 
 ### Deliverables
 - Production-grade auth flow end-to-end.

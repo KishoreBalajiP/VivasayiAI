@@ -8,6 +8,7 @@ import chatRoutes from "./routes/chat.js";
 import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for chatSessions routes
 import weatherRoutes from "./routes/weather.js";
 import farmProfileRoutes from "./routes/farmProfile.js";
+import uploadRoutes from "./routes/upload.js";
 import { notFoundHandler, errorHandler } from "./middlewares/error.js";
 import requireAuth from "./middlewares/auth.js";
 import corsMiddleware from "./middlewares/cors.js";
@@ -57,6 +58,7 @@ app.use("/chat", chatLimiter, chatDailyLimiter, chatRoutes);
 app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
 app.use("/weather", weatherRoutes);
 app.use("/profile", farmProfileRoutes);
+app.use("/upload", uploadRoutes); // E3-S1: multipart image upload transport (behind requireAuth)
 
 app.use(notFoundHandler);
 app.use(errorHandler);

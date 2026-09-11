@@ -54,7 +54,7 @@ const isClarification = (message) => {
 export const selectTemplate = (message) => {
   if (!message || !message.trim()) return TEMPLATES.FALLBACK_RESPONSE;
   if (isGreeting(message)) return TEMPLATES.GREETINGS;
-  if (isClarification(message)) return TEMPLATES.Clarifications;
+  if (isClarification(message)) return TEMPLATES.CLARIFICATIONS;
   return TEMPLATES.AGRICULTURE_GUIDANCE;
 };
 

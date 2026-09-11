@@ -16,16 +16,16 @@
 
 | ID | Finding | Severity | Status |
 |---|---|---|---|
-| SEC-01 | Backend decodes Cognito ID token **without verifying signature/issuer/audience/expiry** (`jwt.decode`) — a forged JWT can impersonate any user | **Critical** | `[EXISTING]` — fix Phase 1 |
-| SEC-02 | **No authentication on any API.** Chat/session identity is a `userEmail` the client sends in body/query — spoofable (IDOR: read/delete/clear others' chats) | **Critical** | `[EXISTING]` — fix Phase 1 |
-| SEC-03 | `/test/*` endpoints publicly expose **all users (PII) and all queries** | **Critical** | `[EXISTING]` — remove Phase 1 |
+| SEC-01 | Backend decodes Cognito ID token **without verifying signature/issuer/audience/expiry** (`jwt.decode`) — a forged JWT can impersonate any user | **Critical** | `[RESOLVED]` E1-S2/E1-S3 — server-side JWKS verification (RS256, issuer-family constrained, audience, expiry, fail-closed); backend-issued session JWT; t206/t212 prove forged/invalid tokens rejected |
+| SEC-02 | **No authentication on any API.** Chat/session identity is a `userEmail` the client sends in body/query — spoofable (IDOR: read/delete/clear others' chats) | **Critical** | `[RESOLVED]` E1-S4/E1-S5 — all app routes behind `requireAuth`; ownership is derived from the verified token's `cognitoSub` and client identity fields are ignored; unowned resources → 404; t207/t208/t212 prove IDOR negatives |
+| SEC-03 | `/test/*` endpoints publicly expose **all users (PII) and all queries** | **Critical** | `[RESOLVED]` E1-S1 — `/test/*` routes + controller removed from the codebase |
 | SEC-04 | CORS `origin: "*"` on the API | High | `[RESOLVED]` E1-S7 — strict allow-list from `CORS_ORIGINS` (`credentials:true`), disallowed origins rejected; t210 proves allow/deny/preflight/no-bypass |
 | SEC-05 | Error responses leak internal stack traces to clients (`asyncHandler`) | High | `[RESOLVED]` E1-S6 — `errorHandler` returns generic messages (`ApiResponse` only); no stack/cause/message reaches clients; t209 proves it |
 | SEC-06 | `id_token` + user stored in `localStorage` (XSS → token theft; no refresh/expiry handling) | High | `[EXISTING]` — rework |
 | SEC-07 | Live secrets in plaintext `.env` on dev machines (Mongo, AWS, Gemini, Cohere, Chroma). `.env` is git-ignored (verified), but keys must be rotated & moved to a secret manager | High | `[EXISTING]` — rotate + migrate |
 | SEC-08 | No rate limiting on auth/chat → brute force + cost abuse of paid AI APIs | Med | `[RESOLVED]` E1-S8 — auth (per IP, 10/60s), chat (per user, 30/60s + 300/24h), session mutations (per user, 30/60s: POST /new, POST /:id/message, DELETE /:id, DELETE /clear/all); reads unthrottled; 429 + `Retry-After`; t211 |
-| SEC-09 | No input size caps on `message` (token/cost abuse) | Med | `[EXISTING]` — fix |
-| SEC-10 | Emails in URL paths (`/chatsessions/list/:email`) leak into logs | Med | `[EXISTING]` — fix |
+| SEC-09 | No input size caps on `message` (token/cost abuse) | Med | `[RESOLVED]` E1-S9 — zod length caps at the route boundary: `MESSAGE_MAX_LENGTH` (2000) on `POST /chat` `message` and `POST /chatsessions/:id/message` `text`; `title` ≤ 200; `crops` ≤ 20; `district` ≤ 80; t212 asserts over-limit → 400 |
+| SEC-10 | Emails in URL paths (`/chatsessions/list/:email`) leak into logs | Med | `[RESOLVED]` E1-S5 — list is now `GET /chatsessions/list` scoped by the token; no email in any URL; request logging keyed by `requestId` |
 | SEC-11 | Prompt injection: user input + retrieved content share the prompt; no sanitization of RAG content | Med | `[EXISTING]` — harden |
 | SEC-12 | Auto-deploy to production on `push to main` with no tests/checks | Med | `[EXISTING]` — change pipeline |
 | SEC-13 | No data-retention or consent framework for farmer PII (planned profile/phone data) | Med | `[PLANNED]` — design now |
@@ -74,6 +74,7 @@ flowchart LR
 - **Input caps:** `message` length (e.g., 2000 chars); image size/type; list page sizes.
 - **Rate limits:** auth attempts (per IP), chat (per user per minute/day), session mutations. Return `429` with `Retry-After`.
 - **Body size limit:** `express.json({ limit: '1mb' })` (currently default).
+- **Image upload (`POST /upload`):** approved MIME types (JPEG/PNG/WEBP only, magic-byte sniffed, declared Content-Type must match bytes); max size `IMAGE_UPLOAD_MAX_BYTES` (default 5 MB); per-user rate limit `UPLOAD_RATE_LIMIT_MAX` requests per `UPLOAD_RATE_LIMIT_WINDOW_MS` (default 10/60 s); original filename never trusted; no S3 write or binary persistence (E3-S1 transport only; D-23 pending).
 
 ## 6. Data privacy
 

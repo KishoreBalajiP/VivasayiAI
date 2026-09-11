@@ -910,7 +910,7 @@ Gate legend: **P1-HARD** = blocks Phase 1 start · **P1** = must be approved dur
 | D-19 | Soil data source | District-level table (TNAU); SHC = Phase 3 partnership | P1-HARD |
 | D-20 | Soil accuracy labeling | Explicit "typical for district" label + eval rubric | P1 |
 | D-21 | Soil fallback | `unknown` + optional volunteer override; no guessing | P1 |
-| D-22 | Image upload transport | Multipart to backend ≤5MB, EXIF stripped | P1-HARD |
+| D-22 | Image upload transport | Multipart to backend ≤5MB, EXIF stripped. **E3-S1 approved and shipped Option 1 (multipart-to-backend, content-type sniff, ≤5 MB). S3 storage (Option 2 onward) is E3-S2 (D-23 pending). EXIF stripping is E3-S2/E3-S3 (D-24 pending).** | P1-HARD |
 | D-23 | Image storage & retention | S3 private + signed URLs + 90d lifecycle + delete with user | P1 |
 | D-24 | Image privacy | Strip EXIF on receipt; explicit consent copy | P1-HARD |
 | D-25 | Confidence & escalation | Model confidence + high-stakes category rules → escalate flag | P1 |

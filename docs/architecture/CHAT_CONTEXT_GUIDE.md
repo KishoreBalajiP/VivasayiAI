@@ -66,13 +66,16 @@ POST /api/chat/
 
 ### 2. Get Chat Session
 ```
-GET /api/chat/session/:chatId?userEmail=farmer@example.com
+GET /chatsessions/:id
+Authorization: Bearer <access token>
 ```
 
 ### 3. Get User's Chat Sessions
 ```
-GET /api/chat/sessions?userEmail=farmer@example.com
+GET /chatsessions/list
+Authorization: Bearer <access token>
 ```
+> Identity and ownership are taken from the Bearer token (`cognitoSub`); no `userEmail` params are accepted. The legacy `/api/chat/session|sessions` endpoints were removed (E4-S3).
 
 ## How Context Works
 
