@@ -108,7 +108,7 @@ flowchart LR
 
 ## 6. Image analysis → AI diagnosis pipeline
 
-- **Today:** image can be selected and previewed in the chat UI; **the file is dropped before the API call** (`sendChatMessage` sends text only). The backend has **no image endpoint**, and `@aws-sdk/client-s3` is present but unused for uploads.
+- **Today:** Backend now accepts an authenticated multipart image upload (`POST /upload`, E3-S1 transport only). Vision analysis, EXIF stripping and S3 storage are E3-S2/S3/S4 (D-23, D-24 pending).
 - **Planned (F-22, ADR-017, APP-07):** upload (signed storage or multipart) → downscale → vision analysis **fused with the Context Engine snapshot (weather, soil, crop, location, season)** → structured diagnosis (cause → treatment → safety → escalation) → rendered as a diagnosis card + stored with the message. **An image is never analyzed in isolation** — the diagnosis must be explainable by the context that informed it.
 
 ## 7. Voice

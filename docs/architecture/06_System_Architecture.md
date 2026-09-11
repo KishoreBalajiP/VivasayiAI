@@ -63,7 +63,7 @@ flowchart LR
 | Notifications | Sonner toasts |
 | Key flows | Login screen (weather + Google login) → language selection → chat (sidebar + interface) |
 
-**Known gaps (see 04_Feature_List F-15/F-16/F-18):** image preview only (no upload); audio playback affordance with no TTS; two session-API conventions; raw `fetch` calls instead of a typed API client; `@supabase/supabase-js` dependency installed but unused.
+**Known gaps (see 04_Feature_List F-15/F-16/F-18):** image preview only (backend accepts authenticated multipart upload since E3-S1; S3 storage is E3-S2 pending D-23); audio playback affordance with no TTS; two session-API conventions; raw `fetch` calls instead of a typed API client; `@supabase/supabase-js` dependency installed but unused.
 
 ## 3. Backend
 

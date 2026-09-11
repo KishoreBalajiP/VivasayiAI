@@ -18,6 +18,9 @@
 
 ## [Unreleased] — Phase 0 (in progress)
 
+### Added (Phase 1 — E3-S1, multipart image upload transport)
+- **E3-S1: multipart image upload transport** — added `POST /upload` behind `requireAuth`; multer 2.3 with custom capped-memory storage, magic-byte sniffing (JPEG/PNG/WEBP only), per-user rate limit, safe server-generated `uploadId`, sanitized 400/413/429 responses; binary never persisted (S3 is E3-S2). Test: `t213-verify.mjs` (59 assertions, all green).
+
 ### Added
 - Complete documentation system under `docs/` in the backend (Product) repository: product, architecture, engineering, business, planning, decisions. `docs/README.md` is the hub. (2026-08-07)
 - Consolidated historical project docs into `docs/planning/todo.md` and `docs/architecture/CHAT_CONTEXT_GUIDE.md`.
@@ -58,9 +61,17 @@
 ### Added (Phase 1 — E1-S8, session mutation rate limiting; SEC-08 resolved)
 - **Session mutation limiter added (SEC-08 resolved).** Auth and chat rate limiters already existed (`authLimiter` 10/60s per IP, `chatLimiter` 30/60s per user, `chatDailyLimiter` 300/24h per user — `middlewares/rateLimit.js`). The sole gap — `/chatsessions` mutation routes — is now closed: a new `sessionMutationLimiter` (30 requests per 60s, per authenticated user via `chatKeyGenerator` / `req.user.id`) applies to `POST /new`, `POST /:id/message`, `DELETE /:id`, `DELETE /clear/all` (route-level in `routes/chatSessions.js`). Reads (`GET /list`, `GET /:id`) remain **unthrottled** by design — the limiter is per-route, not mounted on the `/chatsessions` namespace. Returns `429` with `Retry-After` header and standard `ratelimit-limit` / `ratelimit-remaining` / `ratelimit-policy` headers (express-rate-limit v8, `standardHeaders: true`). All four mutation routes share the same per-user counter. D-37 cost quotas / budgets / alerting remain blocked on product approval and are explicitly out of scope. Config: `SESSION_MUTATION_RATE_LIMIT_WINDOW_MS` (default 60000) and `SESSION_MUTATION_RATE_LIMIT_MAX` (default 30) added to `config/env.js` and `.env.example`. Files: `config/env.js`, `.env.example`, `middlewares/rateLimit.js`, `routes/chatSessions.js`. Verification: `t211-verify.mjs` proving 429 triggers exactly at limit; `Retry-After` + `ratelimit-limit`/`ratelimit-remaining` headers present; all 4 mutation routes share counter; reads remain 200 after exhaustion; per-user independence; E1-S4/5/6/7 controls intact. Regression across t205–t210 + t201–t204 all green.
 
----
+### Added (Phase 1 — production-hardening & reconciliation pass, 2026-09-11)
+- **E4-S3 — session API consolidated.** Retired the `GET /chat/session/:chatId` and `GET /chat/sessions` duplicates (routes `routes/chat.js`, controllers `controllers/chat.controller.js`); `/chatsessions/*` is the single sessions resource. Requests to the retired paths now return `404` (valid token) / `401` (no token). Updated `t208-verify.mjs` and docs (08, 07, CHAT_CONTEXT_GUIDE, 04 F-18, roadmap).
+- **Fixed `selectTemplate` clarification bug.** `src/ai/PromptTemplates.js` returned `TEMPLATES.Clarifications` (undefined) for short/question-mark messages, so those prompts rendered `Task focus: undefined`; now returns `TEMPLATES.CLARIFICATIONS`.
+- **Fixed mojibake Tamil fallback.** The hardcoded empty-AI fallback in `services/chat.service.js` contained U+FFFD replacement chars; replaced with the canonical clean safety line used by the `FALLBACK_RESPONSE` template.
+- **Added `ChatSession` compound index** `{ cognitoSub: 1, updatedAt: -1 }` (`models/ChatSession.js`) so the list-recent query gets a covered sort.
+- **Added `t212-verify.mjs`** — deterministic full user-backend suite (public probes, auth enforcement on every route, zod validation incl. length caps, session lifecycle, IDOR negatives, profile lifecycle, weather, retired-route checks, template-selector regression). Made `t201-verify.mjs` deterministic by clearing the chennai weather cache before the live-fetch assertion (it was stale-locked by prior runs).
+- **Security summary reconciled** (`15_Security.md`): SEC-01 → RESOLVED (E1-S2/S3), SEC-02 → RESOLVED (E1-S4/S5), SEC-03 → RESOLVED (E1-S1), SEC-09 → RESOLVED (E1-S9 input caps), SEC-10 → RESOLVED (E1-S5, no emails in URLs). Backlog/repo reconciled for E1-S1..S5/S9, E2-S1..S5, E4-S1 (blocked, with reason), E4-S3.
+- **Not implemented, documented as blocked:** E4-S1 SSE streaming (Lambda + `serverless-http` buffering; needs D-05 + `RESPONSE_STREAM` deploy infra — see 17_Backlog). E3-S2..S4 remain blocked on D-23/D-24. E1-S10/E1-S11/E1-S12/E5-* remain open (credentials/CI/frontend scope). No commit was made pending product review of the final report.
+- Verification: regression across t201–t211 all green; `t212-verify.mjs` 59/59.
 
-## Backend releases
+---
 
 ### [1.4.0] — 2026-02-28
 **Changed**

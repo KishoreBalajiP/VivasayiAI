@@ -130,29 +130,7 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
 
 **Validation:** `message` (required), `district` (optional, 1–80 chars); `message` length capped at `MESSAGE_MAX_LENGTH`. No other length caps yet (planned F-24).
 
-### 3.2 `GET /chat/session/:chatId` — Get one session `[DEPRECATED — duplicates 4.4]`
-
-**Params:** `chatId` (path). Scope = caller's `cognitoSub` (token); unowned → 404.
-
-**Success `200`:** `data.chatSession` = full session document.
-**Errors:** `404` — `Chat session not found`.
-
-### 3.3 `GET /chat/sessions` — List sessions `[DEPRECATED — duplicates 4.3]`
-
-Scope = caller's `cognitoSub` (token).
-
-**Success `200`:**
-```json
-{
-  "data": {
-    "chatSessions": [
-      { "_id": "…", "title": "…", "updatedAt": "…", "createdAt": "…", "messageCount": 5, "lastMessage": "…" }
-    ],
-    "total": 1
-  }
-}
-```
-Limited to 50 sessions, sorted by `updatedAt` desc. No pagination beyond the 50-cap.
+> **Removed (E4-S3, 2026-09-11):** the legacy `GET /chat/session/:chatId` and `GET /chat/sessions` routes duplicated Section 4 (`/chatsessions/*`). They are **gone**; the single sessions resource is Section 4. Requests to `/chat/session/*` / `/chat/sessions` now return `404` (token present) / `401` (no token). `t212-verify.mjs` asserts the retirement.
 
 ---
 
@@ -204,6 +182,8 @@ Clears all sessions owned by `req.user` (`cognitoSub`). No request body.
 ### 5.1 `GET /weather?district=<name>` — Current + 1-day forecast (Open-Meteo proxy)
 
 Backend proxy + Mongo cache for Open-Meteo. The frontend (login weather card) still uses Open-Meteo directly today; this endpoint exists so the Context Engine (F-20) can inject cached, fresh-labelled weather into prompts without each chat call hitting the upstream provider (E2-S1, D-15..D-18).
+
+**Auth:** `Authorization: Bearer <token>` — required (behind `requireAuth`; `401` without a valid session token).
 
 **Query params:** `district` (required, 1–80 chars). Free-form name — resolved server-side via Open-Meteo geocoding; the 38-district reference set is a separate seed (E2-S2).
 
@@ -338,7 +318,53 @@ the farm-profile line renders `unknown` and no profile data is used.
 
 ---
 
-## 7. Test / admin CRUD `[LEGACY — to be removed in Phase 1]`
+## 7. Image upload (E3-S1)
+
+#### `POST /upload`
+**Summary:** Authenticated multipart image upload (E3-S1 transport).
+
+**Request Content-Type:** `multipart/form-data; boundary=<boundary>`
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `image` | binary file part | yes | field name must be `image` |
+
+**Required headers:** `Authorization: Bearer <session-token>`
+
+**Constraints (env-configurable):**
+- Approved MIME types: `image/jpeg`, `image/png`, `image/webp` (magic-byte sniffed; declared type must match bytes; SVG excluded)
+- Max file size: `IMAGE_UPLOAD_MAX_BYTES` (default 5 MB; enforced in-process, not just busboy)
+- Per-user rate limit: `UPLOAD_RATE_LIMIT_WINDOW_MS` / `UPLOAD_RATE_LIMIT_MAX` (default 10 requests / 60 s)
+- Single file only (`files: 1`); original filename is never trusted or echoed
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "message": "Image uploaded successfully",
+  "data": {
+    "uploadId": "img_<uuid>",
+    "mediaType": "image/png",
+    "extension": "png",
+    "size": 1234,
+    "status": "uploaded"
+  }
+}
+```
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Upload accepted; binary held in memory for this request only (not persisted; S3 is E3-S2) |
+| 400 | Missing file, unsupported MIME, magic-byte mismatch, malformed bytes, unexpected field, multiple files |
+| 401 | No / invalid bearer token |
+| 413 | Image exceeds `IMAGE_UPLOAD_MAX_BYTES` |
+| 429 | Per-user rate limit exceeded |
+
+> **Scope:** This endpoint is transport only. Vision analysis, diagnosis, EXIF stripping and S3 storage are E3-S2/S3/S4 (D-23, D-24 pending).
+
+---
+
+## 8. Test / admin CRUD `[LEGACY — to be removed in Phase 1]`
 
 Exposed under `/test` for capstone demo. **No authentication. Must be removed or gated.**
 
@@ -351,11 +377,11 @@ Exposed under `/test` for capstone demo. **No authentication. Must be removed or
 | `/test/context` | POST | `{ districtName, soilType, crops, fertilizerRecommendations }` | Create district context |
 | `/test/contexts` | GET | — | List all contexts |
 
-**Action:** remove `routes/test.js` + `controllers/test.controller.js` in Phase 1 (backlog item [E1-S1](../planning/17_Backlog.md)).
+> **Removed (E1-S1):** the `/test/*` routes, `routes/test.js`, and `controllers/test.controller.js` are gone; the `queries`/`contexts` collections are legacy/unused. See [17_Backlog](../planning/17_Backlog.md).
 
 ---
 
-## 8. Error reference
+## 9. Error reference
 
 | Code | Meaning | Common cases |
 |---|---|---|
@@ -366,7 +392,7 @@ Exposed under `/test` for capstone demo. **No authentication. Must be removed or
 | `500` | Server error | Cognito exchange failure, model/RAG errors → returns fixed generic `"Internal server error"`, no stack/cause (E1-S6) |
 | `510` | (removed) | Uncaught error in `asyncHandler` — deprecated. `asyncHandler` forwards all errors to `errorHandler`, which sanitizes and returns `500`. No stack traces reach clients (E1-S6, SEC-05) |
 
-## 9. Request/response examples (curl)
+## 10. Request/response examples (curl)
 
 ```bash
 # Health
@@ -401,14 +427,14 @@ curl -X DELETE http://localhost:8000/chatsessions/670f8a5b1234567890abcdef \
 curl "http://localhost:8000/weather?district=Chennai"
 ```
 
-## 9. Planned API changes (Phase 1 + vision-v2)
+## 11. Planned API changes (Phase 1 + vision-v2)
 
 1. **Namespace:** `/api/v1/…` prefix; versioning.
 2. **Auth:** `Authorization: Bearer <JWT>`; `requireAuth` middleware; identity from token only.
-3. **Consolidation:** single sessions resource; retire `/chat/session|sessions` duplicates.
+3. ~~Consolidation: single sessions resource; retire `/chat/session|sessions` duplicates~~ **Done (E4-S3).** `/chat/session|sessions` are removed; `/chatsessions/*` is the single sessions resource.
 4. **Context Engine:** `POST /chat` accepts `{ message, image?, farmId? }`; the backend auto-assembles the context snapshot (farm profile, GPS, weather, soil, season, history, advisories, RAG) and returns `context` in the response for UI trust chips + traceability (F-46, ADR-014).
 5. **Farm profile & memory:** `POST/GET/PATCH /api/v1/farms` (profile), `GET /api/v1/farms/:id/memory` (crop history, decisions, outcomes) (F-21, F-47).
 6. **Diagnosis pipeline:** `POST /api/v1/diagnose` (multipart image + optional text) → context-fused structured diagnosis card (cause → treatment → safety → escalation) (F-22, ADR-017).
 7. **Model provider health:** `GET /api/v1/ai/providers` → active adapter, model, latency — operational view for the Model Adapter (F-45).
-8. **Streaming:** `GET`/SSE variant or `stream: true` flag (F-23).
+8. **Streaming:** `GET`/SSE variant or `stream: true` flag (F-23). **Blocked (E4-S1):** production path is Lambda + `serverless-http` (buffered responses) with no `RESPONSE_STREAM` invoke mode; requires D-05 (SSE transport decision) + streaming-capable deploy infra before implementation.
 9. **OpenAPI 3.1 spec** exported from the codebase (source of truth for QA tooling).

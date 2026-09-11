@@ -40,8 +40,8 @@
 |---|---|---|---|---|---|---|---|
 | F-15 | **Image capture/upload (UI)** | File picker + preview bubble (ChatGPT-style) in the chat input | Image is **never sent** to the backend; no vision analysis; no storage | H | M | P0 | Vision model, upload/storage endpoint |
 | F-16 | **Audio playback affordance** | `playAudio` button on AI bubbles if `audioUrl` exists | No text-to-speech; `audioUrl` is never populated | M | M | P1 | TTS service (e.g., Google Cloud TTS) |
-| F-17 | **Auth security** | Cognito login works; backend decodes the ID token | Token signature/audience/expiry not verified; all APIs trust `userEmail` supplied by the client | H | M | P0 | Auth refactor (see 15_Security) |
-| F-18 | **Session API** | Two route families exist (`/chat/session|sessions` and `/chatsessions/*`) with overlapping behavior | Duplication, drift risk, inconsistent payloads | M | S | P1 | Backend cleanup |
+| F-17 | **Auth security** | Cognito login works; backend decodes the ID token | Token signature/audience/expiry not verified; all APIs trust `userEmail` supplied by the client — **RESOLVED (E1-S2..S5)** | H | M | P0 | Auth refactor (see 15_Security) |
+| F-18 | **Session API** | Two route families exist (`/chat/session|sessions` and `/chatsessions/*`) with overlapping behavior | Duplication, drift risk, inconsistent payloads — **RESOLVED (E4-S3, 2026-09-11)** | M | S | P1 | Backend cleanup |
 
 ## 3. Planned `[PLANNED]` (next milestones)
 

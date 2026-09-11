@@ -128,7 +128,7 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
       // Gracefully recover from malformed/empty AI output.
       logger.warn({ conversationId }, "Empty AI response; using fallback");
       response =
-        "மன்னிக்கவும், பதிலில் பரிந்துர்க்க முடியவில்லை. உங்கள் பக்கத்து வேளாண்மை அலுவலரிட�் கேட�்கவும்.";
+        "மன்னிக்கவும், இந்த கேள்விக்கு பதிலில் பரிந்துர்க்க முடியவில்லை. உங்கள் பக்கத்து வேளாண்மை அலுவலரிடம் கேட்கவும்.";
     }
 
     // Clean up the model output (dedupe headings, normalize bullets, collapse blanks).

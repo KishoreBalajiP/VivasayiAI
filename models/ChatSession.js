@@ -15,5 +15,10 @@ const chatSessionSchema = new mongoose.Schema({
   messages: { type: [messageSchema], default: [] },
 }, { timestamps: true });
 
+// Production-safety: index the `List recent sessions` query (find by cognitoSub, sort by
+// updatedAt desc) so reads stay efficient as sessions grow. The per-field indexes alone
+// can only serve the filter, not the sort, without a blocking sort.
+chatSessionSchema.index({ cognitoSub: 1, updatedAt: -1 });
+
 export default mongoose.model("ChatSession", chatSessionSchema);
   
