@@ -2,7 +2,16 @@ import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema({
   sender: { type: String, enum: ["user", "ai", "system"], required: true },
-  text: { type: String, required: true },
+  // E3: `text` is required for plain turns, but an image-only turn legitimately carries no
+  // text — Mongoose treats "" as missing, so require() is conditional on the image link.
+  text: {
+    type: String,
+    required: function () { return !this.imageId; },
+  },
+  // E3: link-only reference to an attached image turn. Binary is never stored here — the
+  // value is the server-generated uploadId (`img_<uuid>`), which keys ImageRecord (S3 +
+  // vision metadata).
+  imageId: { type: String, default: undefined },
   timestamp: { type: Date, default: Date.now },
 }, { _id: false });
 

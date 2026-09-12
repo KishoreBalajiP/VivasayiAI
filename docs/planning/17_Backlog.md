@@ -47,10 +47,10 @@
 
 | ID | Feature | Story / Task | Pri | Est | Dep | Status |
 |---|---|---|---|---|---|---|
-| E3-S1 | Upload endpoint | Multipart `/chat` or `/upload`; S3 storage; signed URLs | P0 | 5 | E1-S4 | DONE (E3-S1) |
-| E3-S2 | Vision analysis | Downscale → Gemini Vision → structured diagnosis (cause/treatment/escalation) | P0 | 5 | E3-S1 | TODO |
-| E3-S3 | Frontend send pipeline | Send selected image with message; progress + error states | P0 | 3 | E3-S1 | TODO |
-| E3-S4 | Diagnosis card UI | Render structured diagnosis, not prose | P0 | 3 | E3-S2 | TODO |
+| E3-S1 | Upload endpoint | Multipart `/upload`; normalize → private S3 → metadata record | P0 | 5 | E1-S4 | DONE (E3-S1 + E3-S2 storage half) |
+| E3-S2 | Vision analysis | Downscale → Gemini Vision → structured diagnosis (cause/treatment/escalation) | P0 | 5 | E3-S1 | DONE (E3-S2 backend) — `POST /chat` with `uploadId`; t214/t215 green |
+| E3-S3 | Frontend send pipeline | Send selected image with message; progress + error states | P0 | 3 | E3-S1 | TODO (frontend story) |
+| E3-S4 | Diagnosis card UI | Render structured diagnosis, not prose | P0 | 3 | E3-S2 | TODO (frontend story) |
 
 ## EPIC 4 — Chat & UX (Phase 1, P0)
 

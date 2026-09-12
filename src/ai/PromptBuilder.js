@@ -1,5 +1,6 @@
 import { getSystemPrompt } from "./SystemInstructions.js";
 import { selectTemplate } from "./PromptTemplates.js";
+import { IMAGE_DIAGNOSIS_FOCUS } from "./ImageDiagnosisTemplates.js";
 import { formatHistory } from "./ConversationFormatter.js";
 import AIConfig from "./AIConfig.js";
 import ApiError from "../../utils/ApiError.js";
@@ -78,8 +79,58 @@ export const buildFallbackPrompt = ({ userMessage, history, assembledContext }) 
   ];
 };
 
+// E3 (D-22/D-24): stage-2 reasoning prompt for an image diagnosis turn. The vision stage
+// (services/vision.service.js) already produced a structured `observation`; this builds the
+// farmer-facing reasoning prompt: base system instructions + an explicit language rule
+// (image-only turns have no message text to infer language from) + conversation history +
+// assembled farm context + the observation JSON + RAG knowledge base. User-derived values
+// are injected here — never concatenated in services.
+export const buildImageDiagnosisPrompt = ({
+  observation,
+  userMessage,
+  history,
+  context,
+  assembledContext,
+  language,
+}) => {
+  const focus = IMAGE_DIAGNOSIS_FOCUS;
+
+  const languageRule =
+    language === "ta"
+      ? `\n\nThe farmer expects a reply in Tamil. Respond completely in Tamil, using natural local expressions and Tamil script.`
+      : language === "en"
+        ? `\n\nThe farmer expects a reply in English. Respond in simple, clear English suitable for rural users.`
+        : "";
+
+  const observationBlock = observation
+    ? `\n\nMachine vision observation from the attached photo (JSON):\n${JSON.stringify(observation)}\n\nUse this observation as evidence, but only claim what you can support. If the observation is unclear, say so and ask for a better photo instead of guessing.`
+    : "";
+
+  const system =
+    getSystemPrompt() +
+    `\n\nTask focus: ${focus}` +
+    languageRule +
+    buildHistoryBlock(history || []) +
+    buildAssembledContextBlock(assembledContext) +
+    observationBlock;
+
+  const userContent =
+    userMessage && String(userMessage).trim()
+      ? String(userMessage).trim()
+      : "Look at the attached crop photo and help me.";
+
+  if (context) {
+    return [
+      { role: "system", content: system + buildContextBlock(context) },
+      { role: "user", content: userContent },
+    ];
+  }
+
+  return [{ role: "system", content: system }, { role: "user", content: userContent }];
+};
+
 export const promptConfig = {
   maxOutputTokens: AIConfig.maxOutputTokens,
 };
 
-export default { buildPrompt, buildFallbackPrompt, promptConfig };
+export default { buildPrompt, buildFallbackPrompt, buildImageDiagnosisPrompt, promptConfig };
