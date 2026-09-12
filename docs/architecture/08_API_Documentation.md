@@ -84,20 +84,23 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
 
 ## 3. Chat (AI)
 
-### 3.1 `POST /chat` — Send a message (RAG + context)
+### 3.1 `POST /chat` — Send a message (RAG + context) or image diagnosis (E3)
 
 **Request body:**
 ```json
 {
-  "message": "How should I water my tomatoes?",
-  "chatId": "670f8a5b1234567890abcdef",   // optional — continue existing session
-  "language": "en",                        // accepted by client; ignored by backend (response language is inferred from the question)
-  "district": "Thanjavur"                  // optional — farmer district captured by the client; feeds Context assembly (E2-S3)
+  "message": "How should I water my tomatoes?",          // optional if uploadId is present (E3)
+  "chatId": "670f8a5b1234567890abcdef",                  // optional — continue existing session
+  "language": "en",                                      // optional "en"|"ta" — honored by the image path (E3)
+  "district": "Thanjavur",                               // optional — feeds Context assembly (E2-S3)
+  "uploadId": "img_1a2b…",                               // optional (E3) — image id from POST /upload → runs image diagnosis
 }
 ```
 > Ownership is derived from the verified token (`req.user`); the client does **not** send `userEmail` (E1-S5/ADR-018).
 
-**Success `200`:**
+**Text-chat success `200`:** same envelope as below (no `uploadId`/`image` fields). `language` remains ignored by the text path (inferred from the question); the **image path honors it** (see 3.2).
+
+**Image-diagnosis success `200`** (when `uploadId` is present):
 ```json
 {
   "statusCode": 200,
@@ -105,30 +108,50 @@ Exchanges the Cognito authorization code for tokens and creates/updates the user
   "data": {
     "chatId": "670f8a5b1234567890abcdef",
     "messages": [
-      { "sender": "user", "text": "How should I water my tomatoes?" },
-      { "sender": "ai", "text": "Based on our earlier discussion…" }
+      { "sender": "user", "text": "", "imageId": "img_1a2b…" },
+      { "sender": "ai", "text": "உங்கள் நெல் இலைகளில்… / Your paddy leaves show…" }
     ],
-    "response": "Based on our earlier discussion…",
+    "response": "…farmer-facing diagnosis…",
+    "uploadId": "img_1a2b…",
+    "image": {
+      "status": "completed",
+      "processed": { "mediaType": "image/jpeg", "size": 41234, "width": 1024, "height": 768 },
+      "vision": {
+        "crop": "rice",
+        "symptoms": ["yellowing of lower leaves"],
+        "likelyIssues": [
+          { "name": "Nitrogen deficiency", "type": "deficiency", "confidence": "medium", "evidence": ["…"] }
+        ],
+        "confidence": "medium",
+        "uncertain": false,
+        "summary": "…"
+      }
+    },
     "hasContext": true,
-    "hasChatHistory": true,
+    "hasChatHistory": false,
     "sourceCount": 3,
-    "chatHistoryCount": 4,
     "timestamp": "2026-08-07T10:30:00.000Z",
-    "session": { "_id": "…", "cognitoSub": "…", "userEmail": "farmer@example.com", "title": "How should I water my tomatoes?", "messages": [ … ] }
+    "session": { "…": "…" }
   }
 }
 ```
 
-**Behavior:**
-- If `chatId` is provided and exists: loads history, appends user+AI messages, saves.
-- Otherwise: creates a new session, title = first message (truncated).
-- **Context assembly (E2-S3):** when `district` is provided, the backend assembles weather (E2-S1 proxy, cache-first), soil/region (E2-S2 `districts` reference) and crop (detected from the message) into a labelled plain-text "Context" block that is injected into the system prompt. Missing domains degrade to explicit `unknown` markers (ADR-014, D-03) and never cause a 5xx. Farm profile is `unknown` until E2-S4.
+**Behavior (image path, E3):**
+- The `uploadId` must have been returned to the **same caller** by `POST /upload`; foreign/unknown ids → `404 Image upload not found` (no cross-user access).
+- Pipeline (synchronous, D-22 Option 1 / D-41): S3 fetch → Gemini vision observation (structured JSON; explicit uncertainty — never fabricated) → Context assembly + RAG (both best-effort, as in text chat) → farmer reasoning → session persistence. Vision-API errors → sanitized `500`; unparseable vision output → conservative `unclear` response telling the farmer a clearer photo is needed.
+- `language`: explicit `"ta"`/`"en"` wins; otherwise inferred from the message, then the caller's farm-profile language, then English. The stored AI message and `response` use that language; `messages[0].imageId` links the turn to the upload.
+
+**Behavior (text path):**
+- If `chatId` is provided and exists: loads history, appends user+AI messages, saves. Otherwise: creates a new session, title = first message (truncated).
+- **Context assembly (E2-S3):** when `district` is provided, the backend assembles weather/soil/region/crop into a labelled "Context" block injected into the system prompt; missing domains degrade to explicit `unknown` (ADR-014, D-03), never 5xx.
 - RAG + chat memory (last 6 messages) → prompt → Gemini → response. RAG failure falls back to chat-context-only.
 
 **Errors:**
-- `400` — `Message is required` / model error payload
+- `400` — `Message is required` (no message and no `uploadId`) / `Invalid image upload ID` / model error payload
+- `404` — `Image upload not found` (foreign or unknown `uploadId`)
+- `500` — `Failed to analyze the image` (vision provider failure; sanitized)
 
-**Validation:** `message` (required), `district` (optional, 1–80 chars); `message` length capped at `MESSAGE_MAX_LENGTH`. No other length caps yet (planned F-24).
+**Validation:** `message` (optional if `uploadId` present; else required; length capped at `MESSAGE_MAX_LENGTH`), `district` (optional, 1–80 chars), `language` (`en`/`ta`), `uploadId` (must match `img_<uuid>` server-issued format).
 
 > **Removed (E4-S3, 2026-09-11):** the legacy `GET /chat/session/:chatId` and `GET /chat/sessions` routes duplicated Section 4 (`/chatsessions/*`). They are **gone**; the single sessions resource is Section 4. Requests to `/chat/session/*` / `/chat/sessions` now return `404` (token present) / `401` (no token). `t212-verify.mjs` asserts the retirement.
 
@@ -318,10 +341,10 @@ the farm-profile line renders `unknown` and no profile data is used.
 
 ---
 
-## 7. Image upload (E3-S1)
+## 7. Image upload (E3) + diagnosis
 
 #### `POST /upload`
-**Summary:** Authenticated multipart image upload (E3-S1 transport).
+**Summary:** Authenticated multipart image upload → normalize → private-S3 store → metadata record. The returned `uploadId` is then passed to `POST /chat` (Section 3.1) to run the diagnosis pipeline.
 
 **Request Content-Type:** `multipart/form-data; boundary=<boundary>`
 
@@ -336,6 +359,7 @@ the farm-profile line renders `unknown` and no profile data is used.
 - Max file size: `IMAGE_UPLOAD_MAX_BYTES` (default 5 MB; enforced in-process, not just busboy)
 - Per-user rate limit: `UPLOAD_RATE_LIMIT_WINDOW_MS` / `UPLOAD_RATE_LIMIT_MAX` (default 10 requests / 60 s)
 - Single file only (`files: 1`); original filename is never trusted or echoed
+- Decode + normalize (D-22 Option 1): the payload must be a real decodable image (sharp strict decode + 20 MP guard); the stored image is re-encoded in its original family with EXIF stripped, orientation applied, and longest edge capped at `IMAGE_MAX_DIMENSION` (default 2048). `IMAGE_STORAGE_MODE=mock` (dev/test only) swaps S3 for an in-memory stub.
 
 **Response (200):**
 ```json
@@ -347,20 +371,23 @@ the farm-profile line renders `unknown` and no profile data is used.
     "mediaType": "image/png",
     "extension": "png",
     "size": 1234,
-    "status": "uploaded"
+    "status": "stored",
+    "processed": { "mediaType": "image/png", "size": 980, "width": 1024, "height": 768 }
   }
 }
 ```
+`size`/`mediaType`/`extension` describe the original upload; `processed` describes the normalized image actually stored (metadata only — binary lives in private S3 under an owner-scoped, server-generated key; `s3Key` is **never** returned to clients).
 
 | Status | Meaning |
 |--------|---------|
-| 200 | Upload accepted; binary held in memory for this request only (not persisted; S3 is E3-S2) |
-| 400 | Missing file, unsupported MIME, magic-byte mismatch, malformed bytes, unexpected field, multiple files |
+| 200 | Upload normalized, stored in S3 and recorded (owned by caller, status `stored`) |
+| 400 | Missing file, unsupported MIME, magic-byte mismatch, corrupt/undecodable bytes, unexpected field, multiple files |
 | 401 | No / invalid bearer token |
 | 413 | Image exceeds `IMAGE_UPLOAD_MAX_BYTES` |
 | 429 | Per-user rate limit exceeded |
+| 500 | Image storage unavailable (S3/config failure; sanitized) |
 
-> **Scope:** This endpoint is transport only. Vision analysis, diagnosis, EXIF stripping and S3 storage are E3-S2/S3/S4 (D-23, D-24 pending).
+> **Diagnosis (E3-S2):** send `POST /chat { uploadId, message?, language?, chatId? }` (Section 3.1) to run vision analysis + agricultural reasoning on this image. The chat session's AI turn returns the diagnosis; the `image.vision` block carries the structured observation for the E3-S4 diagnosis card. **Remaining product decisions, unchanged by this work:** D-23 (S3 retention/lifecycle/signed-URL retrieval — configured on private storage with an `uploads/` prefix; bucket choice, 90-day lifecycle and presigned URL serving pending approval), D-24 (EXIF/consent — EXIF stripped at upload as the approved normalize side-effect), D-38 (privacy/consent framework). E3-S3/E3-S4 are frontend stories.
 
 ---
 

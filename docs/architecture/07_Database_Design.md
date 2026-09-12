@@ -21,6 +21,7 @@
 |---|---|---|---|
 | `users` | `User.js` | Authenticated users (from Cognito) | `[EXISTING]` used |
 | `chatsessions` | `ChatSession.js` | Chat sessions + embedded messages | `[EXISTING]` used |
+| `imagerecords` | `ImageRecord.js` | Image metadata + vision result (E3) — binary in S3, never Mongo | `[NEW]` added (E3-S2) |
 | `queries` | `Query.js` | Per-query logs with attachments/location | `[EXISTING]` schema, **unused** |
 | `contexts` | `Context.js` | District soil/crop context | `[EXISTING]` schema, **unused** |
 
@@ -56,7 +57,8 @@
   messages: [                    // EMBEDDED ARRAY
     {
       sender:    "user" | "ai" | "system",   // enum, required
-      text:      String,                     // required
+      text:      String,                     // required for plain turns; optional when imageId present (E3 — an image-only turn has no text)
+      imageId:   String,                     // E3: link-only uploadId (`img_<uuid>`) for attached-image turns; binary never stored here
       timestamp: Date                        // default now
       // _id: false — subdocuments have NO ids
     }
@@ -67,8 +69,8 @@
 ```
 
 - **Indexes:** `cognitoSub` (1) · `userEmail` (1, legacy/backfill) · compound `{ cognitoSub: 1, updatedAt: -1 }` (serves `GET /chatsessions/list` — filter by user, sort by recency — added in the production-hardening pass, 2026-09-11).
-- **Relationships:** N → 1 `users` (by `cognitoSub`; ownership scope).
-- **API surface:** created via `POST /chatsessions/new`, appended via `POST /chatsessions/:id/message` or the `/chat` controller; listed via `GET /chatsessions/list`; fetched/removed via `GET/DELETE /chatsessions/:id`; cleared via `DELETE /chatsessions/clear/all`. The legacy `GET /chat/session|sessions` duplicates were removed (E4-S3). All scoped to the caller's `cognitoSub` from the token (E1-S5/D-35); unowned/foreign ids return 404.
+- **Relationships:** N → 1 `users` (by `cognitoSub`; ownership scope). Image turns reference `imagerecords.uploadId` via `messages[].imageId` (link-only; the binary + vision metadata live in the image record / S3 — **never duplicated into `chatsessions`**, per the no-binary-in-Mongo rule).
+- **API surface:** created via `POST /chatsessions/new`, appended via `POST /chatsessions/:id/message` or the `/chat` controller (including the E3 image-diagnosis path, which appends a user turn carrying `imageId`); listed via `GET /chatsessions/list`; fetched/removed via `GET/DELETE /chatsessions/:id`; cleared via `DELETE /chatsessions/clear/all`. The legacy `GET /chat/session|sessions` duplicates were removed (E4-S3). All scoped to the caller's `cognitoSub` from the token (E1-S5/D-35); unowned/foreign ids return 404.
 
 ### Migration note (E1-S5 / ADR-018)
 `chatsessions` and `profiles` gain a `cognitoSub` ownership key (indexed; unique+sparse on `profiles` for 1:1). Legacy email-keyed rows are backfilled from the `users` collection (`User.email → User.cognitoSub`) via `scripts/backfillOwnership.js` (idempotent; `--dry-run` available). Rows with no known user mapping are re-keyed on the user's next login (auth upsert). Runs after the `users` collection has `cognitoSub` populated (E1-S3+).
@@ -82,7 +84,59 @@
 | No per-user limits | Storage growth with no cap | Add session/message quotas |
 | `updatedAt` not bumped consistently by all endpoints | `POST /chatsessions/:id/message` relies on explicit saves; some paths set `updatedAt` manually | Rely on Mongoose timestamps |
 
-## 4. Collection: `queries` (legacy / unused)
+## 4. Collection: `imagerecords` (E3 — image metadata only, never binary)
+
+```js
+{
+  cognitoSub:   String,       // OWNER KEY (E1-S5/D-35) — required, indexed; from verified token
+  userEmail:    String,       // display/legacy dual-key (server-set)
+  uploadId:     String,       // server-generated `img_<uuid>` — unique, indexed; never from client filename
+  s3Key:        String,       // server-generated object key (owner-scoped under uploads/ prefix); never exposed to clients
+  mediaType:    String,       // original declared+sniffed MIME (e.g. image/png)
+  size:         Number,       // original upload byte-count
+  processed:    {             // normalized image actually stored in S3
+    mediaType:  String,
+    size:       Number,
+    width:      Number,
+    height:     Number,
+  },
+  status:       "stored" | "processing" | "completed" | "failed",
+  chatSessionId: ObjectId,    // ref → chatsessions (first owned session that ran analysis on this image; nullable)
+  vision:       {             // structured observation returned by the vision stage (nullable)
+    crop:       String,       // identified crop/plant or null
+    symptoms:   [String],
+    likelyIssues: [{
+      name:       String,
+      type:       "pest" | "disease" | "deficiency" | "environmental" | "other",
+      confidence: "high" | "medium" | "low" | "uncertain",
+      evidence:   [String],
+    }],
+    confidence: "high" | "medium" | "low" | "unclear",
+    uncertain:  Boolean,
+    summary:    String,
+  },
+  response:     {             // last farmer-facing diagnosis (nullable)
+    text:       String,
+    language:   "en" | "ta",
+  },
+  error:        {             // sanitized internal error state (never echoed to clients)
+    stage:      String,
+    message:    String,
+  },
+  createdAt:    Date,         // timestamps: true
+  updatedAt:    Date,
+}
+```
+
+- **Ownership / access:** scoped by `cognitoSub` (from the token). The upload (`POST /upload`) always reads/writes on the owner's behalf; diagnosis (`POST /chat` with `uploadId`) checks `{ uploadId, cognitoSub }` — foreign/unknown → 404. `s3Key` is **never** returned in API responses (15_Security §5).
+- **Relationships:** 1 → N `chatsessions` via `chatSessionId`; the chat-session message stores the uploadId link via `messages[].imageId` (link-only; no binary stored there).
+- **Binary:** the normalized image bytes live in **private S3** (`s3Key`). Mongo stores zero bytes of the image itself (07 rule: never store binary in Mongo).
+- **State machine:** `stored → processing → completed | failed`. A completed image can be re-analyzed (status resets to `processing`, vision/response overwritten with the latest run).
+- **D-23 pending (buckets/lifecycle):** today the image is stored under the existing `S3_BUCKET` with an `uploads/` prefix; a dedicated private bucket and 90-day lifecycle / signed-URL retrieval remain pending product approval (see `ARCHITECTURE_DECISIONS_PENDING.md` D-23).
+
+---
+
+## 5. Collection: `queries` (legacy / unused)
 
 ```js
 {

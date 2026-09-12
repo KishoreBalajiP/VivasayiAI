@@ -204,4 +204,4 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
   }
 };
 
-export { generateResponse };
+export { generateResponse, model, performRAG };

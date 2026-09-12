@@ -46,6 +46,16 @@ export const INGEST_REQUIRED = [
   "CHROMA_DATABASE",
 ];
 
+// E3 (D-22 Option 1 / D-23): storage credentials for image uploads. Validated lazily by
+// services/s3.service.js on first real use — the server still boots (and text chat still
+// works) when E3 storage is not yet provisioned.
+export const S3_REQUIRED = [
+  "MY_AWS_REGION",
+  "MY_AWS_ACCESS_KEY_ID",
+  "MY_AWS_SECRET_ACCESS_KEY",
+  "S3_BUCKET",
+];
+
 export const env = Object.freeze({
   port: Number(process.env.PORT) || 8000,
   corsOrigins: (process.env.CORS_ORIGINS || "http://localhost:5173")
@@ -65,6 +75,16 @@ export const env = Object.freeze({
   uploadRateLimitWindowMs: Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_MS) || 60000,
   uploadRateLimitMax: Number(process.env.UPLOAD_RATE_LIMIT_MAX) || 10,
   imageUploadMaxBytes: Number(process.env.IMAGE_UPLOAD_MAX_BYTES) || 5 * 1024 * 1024,
+  // E3 (D-22 Option 1): normalization bound — the stored image's longest edge is capped at
+  // this (configurable default pending product tuning; never enlarges).
+  imageMaxDimension: Number(process.env.IMAGE_MAX_DIMENSION) || 2048,
+  // E3: object-key namespace inside S3_BUCKET for farmer uploads (kept separate from the
+  // dataset/ingestion keys so ingestion scripts never pick up uploads).
+  uploadStoragePrefix: process.env.UPLOAD_STORAGE_PREFIX || "uploads",
+  // E3 dev/test-only seams (documented in .env.example; server-side config, never client-
+  // controlled): "mock" swaps S3/AI for deterministic in-memory/fake implementations.
+  imageStorageMode: process.env.IMAGE_STORAGE_MODE || "live",
+  imageAiMode: process.env.IMAGE_AI_MODE || "live",
   sessionCookieName: process.env.SESSION_COOKIE_NAME || "session",
   // E1-S3: backend-issued session tokens (ADR-013, D-34). HMAC HS256 signing secret.
   sessionJwtSecret: process.env.SESSION_JWT_SECRET || undefined,

@@ -119,6 +119,7 @@ export const validateUploadedImage = (req, res, next) => {
   req.upload = {
     size: req.file.size,
     mimetype: req.file.mimetype,
+    buffer: req.file.buffer,
   };
   return next();
 };

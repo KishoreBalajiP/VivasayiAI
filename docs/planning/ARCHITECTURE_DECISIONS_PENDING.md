@@ -404,7 +404,7 @@ These architecture choices are settled in the ADR log and treated as fixed input
 ## 7. Image Diagnosis
 
 ### D-22 — Upload transport
-**Current Status:** `PENDING PRODUCT APPROVAL`
+**Current Status:** `APPROVED & IMPLEMENTED (Option 1 — full pipeline shipped E3-S2 backend)`
 **Why this decision matters:** E3-S1 plans an upload path. Multipart-to-backend vs presigned-S3 changes security surface, round-trips, and S3 policy work.
 **Available options:**
 1. **Multipart to the backend** (busboy/multer) → validate → downscale → process → store.
@@ -412,16 +412,13 @@ These architecture choices are settled in the ADR log and treated as fixed input
 3. Base64-in-JSON.
 **Advantages:** (1) one round-trip, validation/EXIF-strip in one place, no S3 policy for client uploads; (2) no image bytes through Lambda, scales to big files; (3) trivially simple.
 **Disadvantages:** (1) image bytes hit Lambda memory/bandwidth (fine ≤5MB); (2) signing endpoint + S3 CORS + completion states — more moving parts; (3) 33% size overhead, bad for any real image.
-**Recommendation:** **Option 1** for Phase 1 (≤1 image, ≤5MB, content-type sniff, dimension caps, EXIF stripped). *Why:* one bounded, testable path; presigned uploads earn their complexity only when files get large (multi-image Pro, E7-S4).
-**Risks:** Lambda memory at 5MB × concurrent requests — bounded by body limit + rate limiting (D-38).
-**Dependencies:** E3-S1, D-09, D-24.
-**Future impact:** Presigned path can be added for large/multi-image without changing the pipeline downstream.
+**Recommendation:** **Option 1** for Phase 1 (≤1 image, ≤5MB, content-type sniff, dimension caps, EXIF stripped). *Why:* one bounded, testable path; presigned uploads earn their complexity only when files get large (multi-image Pro, E7-S4). **Implemented today (E3-S2):** the full approved synchronous pipeline ships as `POST /upload` (normalize → S3 store → `ImageRecord`) → `POST /chat { uploadId }` (S3 fetch → vision → context+RAG → reasoning → persistence). `IMAGE_STORAGE_MODE=mock` swaps S3 for a deterministic in-memory stub for regression; the live `t215` E2E runs against real AWS + Gemini. Option 2 (presigned) is deferred to a future capacity story (e.g. E7-S4 multi-image Pro).
 
 ---
 
 ### D-23 — Image storage & retention
-**Current Status:** `PENDING PRODUCT APPROVAL`
-**Why this decision matters:** 09 §6 requires images stored with the message; APP-10 requires minimization and retention policy.
+**Current Status:** `PENDING PRODUCT APPROVAL` — **partially implemented as an interim** (private-storage-only, NO retention/signed-URL yet).
+**Why this decision matters:** 09 §6 requires images stored with the message; APP-10 requires minimization and retention policy. **Implemented today (E3-S2 backend):** the normalized image is stored in the existing `S3_BUCKET` under an owner-scoped `uploads/<cognitoSub>/<uploadId>/image.<ext>` key (`services/s3.service.js`, `models/ImageRecord.js`); the bucket stays private (no public GETs), object keys/s3Key are never exposed to clients, and the only stored copy is the EXIF-stripped normalized re-encode. **Still pending product approval:** dedicated private bucket, 90-day lifecycle rule (config-only), short-lived signed-URL retrieval to serve images back to the frontend (would add `@aws-sdk/s3-request-presigner`), and delete-with-user/serverless cleanup. No code changes are needed to add these once approved — the object layout is stable.
 **Available options:**
 1. **S3 private bucket + short-lived signed GET URLs; lifecycle delete after 90 days; delete with user/session.**
 2. Mongo GridFS.
@@ -436,8 +433,8 @@ These architecture choices are settled in the ADR log and treated as fixed input
 ---
 
 ### D-24 — Image privacy (EXIF, consent)
-**Current Status:** `PENDING PRODUCT APPROVAL`
-**Why this decision matters:** Images can contain faces, license plates, and GPS EXIF — precise PII (ADR-017 tradeoff, APP-10).
+**Current Status:** `PENDING PRODUCT APPROVAL` — **EXIF stripping IMPLEMENTED as an inherent side-effect of the approved normalize step; consent copy pending.**
+**Why this decision matters:** Images can contain faces, license plates, and GPS EXIF — precise PII (ADR-017 tradeoff, APP-10). **Implemented today (E3-S2 backend):** the storage pipeline re-encodes every image with sharp WITHOUT metadata, so EXIF/GPS is stripped at receipt and the original (EXIF-bearing) upload bytes are released after processing — only the clean normalized re-encode is ever stored (`services/imageProcess.service.js`, verified by `t214` §9 and the live `t215` E2E). Image GPS is never read at any point. **Still pending:** explicit consent copy at first image use (frontend story E3-S3) and the image-consent atom integration (D-38).
 **Available options:**
 1. **Strip EXIF on receipt; never read/store image GPS; explicit consent copy at first image use; retention + delete honored.**
 2. Store EXIF (for location matching).
@@ -910,9 +907,9 @@ Gate legend: **P1-HARD** = blocks Phase 1 start · **P1** = must be approved dur
 | D-19 | Soil data source | District-level table (TNAU); SHC = Phase 3 partnership | P1-HARD |
 | D-20 | Soil accuracy labeling | Explicit "typical for district" label + eval rubric | P1 |
 | D-21 | Soil fallback | `unknown` + optional volunteer override; no guessing | P1 |
-| D-22 | Image upload transport | Multipart to backend ≤5MB, EXIF stripped. **E3-S1 approved and shipped Option 1 (multipart-to-backend, content-type sniff, ≤5 MB). S3 storage (Option 2 onward) is E3-S2 (D-23 pending). EXIF stripping is E3-S2/E3-S3 (D-24 pending).** | P1-HARD |
-| D-23 | Image storage & retention | S3 private + signed URLs + 90d lifecycle + delete with user | P1 |
-| D-24 | Image privacy | Strip EXIF on receipt; explicit consent copy | P1-HARD |
+| D-22 | Image upload transport | Multipart to backend ≤5MB, EXIF stripped. **APPROVED & IMPLEMENTED — Option 1 full pipeline (transport → normalize → S3 store → vision → reasoning → persistence) shipped as E3-S2.** | P1-HARD |
+| D-23 | Image storage & retention | S3 private + signed URLs + 90d lifecycle + delete with user — **partial interim shipped: private bucket + owner-scoped `uploads/` keys; retention/signed-URL retrieval pending** | P1 |
+| D-24 | Image privacy | Strip EXIF on receipt; explicit consent copy — **EXIF-strip IMPLEMENTED (normalize side-effect); consent copy pending (E3-S3)** | P1-HARD |
 | D-25 | Confidence & escalation | Model confidence + high-stakes category rules → escalate flag | P1 |
 | D-26 | Knowledge curation model | Curated sourced content store with provenance + tags | P1-HARD |
 | D-27 | Knowledge versioning | Deterministic IDs + idempotent upsert + pack rollback | P1 |

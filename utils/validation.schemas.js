@@ -34,6 +34,12 @@ const language = z.enum(["en", "ta"], {
   message: "language must be 'en' or 'ta'",
 });
 
+// E3: server-generated image identifier from POST /upload (`img_<uuid>`).
+const uploadId = z
+  .string({ message: "Invalid image upload ID" })
+  .trim()
+  .regex(/^img_[0-9a-fA-F-]{36}$/, "Invalid image upload ID");
+
 const title = z
   .string()
   .trim()
@@ -55,13 +61,26 @@ const weatherDistrict = z
   .min(1, "District is required")
   .max(80, "District name exceeds 80 character limit");
 
-const chatBody = z.object({
-  message: requiredText("Message is required"),
-  chatId: mongoId("Invalid chat ID format").optional(),
-  language: language.optional(),
-  // Context assembly input (E2-S3): optional farmer district captured by the client.
-  district: weatherDistrict.optional(),
-});
+const chatBody = z
+  .object({
+    // E3: `message` becomes optional when an image is attached (`uploadId`).
+    message: requiredText("Message is required").optional(),
+    chatId: mongoId("Invalid chat ID format").optional(),
+    language: language.optional(),
+    // Context assembly input (E2-S3): optional farmer district captured by the client.
+    district: weatherDistrict.optional(),
+    // E3: attach a previously uploaded image to this turn (POST /chat → image diagnosis).
+    uploadId: uploadId.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.message && !data.uploadId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["message"],
+        message: "Message is required",
+      });
+    }
+  });
 
 const chatParams = z.object({ chatId: mongoId("Invalid chat ID format") });
 
