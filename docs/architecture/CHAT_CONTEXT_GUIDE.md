@@ -1,5 +1,15 @@
 # Chat Context Enhancement - VivasayiAI
 
+> **Metadata**
+> - **Title:** Chat Context Guide (historical)
+> - **Version:** 1.0
+> - **Status:** `[SUPERSEDED]`
+> - **Owner:** Backend (historical)
+> - **Last Reviewed:** 2026-08-07
+> - **Related Documents:** [08_API_Documentation](08_API_Documentation.md) · [09_AI_Architecture](09_AI_Architecture.md) · [17_Backlog](../planning/17_Backlog.md)
+
+> **Status notice:** This is the original capstone-era implementation guide for session chat context. It is **superseded** — see [08_API_Documentation.md](08_API_Documentation.md) for the current API contract and [09_AI_Architecture.md](09_AI_Architecture.md) for the current and target AI pipeline (including the planned Context Engine and Farm Memory). The endpoint paths below use the capstone-era `/api/chat/…` prefix; the live routes are `/chat/…` (no `/api`). Keep this document as historical reference only; do not use it as the contract.
+
 ## Overview
 The chat system has been enhanced to provide contextual awareness, allowing the AI to remember and reference previous conversations within a chat session.
 
@@ -56,13 +66,16 @@ POST /api/chat/
 
 ### 2. Get Chat Session
 ```
-GET /api/chat/session/:chatId?userEmail=farmer@example.com
+GET /chatsessions/:id
+Authorization: Bearer <access token>
 ```
 
 ### 3. Get User's Chat Sessions
 ```
-GET /api/chat/sessions?userEmail=farmer@example.com
+GET /chatsessions/list
+Authorization: Bearer <access token>
 ```
+> Identity and ownership are taken from the Bearer token (`cognitoSub`); no `userEmail` params are accepted. The legacy `/api/chat/session|sessions` endpoints were removed (E4-S3).
 
 ## How Context Works
 
