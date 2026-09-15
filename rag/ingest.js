@@ -1,43 +1,19 @@
-import dotenv from "dotenv";
-import path from "path";
-import fs from "fs";
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { CohereEmbeddings } from "@langchain/cohere";
 import { CloudClient } from "chromadb";
 import { Document } from "@langchain/core/documents";
+import logger from "../utils/logger.js";
+import { env, validateEnv, INGEST_REQUIRED } from "../config/env.js";
 
-dotenv.config();
-
-const {
-  MY_AWS_REGION,
-  MY_AWS_ACCESS_KEY_ID,
-  MY_AWS_SECRET_ACCESS_KEY,
-  S3_BUCKET,
-  COHERE_API_KEY,
-  CHROMA_API_KEY,
-  CHROMA_TENANT,
-  CHROMA_DATABASE,
-} = process.env;
-
-if (!S3_BUCKET || !MY_AWS_ACCESS_KEY_ID || !MY_AWS_SECRET_ACCESS_KEY) {
-  throw new Error("❌ Missing AWS credentials or S3 bucket name in .env");
-}
-
-if (!COHERE_API_KEY) {
-  throw new Error("❌ Missing COHERE_API_KEY in .env");
-}
-
-if (!CHROMA_API_KEY || !CHROMA_TENANT || !CHROMA_DATABASE) {
-  throw new Error("❌ Missing ChromaDB cloud credentials in .env");
-}
+validateEnv(INGEST_REQUIRED);
 
 // ---------- AWS S3 Setup ----------
 const s3 = new S3Client({
-  region: MY_AWS_REGION || "us-east-1",
+  region: env.awsRegion || "us-east-1",
   credentials: {
-    accessKeyId: MY_AWS_ACCESS_KEY_ID,
-    secretAccessKey: MY_AWS_SECRET_ACCESS_KEY,
+    accessKeyId: env.awsAccessKeyId,
+    secretAccessKey: env.awsSecretAccessKey,
   },
 });
 
@@ -96,19 +72,19 @@ async function loadCSVFromS3(bucket, key) {
       }
     });
   } catch (error) {
-    console.error(`Error loading ${key}:`, error.message);
+    logger.error({ key, err: error }, "Error loading S3 object");
     return null;
   }
 }
 
 // ---------- Main ingestion ----------
 async function ingestAllFromS3() {
-  console.log(`📦 Listing all files from S3 bucket: ${S3_BUCKET} ...`);
-  const keys = await listAllObjects(S3_BUCKET);
-  console.log(`✅ Found ${keys.length} files in S3 bucket.`);
+  logger.info({ bucket: env.s3Bucket }, "Listing all files from S3 bucket");
+  const keys = await listAllObjects(env.s3Bucket);
+  logger.info({ count: keys.length }, "Found S3 files");
 
   const embeddings = new CohereEmbeddings({ 
-    apiKey: COHERE_API_KEY,
+    apiKey: env.cohereApiKey,
     model: "embed-english-v3.0"
   });
   const textSplitter = new RecursiveCharacterTextSplitter({
@@ -118,9 +94,9 @@ async function ingestAllFromS3() {
 
   // Initialize ChromaDB cloud client
   const client = new CloudClient({
-    apiKey: CHROMA_API_KEY,
-    tenant: CHROMA_TENANT,
-    database: CHROMA_DATABASE
+    apiKey: env.chromaApiKey,
+    tenant: env.chromaTenant,
+    database: env.chromaDatabase
   });
 
   // Get or create collection
@@ -129,7 +105,7 @@ async function ingestAllFromS3() {
     collection = await client.getCollection({
       name: "farming-documents"
     });
-    console.log("✅ Using existing collection: farming-documents");
+    logger.info("Using existing collection: farming-documents");
   } catch (error) {
     // Create collection without embedding function (we handle embeddings externally)
     collection = await client.createCollection({
@@ -139,26 +115,26 @@ async function ingestAllFromS3() {
         embedding_provider: "cohere" 
       }
     });
-    console.log("✅ Created new collection: farming-documents");
+    logger.info("Created new collection: farming-documents");
   }
 
   for (const key of keys) {
     try {
-      console.log(`\n🔹 Processing: ${key}`);
+      logger.info({ key }, "Processing S3 object");
 
       // Load document from S3 using our custom CSV loader
-      const doc = await loadCSVFromS3(S3_BUCKET, key);
+      const doc = await loadCSVFromS3(env.s3Bucket, key);
       if (!doc) {
-        console.warn(`⚠️ Failed to load: ${key}`);
+        logger.warn({ key }, "Failed to load S3 object");
         continue;
       }
 
       // Split into chunks
       const splitDocs = await textSplitter.splitDocuments([doc]);
-      console.log(`📄 Split into ${splitDocs.length} chunks.`);
+      logger.info({ key, chunks: splitDocs.length }, "Split into chunks");
 
       if (splitDocs.length === 0) {
-        console.warn(`⚠️ No chunks created for: ${key}`);
+        logger.warn({ key }, "No chunks created");
         continue;
       }
 
@@ -171,7 +147,7 @@ async function ingestAllFromS3() {
         const chunk = splitDocs[i];
         documents.push(chunk.pageContent);
         metadatas.push({
-          source: `s3://${S3_BUCKET}/${key}`,
+          source: `s3://${env.s3Bucket}/${key}`,
           chunk_index: i,
           filename: key
         });
@@ -189,17 +165,17 @@ async function ingestAllFromS3() {
         documents: documents
       });
 
-      console.log(`✅ Added ${key} with ${splitDocs.length} chunks to ChromaDB cloud.`);
+      logger.info({ key, chunks: splitDocs.length }, "Added to ChromaDB cloud");
     } catch (err) {
-      console.error(`❌ Error processing ${key}:`, err.message);
+      logger.error({ key, err }, "Error processing S3 object");
     }
   }
 
-  console.log("\n🎉 All S3 files ingested successfully!");
+  logger.info("All S3 files ingested successfully");
 }
 
 // Run the ingestion
 ingestAllFromS3().catch((err) => {
-  console.error("Fatal ingestion error:", err);
+  logger.error({ err }, "Fatal ingestion error");
   process.exit(1);
 });

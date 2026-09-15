@@ -1,15 +1,11 @@
 import express from "express";
-import chat, { getChatSession, getUserChatSessions } from "../controllers/chat.controller.js";
+import chat from "../controllers/chat.controller.js";
+import validate from "../middlewares/validate.js";
+import { chatBody } from "../utils/validation.schemas.js";
 
 const router = express.Router();
 
 // Chat with RAG-enhanced AI with context awareness
-router.post("/", chat);
-
-// Get specific chat session with context
-router.get("/session/:chatId", getChatSession);
-
-// Get all chat sessions for a user
-router.get("/sessions", getUserChatSessions);
+router.post("/", validate(chatBody), chat);
 
 export default router;
