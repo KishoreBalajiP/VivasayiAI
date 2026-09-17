@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.917.0",
+    "@aws-sdk/s3-request-presigner": "^3.1134.0",
     "@chroma-core/default-embed": "^0.1.8",
     "@langchain/cohere": "^1.0.0",
     "@langchain/community": "^1.0.0",

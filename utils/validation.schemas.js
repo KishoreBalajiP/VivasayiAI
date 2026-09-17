@@ -84,6 +84,33 @@ const chatBody = z
 
 const chatParams = z.object({ chatId: mongoId("Invalid chat ID format") });
 
+// E3 presigned upload (services/uploadPresign.service.js): only the metadata needed to
+// authorize a direct-to-S3 upload. The server always owns the S3 key and the uploadId;
+// filename is metadata-only, validated as an input-hygiene guard (never used in keys).
+const presignUploadContentType = z.enum(
+  ["image/jpeg", "image/png", "image/webp"],
+  { message: "Unsupported image type" }
+);
+const presignUploadSize = z
+  .number({ message: "File size is required" })
+  .int("File size is required")
+  .positive("File size must be greater than 0")
+  .max(1e9, "Image exceeds the maximum allowed size");
+const presignUploadBody = z.object({
+  contentType: presignUploadContentType,
+  size: presignUploadSize,
+  filename: z
+    .string()
+    .trim()
+    .max(200, "Filename is invalid")
+    .regex(/^[^\\/\u0000]+$/, "Filename is invalid")
+    .min(1, "Filename is invalid")
+    .optional(),
+});
+
+// Param for POST /upload/:uploadId/complete — same server-generated id format as /chat's.
+const uploadParams = z.object({ uploadId });
+
 const createSessionBody = z.object({ title });
 
 const messageBody = z.object({
@@ -121,4 +148,6 @@ export {
   sessionParams,
   weatherQuery,
   farmProfileBody,
+  presignUploadBody,
+  uploadParams,
 };

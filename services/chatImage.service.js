@@ -95,6 +95,12 @@ const generateImageResponse = async ({
       throw ApiError.notFound("Image upload not found");
     }
 
+    // A presigned upload that was not completed has no stored normalized image; analyzing it
+    // would be a misleading 500. The client must finish POST /upload/:id/complete first.
+    if (record.status === "pending" || record.status === "uploaded") {
+      throw ApiError.badRequest("Image has not been uploaded yet");
+    }
+
     record.status = "processing";
     record.error = { stage: null, message: null };
     await record.save();
