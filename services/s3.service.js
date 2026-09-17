@@ -3,7 +3,9 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
 import { env, validateEnv, S3_REQUIRED } from "../config/env.js";
@@ -83,6 +85,60 @@ export const getObject = async (key) => {
   }
 };
 
+// Returns { size, mediaType } for an existing object, or null when the key is absent. Used by
+// the presigned-upload completion step to verify the object server-side (existence, size,
+// content type) instead of trusting browser claims.
+export const headObject = async (key) => {
+  try {
+    if (isMock()) {
+      const found = mockBuckets.get(env.s3Bucket)?.get(key);
+      return found ? { size: found.buffer.length, mediaType: found.mediaType } : null;
+    }
+    const response = await getS3Client().send(
+      new HeadObjectCommand({ Bucket: env.s3Bucket, Key: key })
+    );
+    const size = Number(response.ContentLength);
+    return { size: Number.isFinite(size) ? size : 0, mediaType: response.ContentType };
+  } catch (error) {
+    if (
+      error?.name === "NotFound" ||
+      error?.name === "NoSuchKey" ||
+      error?.$metadata?.httpStatusCode === 404
+    ) {
+      return null;
+    }
+    logger.error({ err: error }, "s3.headObject failed");
+    throw ApiError.internal("Image storage unavailable");
+  }
+};
+
+// Generates a short-lived presigned PUT URL for the given server-owned key. The image then
+// travels directly Browser → S3 (never through API Gateway/Lambda), so Lambda's 6MB
+// synchronous invoke ceiling no longer applies to the binary. The Content-Type is signed
+// into the URL: the client MUST send that exact header on the PUT or S3 rejects it.
+//
+// The capability the URL grants is deliberately narrow: one object (the exact server-owned
+// key), one method (PUT), one content type, one expiry. Ownership/verification still happens
+// server-side in the complete step — a presigned URL alone grants nothing on this bucket.
+export const getSignedPutUrl = async ({ key, mediaType, expiresInSeconds }) => {
+  try {
+    if (isMock()) {
+      // Dev/test-only deterministic stand-in (no real AWS). The frontend never consumes this
+      // in tests — suites simulate the browser's PUT via the mock bucket directly.
+      return `https://mock-bucket.local/${key}?X-Amz-Mock=1&Expires=${expiresInSeconds}`;
+    }
+    const command = new PutObjectCommand({
+      Bucket: env.s3Bucket,
+      Key: key,
+      ContentType: mediaType,
+    });
+    return await getSignedUrl(getS3Client(), command, { expiresIn: expiresInSeconds });
+  } catch (error) {
+    logger.error({ err: error }, "s3.getSignedPutUrl failed");
+    throw ApiError.internal("Image storage unavailable");
+  }
+};
+
 // Best-effort delete (used for rollback/cleanup). Never throws — a failed delete leaves an
 // orphaned object at worst and must not fail the request that triggered the rollback.
 export const deleteObject = async (key) => {
@@ -106,4 +162,4 @@ export const deleteObject = async (key) => {
 export const buildObjectKey = (dirname) =>
   `${env.uploadStoragePrefix}/${dirname}`;
 
-export default { putObject, getObject, deleteObject, buildObjectKey };
+export default { putObject, getObject, headObject, deleteObject, getSignedPutUrl, buildObjectKey };

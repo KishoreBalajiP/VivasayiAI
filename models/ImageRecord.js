@@ -58,17 +58,26 @@ const imageRecordSchema = new mongoose.Schema(
     mediaType: { type: String, required: true },
     size: { type: Number, required: true },
     // Normalized image actually stored in S3 (dimension-capped, EXIF-stripped re-encode).
+    // Null until normalization completes (a presigned record starts as metadata-only pending).
     processed: {
-      mediaType: { type: String, required: true },
-      size: { type: Number, required: true },
-      width: { type: Number, required: true },
-      height: { type: Number, required: true },
+      type: new mongoose.Schema(
+        {
+          mediaType: { type: String, required: true },
+          size: { type: Number, required: true },
+          width: { type: Number, required: true },
+          height: { type: Number, required: true },
+        },
+        { _id: false }
+      ),
+      default: null,
     },
-    // Pipeline state machine: stored → processing → completed | failed.
+    // Pipeline state machine (E3 presigned transport extends the stored flow):
+    //   pending (presigned URL issued) → uploaded (raw object verified) → stored (normalized,
+    //   persisted final) → processing → completed | failed.
     status: {
       type: String,
-      enum: ["stored", "processing", "completed", "failed"],
-      default: "stored",
+      enum: ["pending", "uploaded", "stored", "processing", "completed", "failed"],
+      default: "pending",
     },
     // Chat session the image was diagnosed in (first owned session that ran analysis).
     chatSessionId: {
