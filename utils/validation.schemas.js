@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { env } from "../config/env.js";
+import { validateParcelGeometry } from "../services/parcelGeometry.service.js";
 
 const MONGO_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
 
@@ -139,6 +140,85 @@ const farmProfileBody = z.object({
   language: language.optional(),
 });
 
+// ----------------------------------------------------------------------------
+// F-49 (Phase 1 — Farm Parcel Foundation, ADR-019 P1/P4/P10)
+// Parcel CRUD under /profile/parcels. Ownership (cognitoSub) always derives from the verified
+// token (req.user), never from the body. `parcelId` is always server-generated (`par_<uuid>`),
+// clients can never choose or mutate it; `calculatedAreaAcres` is always computed server-side
+// and is never accepted from the client.
+// ----------------------------------------------------------------------------
+
+const PARCEL_ID_PATTERN = /^par_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+const parcelId = z
+  .string({ message: "Invalid parcel ID" })
+  .trim()
+  .regex(PARCEL_ID_PATTERN, "Invalid parcel ID");
+
+const parcelName = requiredText("Parcel name is required", 100);
+const parcelCrop = requiredText("Crop name is required", 100);
+
+// GeoJSON Polygon, WGS84 [lon, lat] in the coordinate plane; deep geometric checks (closure,
+// self-intersection, non-degenerate area) are enforced in validateParcelGeometry, referenced
+// below via superRefine. Only one exterior ring is allowed (no holes in MVP).
+const lonCoordinate = z
+  .number({ message: "Invalid longitude" })
+  .finite("Coordinates must be finite numbers")
+  .min(-180, "Longitude must be between -180 and 180")
+  .max(180, "Longitude must be between -180 and 180");
+const latCoordinate = z
+  .number({ message: "Invalid latitude" })
+  .finite("Coordinates must be finite numbers")
+  .min(-90, "Latitude must be between -90 and 90")
+  .max(90, "Latitude must be between -90 and 90");
+const position = z.tuple([lonCoordinate, latCoordinate], {
+  message: "Position must be [longitude, latitude]",
+});
+const linearRing = z.array(position, {
+  message: "Linear ring must be an array of positions",
+});
+
+const polygonGeometry = z
+  .object({
+    type: z.literal("Polygon", { message: "geometry.type must be 'Polygon'" }),
+    coordinates: z.array(linearRing, {
+      message: "coordinates must be an array of linear rings",
+    }),
+  })
+  .superRefine((geometry, ctx) => {
+    if (!Array.isArray(geometry.coordinates) || geometry.coordinates.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["coordinates"],
+        message: "coordinates must contain at least one linear ring",
+      });
+    } else {
+      const result = validateParcelGeometry(geometry);
+      if (!result.ok) {
+        ctx.addIssue({ code: "custom", path: ["geometry"], message: result.reason });
+      }
+    }
+  });
+
+const createParcelBody = z.object({
+  name: parcelName,
+  crop: parcelCrop,
+  // Client-supplied area (calculatedAreaAcres / area / acres) is stripped by zod's default
+  // object parsing (not strict), so it is silently ignored for authority — the server always
+  // computes and stores its own value (P4). This matches existing validation conventions.
+  geometry: polygonGeometry,
+});
+
+const patchParcelBody = z
+  .object({
+    name: parcelName.optional(),
+    crop: parcelCrop.optional(),
+    geometry: polygonGeometry.optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, "At least one field to update is required");
+
+const parcelParams = z.object({ parcelId });
+
 export {
   googleLoginBody,
   chatBody,
@@ -150,4 +230,8 @@ export {
   farmProfileBody,
   presignUploadBody,
   uploadParams,
+  parcelId,
+  createParcelBody,
+  patchParcelBody,
+  parcelParams,
 };
