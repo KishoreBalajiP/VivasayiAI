@@ -24,6 +24,11 @@
 | `imagerecords` | `ImageRecord.js` | Image metadata + vision result (E3) — binary in S3, never Mongo | `[NEW]` added (E3-S2) |
 | `queries` | `Query.js` | Per-query logs with attachments/location | `[EXISTING]` schema, **unused** |
 | `contexts` | `Context.js` | District soil/crop context | `[EXISTING]` schema, **unused** |
+| `farmprofiles` | `FarmProfile.js` | Farmer onboarding: district, crops, acres, parcels | `[EXISTING]` used |
+| `lossclaims` | `LossClaim.js` | Agricultural loss claim (affected-area geometry, event, state) | `[PLANNED]` Phase 1 |
+| `claimevidence` | `ClaimEvidence.js` | Claim evidence images (owner-scoped, presigned S3) | `[PLANNED]` Phase 1 |
+| `claimassessment` | `ClaimAssessment.js` | Deterministic verification result + AI aggregate | `[PLANNED]` Phase 1 |
+| `claimaudit` | `ClaimAudit.js` | Append-only claim state-transition audit trail | `[PLANNED]` Phase 1 |
 
 > **Note:** `queries` and `contexts` were designed for the capstone (context injection, query audit trail) but the chat flow never writes to them today. Under vision-v2, `contexts` becomes the seed for the **Context Engine's reference data** (districts/soil/season) and `queries` (or a successor) becomes the context-snapshot audit store (see §7). Phase 1 re-introduces their purpose via the redesigned Context Engine (F-20/F-46).
 
@@ -136,7 +141,201 @@
 
 ---
 
-## 5. Collection: `queries` (legacy / unused)
+## 5. Collection: `farmprofiles` (E2-S4 — farmer onboarding with parcels)
+
+```js
+{
+  cognitoSub:   String,       // OWNER KEY (E1-S5/D-35) — required, unique, sparse, indexed
+  userEmail:    String,       // display/legacy dual-key (server-set)
+  district:     String,       // required, from 37 TN districts reference
+  crops:        [String],     // required, at least one crop
+  acres:        Number,       // total declared farm area (legacy field)
+  language:     "en" | "ta",
+  parcels: [                  // NEW: multiple parcels per farm
+    {
+      parcelId:       String,           // server-generated `par_<uuid>`
+      name:           String,           // farmer-given: "North Field"
+      crop:           String,           // primary crop for this parcel
+      geometry: {                     // GeoJSON Polygon (WGS84)
+        type: "Polygon",
+        coordinates: [[[Number, Number]]] // exterior ring only (no holes MVP)
+      },
+      calculatedAreaAcres: Number,    // authoritative, from geometry
+      createdAt: Date,
+      updatedAt: Date
+    }
+  ],
+  createdAt: Date,
+  updatedAt: Date,
+}
+```
+
+- **Indexes:** `cognitoSub` (unique, sparse) · `userEmail` · 2dsphere on `parcels.geometry`
+- **Ownership / access:** scoped by `cognitoSub` from token; 404 for foreign
+- **Parcel rules:**
+  - Geometry is REQUIRED for any claim on that parcel
+  - `calculatedAreaAcres` is authoritative — server computes from geometry; never client-supplied
+  - Multiple parcels per FarmProfile allowed
+  - Legacy FarmProfiles without parcels: users must configure parcel geometry before claiming; NO fabricated geometry from district centroid/GPS
+- **Migration (additive):** parcels array is optional; existing profiles remain valid but cannot claim until parcel drawn
+
+---
+
+## 6. Collection: `lossclaims` (Agricultural Loss / Affected-Area Claim)
+
+```js
+{
+  cognitoSub:          String,       // owner (indexed)
+  profileId:           ObjectId,     // ref FarmProfile
+  parcelId:            String,       // ref to parcels[].parcelId
+  parcelSnapshot: {                 // denormalized for audit
+    parcelId: String,
+    crop: String,
+    parcelAreaAcres: Number
+  },
+  eventType: {
+    type: String,
+    enum: ["flood", "storm", "drought", "pest", "disease", "fire", "other"],
+    required: true
+  },
+  eventDate:           Date,         // when damage occurred (not future; within claim window)
+  claimedGeometry: {                // GeoJSON Polygon (farmer-drawn)
+    type: "Polygon",
+    coordinates: [[[Number, Number]]]
+  },
+  claimedAreaAcres:      Number,     // SERVER-CALCULATED from geometry
+  evidence:             [ObjectId],  // ClaimEvidence refs
+  state: {
+    type: String,
+    enum: ["draft", "submitted", "processing", "verified", "partially_verified",
+           "more_evidence_required", "rejected", "out_of_limit", "duplicate_area", "withdrawn"],
+    default: "draft",
+    index: true
+  },
+  idempotencyKey:       String,      // unique, sparse (client UUID)
+  submittedAt:          Date,
+  processedAt:          Date,
+  decidedAt:            Date,
+}, { timestamps: true }
+```
+
+- **Indexes:**
+  - `{ cognitoSub: 1, createdAt: -1 }` — my claims
+  - `{ parcelId: 1, state: 1 }` — active claims per parcel
+  - **Partial unique** `{ parcelId: 1, eventDate: 1, eventType: 1 }` where `state ∈ [verified, partially_verified]` — prevents duplicate verified claims same event+parcel
+- **Ownership:** scoped by `cognitoSub`; foreign → 404
+- **State machine:** draft → submitted → processing → { verified | partially_verified | more_evidence_required | rejected | out_of_limit | duplicate_area } ; draft/submitted → withdrawn
+- **Resubmission:** only from `more_evidence_required` → resubmitted → processing
+- **Terminal states:** verified, partially_verified, rejected, out_of_limit, duplicate_area, withdrawn (no silent resubmit)
+
+---
+
+## 7. Collection: `claimevidence` (Claim Evidence Images)
+
+```js
+{
+  claimId:           ObjectId,     // ref LossClaim (indexed)
+  uploadId:          String,       // server-generated `img_<uuid>` — unique
+  s3Key:             String,       // owner-scoped: `claims/<claimId>/<uploadId>/file.ext`
+  mediaType:         String,
+  size:              Number,
+  width:             Number,
+  height:            Number,
+  exifGps: { lat: Number, lon: Number, accuracy: Number }, // if present (not trusted)
+  perceptualHash:    String,       // pHash for deduplication
+  aiAssessment: {                  // per-image AI output (optional, nullable)
+    cropDetected: String,
+    damageDetected: Boolean,
+    damageType: String,
+    severity: String,
+    confidence: String,
+    uncertain: Boolean,
+    visibleAffectedPortion: String,
+    imageQuality: String,
+    observations: [String]
+  },
+  uploadedAt:        Date,
+}, { timestamps: true }
+```
+
+- **Indexes:** `{ claimId: 1, uploadedAt: 1 }`, unique `{ uploadId }`
+- **Storage:** reuses existing presigned S3 pipeline; private bucket; owner-scoped keys under `claims/`
+- **Dedup:** pHash on complete → reject duplicate images
+- **State guard:** evidence mutable only in `draft`, `submitted`, `more_evidence_required`
+
+---
+
+## 8. Collection: `claimassessment` (Deterministic Verification Result)
+
+```js
+{
+  claimId:           ObjectId,     // ref LossClaim (unique)
+  // Geometry + area
+  approvedGeometry:  Object,       // GeoJSON (same as claimed or trimmed)
+  approvedAreaAcres: Number,       // authoritative approved area
+  // AI aggregate
+  aiAggregate: {
+    damageDetected: Boolean,
+    damageType: String,
+    severity: String,
+    confidence: String,
+    uncertain: Boolean,
+    inconsistencies: [String],
+    imageCount: Number
+  },
+  // Weather correlation
+  weatherCorrelation: {
+    eventMatch: Boolean,
+    precipitationMm: Number,
+    weatherCode: Number,
+    source: String
+  },
+  // Deterministic rule outputs
+  rules: {
+    areaCheck: { passed: Boolean, remainingEligible: Number },
+    overlapCheck: { passed: Boolean, overlapArea: Number },
+    aiCheck: { passed: Boolean, reason: String },
+    weatherCheck: { passed: Boolean, reason: String },
+    eventTypeCheck: { passed: Boolean },
+    timelinessCheck: { passed: Boolean }
+  },
+  // Final
+  state: String,                   // mirrors claim.state
+  approvedAreaAcres: Number,
+  reason: String,                  // human-readable
+  decidedAt: Date,
+  decidedBy: "engine" | "admin",   // MVP: always "engine"
+  adminNote: String,               // if admin override
+}, { timestamps: true }
+```
+
+- **Purpose:** Complete audit trail of the verification decision; no LLM in the decision path
+- **Decided by:** deterministic rule engine (pure functions)
+
+---
+
+## 9. Collection: `claimaudit` (Append-Only Claim Audit Trail)
+
+```js
+{
+  claimId:       ObjectId,       // ref LossClaim (indexed)
+  actor:         String,         // "farmer" | "engine" | "admin"
+  action:        String,         // "created", "submitted", "ai_completed", "verified", etc.
+  fromState:     String,
+  toState:       String,
+  reason:        String,
+  metadata:      Object,         // flexible context
+  requestId:     String,         // from requestLogger
+  createdAt:     Date,
+}
+```
+
+- **Indexes:** `{ claimId: 1, createdAt: 1 }`
+- **Immutable:** never updated/deleted; append-only
+
+---
+
+## 10. Collection: `queries` (legacy / unused)
 
 ```js
 {
@@ -155,7 +354,7 @@
 - **Indexes:** `{userId, createdAt: -1}`, `{userId, sessionId, createdAt: -1}`.
 - **Status:** schema + controller CRUD exist (`/test/*`) but nothing in the chat flow uses it. Candidate for removal or revival as an audit/analytics store in Phase 1.
 
-## 5. Collection: `contexts` (legacy / unused)
+## 11. Collection: `contexts` (legacy / unused)
 
 ```js
 {
@@ -177,13 +376,21 @@
 
 ---
 
-## 6. ER diagram (today)
+## 12. ER diagram (today — including Phase 0 planned claim collections)
 
 ```mermaid
 erDiagram
     USER ||--o{ CHATSESSION : "owns (cognitoSub, E1-S5)"
     USER ||--o{ QUERY : "owns (userId, legacy)"
+    USER ||--o{ FARMPROFILE : "owns (cognitoSub)"
+    USER ||--o{ LOSSCLAIM : "owns (cognitoSub)"
     CONTEXT ||--o{ QUERY : "referenced (contextId, legacy)"
+    FARMPROFILE ||--o{ PARCEL : "contains"
+    FARMPROFILE ||--o{ LOSSCLAIM : "has"
+    PARCEL ||--o{ LOSSCLAIM : "claims on"
+    LOSSCLAIM ||--o{ CLAIMEVIDENCE : "has"
+    LOSSCLAIM ||--o| CLAIMASSESSMENT : "has"
+    LOSSCLAIM ||--o{ CLAIMAUDIT : "audits"
     CHATSESSION {
         ObjectId _id PK
         string cognitoSub FK
@@ -199,6 +406,73 @@ erDiagram
         string email UK
         string name
         string language
+        date createdAt
+    }
+    FARMPROFILE {
+        ObjectId _id PK
+        string cognitoSub UK
+        string userEmail
+        string district
+        array crops
+        number acres
+        string language
+        array parcels
+        date createdAt
+        date updatedAt
+    }
+    PARCEL {
+        string parcelId UK
+        string name
+        string crop
+        object geometry
+        number calculatedAreaAcres
+        date createdAt
+    }
+    LOSSCLAIM {
+        ObjectId _id PK
+        string cognitoSub FK
+        ObjectId profileId FK
+        string parcelId
+        string eventType
+        date eventDate
+        object claimedGeometry
+        number claimedAreaAcres
+        array evidence
+        string state
+        string idempotencyKey
+        date submittedAt
+    }
+    CLAIMEVIDENCE {
+        ObjectId _id PK
+        ObjectId claimId FK
+        string uploadId UK
+        string s3Key
+        string perceptualHash
+        object aiAssessment
+        date uploadedAt
+    }
+    CLAIMASSESSMENT {
+        ObjectId _id PK
+        ObjectId claimId FK UK
+        object approvedGeometry
+        number approvedAreaAcres
+        object aiAggregate
+        object weatherCorrelation
+        object rules
+        string state
+        string reason
+        string decidedBy
+        date decidedAt
+    }
+    CLAIMAUDIT {
+        ObjectId _id PK
+        ObjectId claimId FK
+        string actor
+        string action
+        string fromState
+        string toState
+        string reason
+        string requestId
         date createdAt
     }
     QUERY {
@@ -224,13 +498,21 @@ erDiagram
     }
 ```
 
-## 7. Target schema (Phase 1-2, planned)
+## 13. Target schema (Phase 1-2, planned — includes Agricultural Loss Claim)
 
 ```mermaid
 erDiagram
     USER ||--o{ PROFILE : "has 1"
     USER ||--o{ CHATSESSION : "owns"
+    USER ||--o{ FARMPROFILE : "owns (cognitoSub)"
+    USER ||--o{ LOSSCLAIM : "owns (cognitoSub)"
     CHATSESSION ||--o{ MESSAGE : "contains (normalized)"
+    FARMPROFILE ||--o{ PARCEL : "contains"
+    FARMPROFILE ||--o{ LOSSCLAIM : "has"
+    PARCEL ||--o{ LOSSCLAIM : "claims on"
+    LOSSCLAIM ||--o{ CLAIMEVIDENCE : "has"
+    LOSSCLAIM ||--o| CLAIMASSESSMENT : "has"
+    LOSSCLAIM ||--o{ CLAIMAUDIT : "audits"
     USER ||--o{ FARM : "owns"
     FARM ||--o{ FARMMEMORY : "history"
     USER ||--o{ CONTEXTSNAPSHOT : "captures"
@@ -242,6 +524,72 @@ erDiagram
         array crops
         string phone
         string cognitoSub UK
+    }
+    FARMPROFILE {
+        ObjectId _id PK
+        string cognitoSub UK
+        string userEmail
+        string district
+        array crops
+        number acres
+        string language
+        array parcels
+        date createdAt
+    }
+    PARCEL {
+        string parcelId UK
+        string name
+        string crop
+        object geometry
+        number calculatedAreaAcres
+        date createdAt
+    }
+    LOSSCLAIM {
+        ObjectId _id PK
+        string cognitoSub FK
+        ObjectId profileId FK
+        string parcelId
+        string eventType
+        date eventDate
+        object claimedGeometry
+        number claimedAreaAcres
+        array evidence
+        string state
+        string idempotencyKey
+        date submittedAt
+    }
+    CLAIMEVIDENCE {
+        ObjectId _id PK
+        ObjectId claimId FK
+        string uploadId UK
+        string s3Key
+        string perceptualHash
+        object aiAssessment
+        date uploadedAt
+    }
+    CLAIMASSESSMENT {
+        ObjectId _id PK
+        ObjectId claimId FK UK
+        object approvedGeometry
+        number approvedAreaAcres
+        object aiAggregate
+        object weatherCorrelation
+        object rules
+        string state
+        string reason
+        string decidedBy
+        date decidedAt
+    }
+    CLAIMAUDIT {
+        ObjectId _id PK
+        ObjectId claimId FK
+        string actor
+        string action
+        string fromState
+        string toState
+        string reason
+        string requestId
+        date createdAt
     }
     FARM {
         ObjectId _id PK
@@ -303,11 +651,14 @@ erDiagram
 - **Context snapshots** (`contextsnapshots`): every answer records the assembled context it used (district, soil, season, weather, crops) for traceability + eval (APP-03, APP-12).
 - **Reference data:** seed `districts` (38 TN districts from frontend config + lat/lon + soil) and `knowledge-content` (curated, sourced) into the DB; keep authoritative source-of-truth server-side for the Context Engine.
 - **Analytics/audit:** revive a `queries`-like store with consent flags, or use structured logs + a metrics store, for cost/quality analytics (F-27).
+- **Agricultural Loss Claim collections** (`lossclaims`, `claimevidence`, `claimassessment`, `claimaudit`): parcel-based affected-area claims with backend-authoritative geometry, AI evidence-only boundary, deterministic verification engine, and append-only audit trail (Phase 0 ADR).
 
-## 8. Migration & maintenance rules
+## 14. Migration & maintenance rules
 
 1. Every schema change ships with a **migration note** recorded in [18_DECISIONS.md](../decisions/18_DECISIONS.md) and this document.
 2. Add indexes **before** data volume demands them; use compound indexes aligned to query patterns.
 3. Do not embed unbounded arrays; cap embedded arrays (e.g., recent 50) and archive the rest.
 4. Sensitive PII (phone, precise location) must be **encrypted at rest** and **never logged** (see [15_Security.md](../engineering/15_Security.md)).
 5. `districts`/reference data is the single source of truth server-side; the frontend copy is display-only.
+6. **FarmProfile parcels migration:** parcels array is additive; existing profiles without parcels remain valid but cannot create claims until parcel geometry is configured. NO fabricated geometry from district centroid, GPS, or inferred location.
+7. **Claim collections are additive only:** new collections (`lossclaims`, `claimevidence`, `claimassessment`, `claimaudit`) — no existing collection modified. Rollback = drop new collections.

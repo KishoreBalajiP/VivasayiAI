@@ -465,3 +465,30 @@ curl "http://localhost:8000/weather?district=Chennai"
 7. **Model provider health:** `GET /api/v1/ai/providers` → active adapter, model, latency — operational view for the Model Adapter (F-45).
 8. **Streaming:** `GET`/SSE variant or `stream: true` flag (F-23). **Blocked (E4-S1):** production path is Lambda + `serverless-http` (buffered responses) with no `RESPONSE_STREAM` invoke mode; requires D-05 (SSE transport decision) + streaming-capable deploy infra before implementation.
 9. **OpenAPI 3.1 spec** exported from the codebase (source of truth for QA tooling).
+10. **Agricultural Loss Claim (Phase 1 — Parcel Foundation + Claim Verification):**
+    - Farm Parcel Management (extends `/profile`):
+      - `POST /profile/parcels` — create parcel with geometry (server calculates area)
+      - `GET /profile/parcels` — list parcels with geometry + calculated area
+      - `PATCH /profile/parcels/:parcelId` — update name/crop
+      - `DELETE /profile/parcels/:parcelId`
+      - `POST /profile/parcels/:parcelId/area` — recalculate area from geometry
+    - Claim Lifecycle:
+      - `POST /claims` — create draft claim (parcelId, eventType, eventDate, geometry, idempotencyKey)
+      - `GET /claims` — list my claims (paginated)
+      - `GET /claims/:id` — claim detail + evidence + assessment
+      - `POST /claims/:id/submit` — draft → submitted (triggers processing)
+      - `POST /claims/:id/withdraw` — draft/submitted → withdrawn
+      - `POST /claims/:id/resubmit` — more_evidence_required → submitted (with new evidence)
+    - Claim Evidence (reuses existing presigned S3 pipeline):
+      - `POST /claims/:id/evidence/presign` — { contentType, size, filename? } → { uploadId, uploadUrl, expiresIn }
+      - `POST /claims/:id/evidence/:evidenceId/complete` — verifies + stores (pHash dedup)
+      - `DELETE /claims/:id/evidence/:evidenceId` — allowed in draft/submitted/more_evidence_required
+      - `GET /claims/:id/evidence/:evidenceId/url` — signed GET (owner/admin only, 5 min TTL)
+    - Claim Area Calculation (authoritative backend):
+      - `POST /claims/calculate-area` — { geometry } → { areaAcres, remainingEligible, overlapWarnings }
+    - Admin (Phase 10, exception-only):
+      - `GET /admin/claims` — queue with filters/pagination
+      - `GET /admin/claims/:id` — full detail + evidence signed URLs + assessment + audit
+      - `POST /admin/claims/:id/override` — approved/rejected with reason (second-admin if >X acres)
+
+All claim endpoints: `requireAuth` + ownership scoping (`cognitoSub`); `claimLimiter` + `evidenceLimiter` rate limits; 404 for foreign resources; idempotency keys on create/submit.

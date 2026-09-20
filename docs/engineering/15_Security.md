@@ -29,6 +29,11 @@
 | SEC-11 | Prompt injection: user input + retrieved content share the prompt; no sanitization of RAG content | Med | `[EXISTING]` — harden |
 | SEC-12 | Auto-deploy to production on `push to main` with no tests/checks | Med | `[EXISTING]` — change pipeline |
 | SEC-13 | No data-retention or consent framework for farmer PII (planned profile/phone data) | Med | `[PLANNED]` — design now |
+| SEC-14 | **Agricultural Loss Claim — geometry overclaiming:** farmer draws larger affected area than actual; backend must be authoritative for area calculation | Med | `[PLANNED]` Phase 1 — server-side authoritative area from GeoJSON; client area never trusted |
+| SEC-15 | **Agricultural Loss Claim — duplicate/overlap claims:** same physical area claimed twice via overlapping polygons | Med | `[PLANNED]` Phase 1 — geometric overlap detection with configurable tolerance; partial unique index on active claims per parcel |
+| SEC-16 | **Agricultural Loss Claim — evidence tampering:** re-uploaded images, fake EXIF/GPS, fabricated timestamps | Med | `[PLANNED]` Phase 1 — pHash dedup; EXIF stripped on normalize; server timestamps; parcel geometry authoritative, not image GPS |
+| SEC-17 | **Agricultural Loss Claim — IDOR on claim/evidence:** accessing another user's claim or evidence | Med | `[PLANNED]` Phase 1 — ownership scoping by `cognitoSub`; 404 for foreign; signed GET URLs only for owner/admin |
+| SEC-18 | **Agricultural Loss Claim — AI boundary violation:** LLM invents acreage or makes final decision | Med | `[PLANNED]` Phase 1 — AI structured output only; deterministic rule engine makes final decision; acreage from geometry only |
 
 ---
 
@@ -76,6 +81,15 @@ flowchart LR
 - **Body size limit:** `express.json({ limit: '1mb' })` (currently default).
 - **Image upload (`POST /upload`):** approved MIME types (JPEG/PNG/WEBP only, magic-byte sniffed, declared Content-Type must match bytes); max size `IMAGE_UPLOAD_MAX_BYTES` (default 5 MB); per-user rate limit `UPLOAD_RATE_LIMIT_MAX` requests per `UPLOAD_RATE_LIMIT_WINDOW_MS` (default 10/60 s); original filename never trusted. E3 (D-22 Option 1) storage layer adds: **decode-based safety** — the payload must fully decode under sharp's strict decode + 20 MP pixel guard (magic bytes alone are never enough; corruption is a clean 400, never 500); **normalization** — re-encode with EXIF stripped (privacy, APP-10) and longest edge capped at `IMAGE_MAX_DIMENSION` (default 2048). **Binary is never persisted to MongoDB** — the normalized image goes to a **private S3 bucket** (owner-scoped, server-generated keys under an `uploads/` prefix; `s3Key`/bucket names are never exposed to clients in any response — errors surface only as generic `Image storage unavailable`). S3 credentials are validated lazily so unprovisioned environments still boot; `IMAGE_STORAGE_MODE=mock` (dev/test-only seam, `.env.example`) swaps in an in-memory stub — never client-controlled. Diagnosis (`POST /chat` with `uploadId`) only ever reads images **owned by the caller**; foreign/unknown ids → 404.
 - **Image data flow (E3):** the only copy stored is the normalized re-encode (the original upload bytes are released after processing), so raw EXIF/GPS never persists. Retention/lifecycle and signed-URL retrieval remain pending product decision **D-23** (remove-with-user is a stated intent to implement), EXIF/consent per **D-24**, and the consent framework per **D-38**.
+- **Agricultural Loss Claim (`/claims/*`):**
+  - **Rate limits:** `CLAIM_RATE_LIMIT_WINDOW_MS` / `CLAIM_RATE_LIMIT_MAX` (default 5 claims/hour per user); `EVIDENCE_RATE_LIMIT_WINDOW_MS` / `EVIDENCE_RATE_LIMIT_MAX` (default 20 uploads/hour per user).
+  - **Geometry validation:** GeoJSON Polygon only; exterior ring only (no holes MVP); vertex limit (e.g., max 50); server-side authoritative area calculation via spherical geometry (`geojson-area` / `@turf/area`).
+  - **Evidence:** reuses presigned S3 pipeline; MIME JPEG/PNG/WEBP only; max 5 MB; pHash deduplication on complete; EXIF stripped; owner-scoped keys under `claims/<claimId>/`; signed GET URLs (5 min TTL) for owner/admin only.
+  - **Idempotency:** `idempotencyKey` unique index on claim create/submit; duplicate submit returns existing claim.
+  - **State guards:** evidence mutable only in `draft`, `submitted`, `more_evidence_required`; terminal states immutable.
+  - **Ownership:** all claim/evidence resources scoped by `cognitoSub`; foreign → 404.
+  - **AI boundary:** AI output validated against schema; acreage fields stripped; deterministic rule engine makes final decision.
+  - **Audit:** append-only `ClaimAudit` on every state transition; `requestId` correlation.
 
 ## 6. Data privacy
 

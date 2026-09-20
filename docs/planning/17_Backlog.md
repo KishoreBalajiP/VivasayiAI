@@ -76,6 +76,19 @@
 | E5-S5 | Monitoring | Structured logs (pino), Sentry, $/conversation + latency dashboards | P1 | 5 | — | TODO |
 | E5-S6 | Staging env + gated deploys | No direct-to-prod on push; tag → staging → prod | P0 | 5 | E5-S4 | TODO |
 
+## EPIC 9 — Agricultural Loss / Affected-Area Claim Verification (F-49, Phase 1, P0)
+
+| ID | Feature | Story / Task | Pri | Est | Dep | Status |
+|---|---|---|---|---|---|---|
+| E9-S1 | Parcel foundation | `parcels[]` on FarmProfile; GeoJSON Polygon; server-authoritative area calc; multiple parcels per farm; additive migration | P0 | 5 | E2-S4 | TODO |
+| E9-S2 | Claim lifecycle API | `POST /claims` (draft, `idempotencyKey`), `PATCH` evidence, submit, withdraw, resubmit (from `MORE_EVIDENCE_REQUIRED` only); state machine guard; claim window (P2) | P0 | 8 | E9-S1 | TODO |
+| E9-S3 | Geometry checks | Authoritative area (Turf/geojson-area); overlap vs verified + in-flight claims; configurable tolerance (P5); no AI-derived acreage (P4) | P0 | 5 | E9-S2 | TODO |
+| E9-S4 | AI evidence analysis | Vision → structured observation (cropDetected, damageDetected, damageType, severity, visibleAffectedPortion, confidence, uncertain, inconsistencies, observations, imageQuality) — acreage/polygon/compensation/status are prohibited; weather as supporting-only evidence (P3) | P0 | 5 | E3-S2, E9-S3 | TODO |
+| E9-S5 | Verification engine | Deterministic rules → verified / partially_verified / more_evidence_required / rejected / out_of_limit / duplicate_area; automated normal path; admin exception-only (P7) | P0 | 5 | E9-S4 | TODO |
+| E9-S6 | Evidence storage | Presigned S3 upload (images only MVP, P9); pHash dedup; EXIF strip; owner-scoped keys; signed GET for owner/admin | P0 | 5 | E9-S2 | TODO |
+| E9-S7 | Audit & idempotency | Append-only `claimaudit` on transitions; unique `idempotencyKey`; DB-enforced resubmission limits | P0 | 3 | E9-S5 | TODO |
+| E9-S8 | Claim UI | MapLibre GL + OSM draw (not paid tiles, P8); ClaimWizard, ClaimMapDraw, ClaimStatusCard, ClaimEvidenceGallery, ClaimsPage | P0 | 8 | E9-S2, E9-S6 | TODO |
+
 ## EPIC 6 — WhatsApp (Phase 2, P1)
 
 | ID | Feature | Story / Task | Pri | Est | Dep | Status |
@@ -116,6 +129,8 @@ flowchart LR
     A[Sprint 1<br/>E1-S1..S9 security core] --> B[Sprint 2<br/>E2 context + E3 image]
     B --> C[Sprint 3<br/>E4 UX + E5 quality]
     C --> D[Sprint 4<br/>E5 CI/deploy + E1-S12]
+    D --> E[Sprint 5+<br/>E9 claim: parcels + lifecycle + geometry]
+    E --> F[E9 claim: AI evidence + verification + UI]
 ```
 
 ## Backlog hygiene rules

@@ -159,3 +159,7 @@ const response2 = await fetch('/api/chat/', {
 ```
 
 The AI will now reference the Salem district and tomato farm context from the first message when responding to the irrigation question.
+
+## Relationship to the Agricultural Loss / Claim feature
+
+The **claim verification pipeline is a separate domain from chat** — see [ADR-019](../decisions/18_DECISIONS.md) (P1–P10) and [08_API_Documentation.md](08_API_Documentation.md) item 10. Claim evidence AI analysis uses the vision pipeline (ADR-017) but runs in the **Claim Verification Engine**, not in `POST /chat`; chat context (this guide) must never be a source of truth for claim area, geometry, or compensation decisions (P4). Farmer profile replenishment comes from `farmprofiles.parcels`, not from chat messages.
