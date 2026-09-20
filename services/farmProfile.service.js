@@ -17,9 +17,13 @@ const upsert = async ({ cognitoSub, email, district, crops, acres, language }) =
 };
 
 // Owned lookup by cognitoSub (from req.user); returns null if the caller has no profile.
+// Phase 1 (F-49/P10): legacy profile documents may not have a stored parcels array. Normalize
+// the read model to parcels: [] without writing fabricated geometry back to the database.
 const getByUser = async (cognitoSub) => {
   if (!cognitoSub) return null;
-  return FarmProfile.findOne({ cognitoSub }).lean().exec();
+  const profile = await FarmProfile.findOne({ cognitoSub }).lean().exec();
+  if (!profile) return null;
+  return { ...profile, parcels: Array.isArray(profile.parcels) ? profile.parcels : [] };
 };
 
 const remove = async (cognitoSub) => {
