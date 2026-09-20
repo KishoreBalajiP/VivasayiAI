@@ -224,6 +224,65 @@
 
 ---
 
+## ADR-019 — AI-Driven Agricultural Loss / Affected-Area Claim Verification
+- **Status:** ACCEPTED (Domain & MVP scope; implementation Phase 1) · **Date:** 2026-09-20 · **Deciders:** Founding team + Product Owner
+
+**Problem:** The product must verify farmer-reported agricultural loss / affected-area claims (e.g., crop loss from weather/insects) with trust, determinism, and no human bottleneck, while keeping AI exactly inside — not beyond — its safe boundary. Ten decision points (P1–P10 below) were mandated and are frozen for Phase 1 scope.
+
+### Approved decisions (P1–P10)
+
+**P1 — Parcels & claim binding.**
+FarmProfile supports **multiple parcels**; every claim binds to **exactly one `parcelId`**. Geometry is farmer-drawn on the parcel; the system **never fabricates geometry** (no district-centroid polygons, no GPS-derived shapes). Claims without a configured parcel are **not** permitted.
+
+**P2 — Claim window.**
+Claimable loss window = **30 days** default before submission, configurable (`CLAIM_WINDOW_DAYS`). The window is **backend-authoritative** — clients never compute eligibility. Future-dated event dates are rejected.
+
+**P3 — Weather as supporting evidence only.**
+Weather (Open-Meteo) is gathered as **supporting context** for the claim record. There are **no hard weather thresholds** (e.g., "rain ≥ 50 mm ⇒ reject") in Phase 1; the **absence of weather data must never cause a rejection** (it may only reduce confidence). Any future thresholds are added as **configurable** rules, never hardcoded, and require a new ADR.
+
+**P4 — No AI-derived acreage.**
+AI is **prohibited** from estimating area, remaining/approved area, or compensation. Area comes **only** from backend geometric computation on the authoritative parcel/claim polygon (Turf.js / geojson-area). Insufficient evidence ⇒ `MORE_EVIDENCE_REQUIRED`, never an AI guess.
+
+**P5 — Overlap policy.**
+Overlapping-claims detection uses a **configurable geometric tolerance/epsilon** (contract-style, avoiding floating-point false positives). Outcomes are distinguished: **(a) no overlap**, **(b) overlaps a verified claim**, **(c) overlaps a draft/in-flight claim** — each maps to a different verification result.
+
+**P6 — Resubmission.**
+Resubmission is allowed **only from `MORE_EVIDENCE_REQUIRED`** → `submitted` → `processing`. Limits/cooldowns are **configurable**. Terminal states (`verified`, `rejected`, `out_of_limit`, `duplicate_area`, `withdrawn`) cannot be resubmitted.
+
+**P7 — Admin is exception-only.**
+Normal verification is **fully automated** (geometry + AI evidence + deterministic rules). Admin review is a deferred, **exception-only** UI (Phase 10 backlog); admin identity reuses existing `requireRole('admin')`.
+
+**P8 — Maps: free stack.**
+Browser maps = **MapLibre GL + free OSM tiles** (no Google Maps / Mapbox). Tile source is **isolated in config** for future swapping. No map in Phase 1 (claim UI is Phase 1; map drawing is subsequent within the claim epic).
+
+**P9 — Evidence = images only (MVP).**
+Only raster images (JPEG/PNG/WEBP) in the MVP. No PDF/OCR/scan parsing. Evidence upload reuses the **existing private S3 presigned pipeline** (owner-scoped keys, EXIF stripped).
+
+**P10 — No auto-created parcels.**
+Parcels are **never auto-created** from survey/district data. Legacy users must **configure a parcel before claiming**; migration is **additive** (new fields/collections only; nothing removed).
+
+### Frozen boundaries (must not be overridden)
+
+- **AI may output:** `cropDetected`, `damageDetected`, `damageType`, `severity`, `visibleAffectedPortion`, `confidence`, `uncertain`, `inconsistencies`, `observations`, `imageQuality`.
+- **AI must NOT output:** `acreage`, `polygon`, `parcel boundary`, `remaining/approved area`, `compensation`, `final status`.
+- **Claim states (frozen):** `draft`, `submitted`, `processing`, `verified`, `partially_verified`, `more_evidence_required`, `rejected`, `out_of_limit`, `duplicate_area`, `withdrawn`.
+- **Evidence mutation allowed only in:** `draft | submitted | more_evidence_required`.
+- **Idempotency:** claim creation/submission requires a DB-enforced unique `idempotencyKey`.
+- **Frontend modules (frozen for later phases):** `api/claims.ts`, `api/types/claim.ts`, `components/ClaimWizard.tsx`, `ClaimMapDraw.tsx`, `ClaimStatusCard.tsx`, `ClaimEvidenceGallery.tsx`, `services/mapDraw.ts`, `claimFlow.ts`, `i18n/claim.ts`, `pages/ClaimsPage.tsx` — the claim feature is part of the product UI, not the chatbot.
+
+**Options considered:**
+1. Manual/paper-based loss assessment with human inspectors only.
+2. Pure ML "AI approves/rejects + AI computes acreage" end-to-end.
+3. **Hybrid deterministic pipeline (chosen):** backend-authoritative geometry + AI structured observation (bounded) + deterministic rule engine + configurable policies + append-only audit.
+
+**Chosen:** Option 3 — the Claim Verification Engine (see 06_System_Architecture §9, 07_Database_Design collections `lossclaims`/`claimevidence`/`claimassessment`/`claimaudit`, 08_API_Documentation item 10).
+
+**Reason:** Deterministic geometry + rules give **auditable, explainable, court-defensible** outcomes (no black-box acreage); the bounded AI observation adds scalable damage evidence without delegating money/staking decisions to a model; all policy knobs are config vars, not code; idempotency + audit protect against double-claims and fraud.
+
+**Tradeoffs:** Requires a **parcel foundation** first (no claims until geometry exists — P10); legitimate unverified claims may be flagged for more evidence (P4) with a slower path; maps (P8) are free-tier which trades polish for zero cost; admin override is deliberately deferred (P7), so edge cases wait on the Phase-10 UI. Related: ADR-017 (vision pipeline reused for claim evidence), ADR-013/018 (ownership by `cognitoSub`), SEC-14…18 (07_Database_Design + 15_Security).
+
+---
+
 ## Decision log conventions
 
 - New decisions: create a new ADR entry, update this file, and link it from affected docs.

@@ -113,6 +113,15 @@ flowchart LR
 - **Structured output:** the vision stage returns a fixed-shape observation (`crop | symptoms[] | likelyIssues[] (name/type/confidence/evidence) | confidence | uncertain | summary`) that is surfaced to clients as `image.vision` — this is what the E3-S4 diagnosis card renders (never raw prose-only).
 - **Left to product (unchanged by this work):** F-22's full "cause → treatment → safety → escalation" card schema, D-23 (retention/lifecycle/signed-URL retrieval), D-24 (EXIF/consent — EXIF is stripped at upload as the approved normalize side-effect), D-38 (consent framework). `IMAGE_STORAGE_MODE=mock` / `IMAGE_AI_MODE=mock` are dev/test-only seams (documented in `.env.example`) for deterministic regression (<sup>t214</sup>); the live provider E2E is `t215-verify.mjs`.
 
+### 6.1 Agricultural Loss Claim evidence analysis (Phase 1 — ADR-019)
+
+The claim pipeline reuses the **same vision observation stage** (`services/vision.service.js`) but runs inside the **Claim Verification Engine**, not `POST /chat`. Its AI boundary is frozen:
+
+- **AI may output (structured observation only):** `cropDetected`, `damageDetected`, `damageType`, `severity`, `visibleAffectedPortion`, `confidence`, `uncertain`, `inconsistencies`, `observations`, `imageQuality`.
+- **AI must NOT output:** `acreage`, `polygon`, `parcel boundary`, `remaining/approved area`, `compensation`, `final status` (P4). Area and status are derived **deterministically** from geometry + rules.
+- **Weather** (Open-Meteo via the backend proxy) is supporting context only; the absence of weather never rejects a claim (P3).
+- **Prompt isolation:** claim evidence prompts are defined separately from `ImageDiagnosisTemplates.js`/`PromptBuilder.js` chat prompts so chat context never leaks into claim decisions (see CHAT_CONTEXT_GUIDE.md).
+
 ## 7. Voice
 
 - **Input:** browser Web Speech API via `react-hook-speech-to-text` (English + Tamil depending on browser support). No server-side STT (rejected — F-44).
