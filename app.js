@@ -6,6 +6,7 @@ import chatSessionsRoutes from "./routes/chatSessions.js"; // add import for cha
 import weatherRoutes from "./routes/weather.js";
 import farmProfileRoutes from "./routes/farmProfile.js";
 import uploadRoutes from "./routes/upload.js";
+import claimRoutes from "./routes/claims.js"; // F-49 claim lifecycle + evidence
 import { notFoundHandler, errorHandler } from "./middlewares/error.js";
 import requireAuth from "./middlewares/auth.js";
 import corsMiddleware from "./middlewares/cors.js";
@@ -55,6 +56,7 @@ app.use("/chatsessions", chatSessionsRoutes); // add chatSessions routes
 app.use("/weather", weatherRoutes);
 app.use("/profile", farmProfileRoutes);
 app.use("/upload", uploadRoutes); // E3-S1: multipart image upload transport (behind requireAuth)
+app.use("/claims", claimRoutes); // F-49: agricultural loss claim lifecycle + evidence (per-user limiters)
 
 app.use(notFoundHandler);
 app.use(errorHandler);
