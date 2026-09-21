@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import ClaimEvidence from "../models/ClaimEvidence.js";
+import ClaimAudit from "../models/ClaimAudit.js";
 import ApiError from "../utils/ApiError.js";
 import { env } from "../config/env.js";
 import { findOwned } from "./claim.service.js";
@@ -28,6 +29,14 @@ import { normalizeImage } from "./imageProcess.service.js";
 // Evidence is only MUTABLE while a claim is draft / submitted / more_evidence_required;
 // terminal-state mutation is rejected (07 §7 state guard). Signed GET is owner-scoped with a
 // short TTL (contract: owner/admin only; admin arrives with the admin phase).
+//
+// Phase 3 hardening (07 §9 / 11):
+//  - every evidence mutation (presign / complete / delete) appends a ClaimAudit row (actor
+//    farmer, requestId correlated) — append-only, never editable by farmers;
+//  - complete is idempotent AND race-safe: a compare-and-swap on status (pending → processing)
+//    means concurrent duplicate completes share one record (no duplicate evidence rows) and a
+//    retry after a dropped response returns the stored metadata; a not-yet-uploaded object
+//    leaves the record pending so the retry path is the same presigned URL.
 
 const PRESIGN_TTL_SECONDS = 5 * 60; // 5 minutes — short-lived, matches /upload/presign.
 
@@ -85,6 +94,7 @@ export const presignEvidence = async ({
   filename,
   contentType,
   size,
+  requestId = null,
 }) => {
   const claim = await findOwned(cognitoSub, claimId);
   if (!claim) throw ApiError.notFound("Claim not found");
@@ -122,6 +132,21 @@ export const presignEvidence = async ({
   claim.evidence.push(evidence._id);
   await claim.save();
 
+  await ClaimAudit.create({
+    claimId: claim._id,
+    actor: "farmer",
+    action: "evidence_presigned",
+    fromState: claim.state,
+    toState: claim.state,
+    reason: "Claim evidence upload presigned",
+    metadata: {
+      uploadId,
+      mediaType: contentType,
+      size,
+    },
+    requestId,
+  });
+
   const uploadUrl = await getSignedPutUrl({
     key: s3Key,
     mediaType: contentType,
@@ -133,26 +158,39 @@ export const presignEvidence = async ({
   return { uploadId, uploadUrl, expiresIn: PRESIGN_TTL_SECONDS * 1000 };
 };
 
-export const completeEvidence = async ({ claimId, uploadId, cognitoSub }) => {
+export const completeEvidence = async ({ claimId, uploadId, cognitoSub, requestId = null }) => {
   const claim = await findOwned(cognitoSub, claimId);
   if (!claim) throw ApiError.notFound("Claim not found");
   assertEvidenceMutable(claim);
 
   // uploadId (`img_<uuid>`) is NOT the Mongo _id — it is the server-generated upload key.
-  const evidence = await ClaimEvidence.findOne({ uploadId, claimId: claim._id });
-  if (!evidence) throw ApiError.notFound("Evidence not found");
-
-  // Idempotent: an already-completed presign returns its final metadata (safe retry).
-  if (evidence.status === "stored" || evidence.status === "completed") {
-    return serializeEvidence(evidence);
-  }
-  if (evidence.status === "processing") {
-    throw ApiError.badRequest("Evidence is already being processed");
+  // Claim-scoped lookup (`{ uploadId, claimId }`) means a foreign uploadId (another user's
+  // presign, or an arbitrary key) can never be completed against the caller's claim.
+  // Atomic CAS on status: exactly one concurrent complete wins the pending → processing
+  // transition; the loser re-reads the record (stored/completed → idempotent, processing →
+  // rejected) so duplicate records are impossible.
+  let evidence = await ClaimEvidence.findOneAndUpdate(
+    { uploadId, claimId: claim._id, status: { $in: ["pending", "uploaded"] } },
+    { $set: { status: "processing" } },
+    { new: true }
+  );
+  if (!evidence) {
+    const existing = await ClaimEvidence.findOne({ uploadId, claimId: claim._id });
+    if (!existing) throw ApiError.notFound("Evidence not found");
+    if (existing.status === "stored" || existing.status === "completed") {
+      return serializeEvidence(existing); // idempotent retry after a dropped response
+    }
+    if (existing.status === "processing") {
+      throw ApiError.badRequest("Evidence is already being processed");
+    }
+    throw ApiError.badRequest("Evidence can no longer be completed");
   }
 
   // Server-side verification of the direct-to-S3 upload (existence + size + content type).
   const verified = await headObject(evidence.s3Key);
   if (!verified) {
+    // Not uploaded yet — leave the record pending so the same presigned URL stays retryable.
+    await ClaimEvidence.updateOne({ _id: evidence._id }, { $set: { status: "pending" } });
     throw ApiError.badRequest("Evidence has not been uploaded");
   }
   if (verified.size > env.imageUploadMaxBytes) {
@@ -165,6 +203,8 @@ export const completeEvidence = async ({ claimId, uploadId, cognitoSub }) => {
 
   const raw = await getObject(evidence.s3Key);
   if (!raw) {
+    // Object vanished between headObject and fetch (rare) — keep the record retryable.
+    await ClaimEvidence.updateOne({ _id: evidence._id }, { $set: { status: "pending" } });
     throw ApiError.badRequest("Evidence has not been uploaded");
   }
 
@@ -199,10 +239,27 @@ export const completeEvidence = async ({ claimId, uploadId, cognitoSub }) => {
   evidence.status = "stored";
   await evidence.save();
 
+  await ClaimAudit.create({
+    claimId: claim._id,
+    actor: "farmer",
+    action: "evidence_completed",
+    fromState: claim.state,
+    toState: claim.state,
+    reason: "Claim evidence uploaded and stored",
+    metadata: {
+      uploadId,
+      mediaType: evidence.mediaType,
+      size: evidence.size,
+      width: evidence.width,
+      height: evidence.height,
+    },
+    requestId,
+  });
+
   return serializeEvidence(evidence);
 };
 
-export const deleteEvidence = async ({ claimId, uploadId, cognitoSub }) => {
+export const deleteEvidence = async ({ claimId, uploadId, cognitoSub, requestId = null }) => {
   const claim = await findOwned(cognitoSub, claimId);
   if (!claim) throw ApiError.notFound("Claim not found");
   assertEvidenceMutable(claim);
@@ -215,6 +272,17 @@ export const deleteEvidence = async ({ claimId, uploadId, cognitoSub }) => {
   claim.evidence.pull(evidence._id);
   await claim.save();
   await ClaimEvidence.deleteOne({ _id: evidence._id });
+
+  await ClaimAudit.create({
+    claimId: claim._id,
+    actor: "farmer",
+    action: "evidence_deleted",
+    fromState: claim.state,
+    toState: claim.state,
+    reason: "Claim evidence removed",
+    metadata: { uploadId },
+    requestId,
+  });
 
   return { removed: true };
 };

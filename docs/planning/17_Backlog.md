@@ -89,6 +89,8 @@
 | E9-S7 | Audit & idempotency | Append-only `claimaudit` on transitions; unique `idempotencyKey`; DB-enforced resubmission limits | P0 | 3 | E9-S5 | TODO |
 | E9-S8 | Claim UI | MapLibre GL + OSM draw (not paid tiles, P8); ClaimWizard, ClaimMapDraw, ClaimStatusCard, ClaimEvidenceGallery, ClaimsPage | P0 | 8 | E9-S2, E9-S6 | TODO |
 
+> **Phase 3 (E9-S2 hardening, 2026-09):** the "claim evidence + assessment foundation" pass completed the E9-S6 *evidence storage* slice already seeded inside E9-S2 — presigned upload, magic-byte + sharp validation, EXIF strip, owner-scoped keys, signed GET, and now **evidence mutation audit (`evidence_presigned`/`evidence_completed`/`evidence_deleted`) + atomic/idempotent complete** (E9-S7 audit portion; 17-scenario hardening suite, `tests/claims.evidence.test.js`). **Explicitly NOT implemented** (per ADR-019 frozen boundaries): pHash/duplicate-image fraud detection (E9-S6 remainder), AI evidence analysis (E9-S4), weather correlation (E9-S4), deterministic verification engine (E9-S5), `POST /claims/calculate-area` overlap checks (E9-S3), frontend claim UI (E9-S8), admin UI, and `claimassessment` writes (persistence boundary only). No simulation of processing was introduced — `submitted` remains a farmer submit path with no engine.
+
 ## EPIC 6 — WhatsApp (Phase 2, P1)
 
 | ID | Feature | Story / Task | Pri | Est | Dep | Status |

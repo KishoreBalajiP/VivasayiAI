@@ -260,8 +260,10 @@
 
 - **Indexes:** `{ claimId: 1, uploadedAt: 1 }`, unique `{ uploadId }`
 - **Storage:** reuses existing presigned S3 pipeline; private bucket; owner-scoped keys under `claims/`
-- **Dedup:** pHash on complete → reject duplicate images
-- **State guard:** evidence mutable only in `draft`, `submitted`, `more_evidence_required`
+- **Dedup:** pHash on complete → reject duplicate images (deferred — E9-S6 anti-fraud; not implemented)
+- **State guard:** evidence mutable only in `draft`, `submitted`, `more_evidence_required` (centralized in `claimEvidence.service.js`, never in controllers)
+- **Audit (Phase 3):** every evidence mutation appends a `ClaimAudit` row — `evidence_presigned` / `evidence_completed` / `evidence_deleted` (actor `farmer`, `requestId` correlated); audit metadata never contains `s3Key`/bucket/owner fields
+- **Complete (Phase 3):** atomic + idempotent — a compare-and-swap on `status` (`pending → processing`) guarantees exactly one record per upload (concurrent duplicate completes share one row), repeated completes return the stored metadata, and a not-yet-uploaded object leaves the record `pending` so the same presigned capability remains retryable
 
 ---
 
@@ -320,7 +322,9 @@
 {
   claimId:       ObjectId,       // ref LossClaim (indexed)
   actor:         String,         // "farmer" | "engine" | "admin"
-  action:        String,         // "created", "submitted", "ai_completed", "verified", etc.
+  action:        String,         // "created", "submitted", "ai_completed", "verified",
+                                 // "evidence_presigned", "evidence_completed",
+                                 // "evidence_deleted", "withdrawn", "resubmitted", etc.
   fromState:     String,
   toState:       String,
   reason:        String,

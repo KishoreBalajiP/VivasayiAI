@@ -63,6 +63,7 @@ const presignEvidence = asyncHandler(async (req, res) => {
     filename: req.body.filename,
     contentType: req.body.contentType,
     size: req.body.size,
+    requestId: req.requestId ?? null,
   });
   return ApiResponse.success(res, "Evidence presign generated", result);
 });
@@ -72,6 +73,7 @@ const completeEvidence = asyncHandler(async (req, res) => {
     claimId: req.params.claimId,
     uploadId: req.params.evidenceId,
     cognitoSub: req.user.id,
+    requestId: req.requestId ?? null,
   });
   return ApiResponse.success(res, "Evidence stored", { evidence });
 });
@@ -81,6 +83,7 @@ const deleteEvidence = asyncHandler(async (req, res) => {
     claimId: req.params.claimId,
     uploadId: req.params.evidenceId,
     cognitoSub: req.user.id,
+    requestId: req.requestId ?? null,
   });
   return ApiResponse.success(res, "Evidence deleted", result);
 });
