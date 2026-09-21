@@ -25,7 +25,9 @@ export default defineConfig({
       CLAIM_RATE_LIMIT_WINDOW_MS: "3600000",
       CLAIM_RATE_LIMIT_MAX: "1000",
       EVIDENCE_RATE_LIMIT_WINDOW_MS: "3600000",
-      EVIDENCE_RATE_LIMIT_MAX: "1000",
+      // Evidence limiter kept low (6) so the Phase 3 rate-limit test can prove a real 429.
+      // Per-user evidence calls inside any single suite stay well under 6 (max 3-4).
+      EVIDENCE_RATE_LIMIT_MAX: "6",
       CLAIM_EVIDENCE_MAX_IMAGES: "10",
       CLAIM_MAX_RESUBMISSIONS: "2",
       CLAIM_RESUBMIT_COOLDOWN_MS: "0",
