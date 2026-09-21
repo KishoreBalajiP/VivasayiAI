@@ -219,6 +219,44 @@ const patchParcelBody = z
 
 const parcelParams = z.object({ parcelId });
 
+// ----------------------------------------------------------------------------
+// F-49 (Phase 2 — Agricultural Loss Claim, ADR-019 P1/P2/P4/P9)
+// Claim lifecycle + claim-scoped evidence. Ownership (cognitoSub) always derives from the
+// verified token (req.user), never from the body. No client-supplied area, profile, parcel
+// name/crop, or state is ever accepted (zod strips unknown keys) — the server is authoritative.
+// ----------------------------------------------------------------------------
+
+const claimId = mongoId("Invalid claim ID format");
+
+const eventType = z.enum(
+  ["flood", "storm", "drought", "pest", "disease", "fire", "other"],
+  { message: "eventType must be one of flood, storm, drought, pest, disease, fire, other" }
+);
+
+const idempotencyKey = z
+  .string({ message: "idempotencyKey is required" })
+  .trim()
+  .min(8, "idempotencyKey must be at least 8 characters")
+  .max(64, "idempotencyKey exceeds 64 characters")
+  .regex(/^[A-Za-z0-9_-]+$/, "idempotencyKey contains invalid characters");
+
+// Accepts an ISO-8601 string (or numeric timestamp). Future/outside-window dates are rejected
+// server-side in the service (P2), never by client authority alone.
+const claimDate = z.coerce.date({ message: "eventDate must be a valid date" });
+
+const createClaimBody = z.object({
+  parcelId,
+  eventType,
+  eventDate: claimDate,
+  geometry: polygonGeometry,
+  idempotencyKey,
+});
+
+const claimParams = z.object({ claimId });
+
+// Evidence identifiers use the same server-generated `img_<uuid>` format as /upload.
+const claimEvidenceParams = z.object({ evidenceId: uploadId });
+
 export {
   googleLoginBody,
   chatBody,
@@ -234,4 +272,11 @@ export {
   createParcelBody,
   patchParcelBody,
   parcelParams,
+  claimId,
+  eventType,
+  idempotencyKey,
+  claimDate,
+  createClaimBody,
+  claimParams,
+  claimEvidenceParams,
 };

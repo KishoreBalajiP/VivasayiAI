@@ -18,6 +18,19 @@ export default defineConfig({
       CHROMA_API_KEY: "test-placeholder",
       CHROMA_TENANT: "test-placeholder",
       CHROMA_DATABASE: "test-placeholder",
+      // F-49 claim tests: in-memory S3 + image AI seams stay deterministic (no external AWS),
+      // rate limits are raised so suites don't self-throttle, and cooldown is disabled so the
+      // resubmission happy path is testable.
+      CLAIM_WINDOW_DAYS: "30",
+      CLAIM_RATE_LIMIT_WINDOW_MS: "3600000",
+      CLAIM_RATE_LIMIT_MAX: "1000",
+      EVIDENCE_RATE_LIMIT_WINDOW_MS: "3600000",
+      EVIDENCE_RATE_LIMIT_MAX: "1000",
+      CLAIM_EVIDENCE_MAX_IMAGES: "10",
+      CLAIM_MAX_RESUBMISSIONS: "2",
+      CLAIM_RESUBMIT_COOLDOWN_MS: "0",
+      IMAGE_STORAGE_MODE: "mock",
+      IMAGE_AI_MODE: "mock",
     },
   },
 });

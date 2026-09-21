@@ -162,4 +162,21 @@ export const deleteObject = async (key) => {
 export const buildObjectKey = (dirname) =>
   `${env.uploadStoragePrefix}/${dirname}`;
 
-export default { putObject, getObject, headObject, deleteObject, getSignedPutUrl, buildObjectKey };
+// F-49 (ADR-019): short-lived presigned GET for an owner-scoped object (claim evidence url).
+// Grants one read of one server-owned key for a few minutes; ownership/claim scoping is still
+// enforced server-side (services/claimEvidence.service.js) before this is ever reachable.
+export const getSignedGetUrl = async ({ key, expiresInSeconds }) => {
+  try {
+    if (isMock()) {
+      // Deterministic dev/test stand-in (no real AWS).
+      return `https://mock-bucket.local/${key}?X-Amz-GET=1&Expires=${expiresInSeconds}`;
+    }
+    const command = new GetObjectCommand({ Bucket: env.s3Bucket, Key: key });
+    return await getSignedUrl(getS3Client(), command, { expiresIn: expiresInSeconds });
+  } catch (error) {
+    logger.error({ err: error }, "s3.getSignedGetUrl failed");
+    throw ApiError.internal("Image storage unavailable");
+  }
+};
+
+export default { putObject, getObject, headObject, deleteObject, getSignedPutUrl, buildObjectKey, getSignedGetUrl };

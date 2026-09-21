@@ -492,3 +492,5 @@ curl "http://localhost:8000/weather?district=Chennai"
       - `POST /admin/claims/:id/override` — approved/rejected with reason (second-admin if >X acres)
 
 All claim endpoints: `requireAuth` + ownership scoping (`cognitoSub`); `claimLimiter` + `evidenceLimiter` rate limits; 404 for foreign resources; idempotency keys on create/submit.
+
+> **Status (Phase 2 implementation note):** implemented — `POST /claims`, `GET /claims`, `GET /claims/:id` (detail + evidence; `assessment: null` until the verification phases), `POST /claims/:id/submit`, `POST /claims/:id/withdraw`, `POST /claims/:id/resubmit`, and all four claim-evidence endpoints (presign / complete / delete / signed-GET url). **Deferred to later phases** (not part of Phase 2): `POST /claims/calculate-area` (needs the E9-S3/S4 area-eligibility/overlap engine, P5), admin endpoints (Phase 10), and pHash dedup on evidence complete (E9-S6). There is **no `PATCH /claims/:id`** draft-update endpoint — the finalized contract does not define one; draft claims are re-created or resubmitted per the contract.

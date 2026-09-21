@@ -281,6 +281,10 @@ Parcels are **never auto-created** from survey/district data. Legacy users must 
 
 **Tradeoffs:** Requires a **parcel foundation** first (no claims until geometry exists — P10); legitimate unverified claims may be flagged for more evidence (P4) with a slower path; maps (P8) are free-tier which trades polish for zero cost; admin override is deliberately deferred (P7), so edge cases wait on the Phase-10 UI. Related: ADR-017 (vision pipeline reused for claim evidence), ADR-013/018 (ownership by `cognitoSub`), SEC-14…18 (07_Database_Design + 15_Security).
 
+### Phase 2 implementation note (E9-S2, ADR-019)
+
+Implemented additive (07_Database_Design §14 rule 1 — nothing removed, no existing collection altered): new `lossclaims` / `claimevidence` / `claimassessment` (structure only, never written) / `claimaudit` collections with the documented indexes (incl. owner-scoped compound-sparse unique `{ cognitoSub, idempotencyKey }` and the partial unique verified-claims guard). `claimState.service.js` is the single source of truth for the 10-state machine; only `draft → submitted` exists as a farmer submit path (no simulated processing), with `withdrawn`/`resubmitted` transitions and configurable P6 limits that are already enforced. Explicitly deferred per the frozen boundaries: AI/weather correlation, pHash dedup, overlap/remaining-eligibility (P5), `POST /claims/calculate-area`, admin endpoints (P7), and any draft-`PATCH` endpoint (the finalized 08 §10 contract defines none). 58-scenario integration suite + 9 state-machine unit tests pass alongside the Phase 1 suite (108 tests).
+
 ---
 
 ## Decision log conventions

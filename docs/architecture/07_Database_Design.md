@@ -25,10 +25,10 @@
 | `queries` | `Query.js` | Per-query logs with attachments/location | `[EXISTING]` schema, **unused** |
 | `contexts` | `Context.js` | District soil/crop context | `[EXISTING]` schema, **unused** |
 | `farmprofiles` | `FarmProfile.js` | Farmer onboarding: district, crops, acres, parcels | `[EXISTING]` used |
-| `lossclaims` | `LossClaim.js` | Agricultural loss claim (affected-area geometry, event, state) | `[PLANNED]` Phase 1 |
-| `claimevidence` | `ClaimEvidence.js` | Claim evidence images (owner-scoped, presigned S3) | `[PLANNED]` Phase 1 |
-| `claimassessment` | `ClaimAssessment.js` | Deterministic verification result + AI aggregate | `[PLANNED]` Phase 1 |
-| `claimaudit` | `ClaimAudit.js` | Append-only claim state-transition audit trail | `[PLANNED]` Phase 1 |
+| `lossclaims` | `LossClaim.js` | Agricultural loss claim (affected-area geometry, event, state) | `[ACTIVE]` Phase 2 (lifecycle + state machine + idempotency) |
+| `claimevidence` | `ClaimEvidence.js` | Claim evidence images (owner-scoped, presigned S3) | `[ACTIVE]` Phase 2 (presign/complete/delete/url; pHash deferred to E9-S6) |
+| `claimassessment` | `ClaimAssessment.js` | Deterministic verification result + AI aggregate | `[PLANNED]` Phase 2 = persistence structure only (no writes until E9-S3/S4/S5) |
+| `claimaudit` | `ClaimAudit.js` | Append-only claim state-transition audit trail | `[ACTIVE]` Phase 2 (farmer transitions; engine/admin with verification phases) |
 
 > **Note:** `queries` and `contexts` were designed for the capstone (context injection, query audit trail) but the chat flow never writes to them today. Under vision-v2, `contexts` becomes the seed for the **Context Engine's reference data** (districts/soil/season) and `queries` (or a successor) becomes the context-snapshot audit store (see §7). Phase 1 re-introduces their purpose via the redesigned Context Engine (F-20/F-46).
 

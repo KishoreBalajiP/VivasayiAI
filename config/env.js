@@ -71,6 +71,19 @@ export const env = Object.freeze({
   sessionMutationRateLimitWindowMs: Number(process.env.SESSION_MUTATION_RATE_LIMIT_WINDOW_MS) || 60000,
   sessionMutationRateLimitMax: Number(process.env.SESSION_MUTATION_RATE_LIMIT_MAX) || 30,
   messageMaxLength: Number(process.env.MESSAGE_MAX_LENGTH) || 2000,
+  // F-49 (ADR-019 — Agricultural Loss / Affected-Area Claim, Phase 2): claim window + claim
+  // and evidence rate limits (15_Security §5), evidence image cap (P9), geometry tolerance
+  // (P5) and resubmission limits/cooldown (P6) — server-authoritative, keyed to .env.example.
+  claimWindowDays: Number(process.env.CLAIM_WINDOW_DAYS) || 30,
+  claimRateLimitWindowMs: Number(process.env.CLAIM_RATE_LIMIT_WINDOW_MS) || 3600000,
+  claimRateLimitMax: Number(process.env.CLAIM_RATE_LIMIT_MAX) || 5,
+  evidenceRateLimitWindowMs: Number(process.env.EVIDENCE_RATE_LIMIT_WINDOW_MS) || 3600000,
+  evidenceRateLimitMax: Number(process.env.EVIDENCE_RATE_LIMIT_MAX) || 20,
+  claimEvidenceMaxImages: Number(process.env.CLAIM_EVIDENCE_MAX_IMAGES) || 10,
+  claimOverlapToleranceM: Number(process.env.CLAIM_OVERLAP_TOLERANCE_M) || 1.0,
+  claimAreaOverageFraction: Number(process.env.CLAIM_AREA_OVERAGE_FRACTION) || 0.05,
+  claimMaxResubmissions: Number(process.env.CLAIM_MAX_RESUBMISSIONS) || 2,
+  claimResubmitCooldownMs: Number(process.env.CLAIM_RESUBMIT_COOLDOWN_MS) || 86400000,
   // E3-S1 (D-22 Option 1): multipart image upload — per-user rate limit and in-memory size cap.
   uploadRateLimitWindowMs: Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_MS) || 60000,
   uploadRateLimitMax: Number(process.env.UPLOAD_RATE_LIMIT_MAX) || 10,
