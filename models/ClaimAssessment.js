@@ -2,10 +2,47 @@ import mongoose from "mongoose";
 
 // F-49 (ADR-019) — Deterministic Verification Result (07_Database_Design §8).
 //
-// Phase 2 creates the persistence STRUCTURE ONLY: no row is ever written until the
-// deterministic rule engine ships (E9-S3/S4 — no LLM in the decision path). All fields are
-// nullable and never fabricated; the claim detail response returns it as `assessment: null`
-// until then.
+// Phase 2/3 created the persistence STRUCTURE ONLY: no row was written until the verification
+// phases. Phase 4 (E9-S4) now writes the AI-EVIDENCE stage of this document: `status` /
+// `startedAt` / `completedAt` / `failedAt`, `version`, `model`, `evidenceVersion`,
+// `aiImageAssessments` (per-image frozen observations + evidence references) and `aiAggregate`
+// (deterministic cross-image aggregate). All fields are additive (07 §14 rule 1 — nothing
+// removed). The FINAL decision fields — `approvedGeometry`, `approvedAreaAcres`,
+// `weatherCorrelation`, `rules`, `state`, `reason`, `decidedAt`, `decidedBy`, `adminNote` —
+// remain reserved (null) until the deterministic verification engine ships (E9-S5); the AI
+// stage never writes them and never transitions the claim.
+
+const aiImageObservationSchema = new mongoose.Schema(
+  {
+    // FROZEN claim-loss observation contract (ADR-019 / 09 §6.1 / E9-S4). `null` = the AI
+    // could not determine the value from the evidence. `inconsistencies` captures both the
+    // model's own notes and normalizer guardrail events (unauthorized fields stripped).
+    cropDetected: { type: String, default: null },
+    damageDetected: { type: Boolean, default: null },
+    damageType: { type: String, default: null },
+    severity: { type: String, default: null },
+    visibleAffectedPortion: { type: String, default: null },
+    confidence: { type: String, default: null },
+    uncertain: { type: Boolean, default: true },
+    inconsistencies: { type: [String], default: [] },
+    observations: { type: [String], default: [] },
+    imageQuality: { type: String, default: null },
+  },
+  { _id: false }
+);
+
+const aiImageAssessmentSchema = new mongoose.Schema(
+  {
+    evidenceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ClaimEvidence",
+      required: true,
+    },
+    uploadId: { type: String, required: true }, // display reference only; never an s3Key
+    observation: { type: aiImageObservationSchema, required: true },
+  },
+  { _id: false }
+);
 
 const aiAggregateSchema = new mongoose.Schema(
   {
@@ -50,12 +87,37 @@ const claimAssessmentSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    // --- Phase 4 (E9-S4) AI-evidence stage fields ---
+    status: {
+      type: String,
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
+    },
+    // Assessment configuration/prompt version (src/ai/ClaimLossVisionTemplates.js). Distinguishes
+    // results generated under different prompt/schema versions; never silently overwritten.
+    version: { type: String, default: null },
+    // Provider/model identifier captured at run time (`provider/model`).
+    model: { type: String, default: null },
+    // Fingerprint of the assessed evidence set (stable even when an assessment is reused).
+    evidenceVersion: { type: String, default: null },
+    // Per-image frozen observations with evidence references (reproducibility; no raw image bytes).
+    aiImageAssessments: { type: [aiImageAssessmentSchema], default: [] },
+    startedAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
+    failedAt: { type: Date, default: null },
+    // Sanitized processing error (stage + short message). Never contains provider internals,
+    // prompts, URLs, keys, or image content.
+    error: {
+      stage: { type: String, default: null },
+      message: { type: String, default: null },
+    },
+    // --- Reserved for the deterministic verification engine (E9-S5); stay null until then ---
     approvedGeometry: { type: Object, default: null },
     approvedAreaAcres: { type: Number, default: null },
     aiAggregate: { type: aiAggregateSchema, default: null },
     weatherCorrelation: { type: weatherCorrelationSchema, default: null },
     rules: { type: rulesSchema, default: null },
-    state: { type: String, default: null }, // mirrors claim.state at decision time
+    state: { type: String, default: null }, // mirrors claim.state at decision time (reserved)
     reason: { type: String, default: null },
     decidedAt: { type: Date, default: null },
     decidedBy: { type: String, enum: ["engine", "admin"], default: "engine" },

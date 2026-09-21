@@ -27,7 +27,7 @@
 | `farmprofiles` | `FarmProfile.js` | Farmer onboarding: district, crops, acres, parcels | `[EXISTING]` used |
 | `lossclaims` | `LossClaim.js` | Agricultural loss claim (affected-area geometry, event, state) | `[ACTIVE]` Phase 2 (lifecycle + state machine + idempotency) |
 | `claimevidence` | `ClaimEvidence.js` | Claim evidence images (owner-scoped, presigned S3) | `[ACTIVE]` Phase 2 (presign/complete/delete/url; pHash deferred to E9-S6) |
-| `claimassessment` | `ClaimAssessment.js` | Deterministic verification result + AI aggregate | `[PLANNED]` Phase 2 = persistence structure only (no writes until E9-S3/S4/S5) |
+| `claimassessment` | `ClaimAssessment.js` | Deterministic verification result + AI aggregate | `[ACTIVE]` Phase 4 = AI evidence assessment stage (E9-S4; decision fields reserved until E9-S5) |
 | `claimaudit` | `ClaimAudit.js` | Append-only claim state-transition audit trail | `[ACTIVE]` Phase 2 (farmer transitions; engine/admin with verification phases) |
 
 > **Note:** `queries` and `contexts` were designed for the capstone (context injection, query audit trail) but the chat flow never writes to them today. Under vision-v2, `contexts` becomes the seed for the **Context Engine's reference data** (districts/soil/season) and `queries` (or a successor) becomes the context-snapshot audit store (see §7). Phase 1 re-introduces their purpose via the redesigned Context Engine (F-20/F-46).
@@ -311,8 +311,61 @@
 }, { timestamps: true }
 ```
 
-- **Purpose:** Complete audit trail of the verification decision; no LLM in the decision path
-- **Decided by:** deterministic rule engine (pure functions)
+### Phase 4 (E9-S4) — AI evidence assessment additions
+
+The `claimassessment` collection became writable in Phase 4 for the **AI evidence-only stage**. The
+lifetime, versioning, and per-image AI observations are stored here; the **decision fields remain
+reserved (`null`)** until the deterministic verification engine (E9-S5) writes them.
+
+```js
+{
+  claimId:           ObjectId,     // ref LossClaim (unique, 1:1) — one row per claim
+  status:            "pending" | "processing" | "completed" | "failed",
+  version:           String,       // asset AI contract version (CLAIM_LOSS_ASSESSMENT_VERSION, currently "1")
+  model:             String,       // "provider/model" that produced the observations
+  evidenceVersion:   String,       // sha1 of sorted "uploadId:updatedAt" — idempotency boundary
+  aiImageAssessments: [{           // one entry PER stored evidence image
+    evidenceId:      ObjectId,     // ref ClaimEvidence
+    uploadId:        String,
+    observation:     {
+      cropDetected:              String | null,   // FROZEN contract (asset-09 §6.1 / ADR-019)
+      damageDetected:            Boolean | null,
+      damageType:                String | null,   // flood|storm|drought|fire|pest|disease|other
+      severity:                  String | null,   // minor|moderate|severe (qualitative ONLY)
+      visibleAffectedPortion:    String | null,   // qualitative text — NEVER converted to acreage (P4)
+      confidence:                String | null,   // high|medium|low|unclear
+      uncertain:                 Boolean,         // uncertainty is first-class
+      inconsistencies:           [String],
+      observations:              [String],
+      imageQuality:              String | null    // good|fair|poor|unclear
+    }
+  }],
+  startedAt:         Date,
+  completedAt:       Date,
+  failedAt:          Date,
+  error:             { stage: "storage" | "provider", message: String },  // sanitized
+  // ...all documented decision/rule/weather fields below remain null until E9-S3/S4/S5
+}
+```
+
+- **AI aggregate is deterministic** (documented rules): `damageDetected` = any true / all false /
+  null; `damageType`/`severity` = most frequent (severity tie → more severe); `confidence` = most
+  conservative (`high > medium > low > unclear`); `uncertain` = any image uncertain OR unknown
+  damage; `inconsistencies` = union of per-image notes + deterministic cross-image conflicts
+  (different crop / conflicting damage / different damage type / different severity).
+- **Idempotency + concurrency:** `proceed:false` reuse semantics — a `processing` in-flight or
+  `completed`-with-same-`evidenceVersion` row is returned as-is (never re-run); changed evidence
+  re-assesses on the same row (new version boundary). Only one worker ever owns the slot (unique
+  `claimId` + atomic status CAS).
+- **Guardrails:** only the frozen whitelist fields may be persisted per image (server-side scrub);
+  acres/polygon/boundary/compensation/status remain structurally impossible to store. Audit rows
+  `ai_completed` / `assessment_failed` (actor `"engine"`) carry no s3Key/bucket/owner/prompt/URL.
+- No public endpoint exposes this stage (internal service only; §18).
+
+- **Purpose (final):** Complete audit trail of the verification decision; no LLM in the decision path
+- **Phase 4 state:** AI evidence analysis only — `approvedGeometry`/`approvedAreaAcres`/`state`/
+  `reason`/`decidedAt`/`decidedBy`/`adminNote`/`weatherCorrelation`/`rules` stay `null`.
+- **Decided by (final):** deterministic rule engine (pure functions, E9-S5)
 
 ---
 
@@ -322,8 +375,8 @@
 {
   claimId:       ObjectId,       // ref LossClaim (indexed)
   actor:         String,         // "farmer" | "engine" | "admin"
-  action:        String,         // "created", "submitted", "ai_completed", "verified",
-                                 // "evidence_presigned", "evidence_completed",
+  action:        String,         // "created", "submitted", "ai_completed", "assessment_failed",
+                                 // "verified", "evidence_presigned", "evidence_completed",
                                  // "evidence_deleted", "withdrawn", "resubmitted", etc.
   fromState:     String,
   toState:       String,
