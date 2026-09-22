@@ -57,7 +57,10 @@ const scrubObservation = (observation) => {
   return out;
 };
 
-const computeEvidenceVersion = (evidenceDocs) => {
+// Fingerprint of an evidence set (`uploadId:updatedAt`, sorted) — the idempotency boundary shared
+// by the assessment service (E9-S4) and the verification engine (E9-S5 recomputes it to confirm it
+// is verifying the exact evidence set that was assessed). sha1 of the canonical string.
+export const computeEvidenceVersion = (evidenceDocs) => {
   const parts = evidenceDocs
     .map((doc) => `${doc.uploadId}:${doc.updatedAt ? doc.updatedAt.getTime() : 0}`)
     .sort()

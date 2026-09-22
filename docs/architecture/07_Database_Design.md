@@ -308,6 +308,15 @@
   decidedAt: Date,
   decidedBy: "engine" | "admin",   // MVP: always "engine"
   adminNote: String,               // if admin override
+  // Verification subdocument (E9-S5 / Phase 5)
+  verification: {
+    status:        "pending" | "verifying" | "completed" | "failed",
+    version:       String,         // VERIFICATION_ENGINE_VERSION ("1")
+    startedAt:     Date,
+    completedAt:   Date,
+    failedAt:      Date,
+    error:         { stage: String, message: String }
+  },
 }, { timestamps: true }
 ```
 
@@ -362,10 +371,21 @@ reserved (`null`)** until the deterministic verification engine (E9-S5) writes t
   `ai_completed` / `assessment_failed` (actor `"engine"`) carry no s3Key/bucket/owner/prompt/URL.
 - No public endpoint exposes this stage (internal service only; §18).
 
-- **Purpose (final):** Complete audit trail of the verification decision; no LLM in the decision path
-- **Phase 4 state:** AI evidence analysis only — `approvedGeometry`/`approvedAreaAcres`/`state`/
-  `reason`/`decidedAt`/`decidedBy`/`adminNote`/`weatherCorrelation`/`rules` stay `null`.
-- **Decided by (final):** deterministic rule engine (pure functions, E9-S5)
+### Phase 5 (E9-S5) — Deterministic Verification Engine
+
+The deterministic engine now **writes the final decision fields** (`state`, `reason`, `decidedAt`,
+`decidedBy`, `approvedGeometry`, `approvedAreaAcres`, `weatherCorrelation`, `rules`) and the
+`verification` subdocument. The engine is a pure function (`evaluateClaimVerification`) with these
+rules evaluated in strict precedence:
+
+1. **timelinessCheck** — `eventDate` not future and within `CLAIM_WINDOW_DAYS` → `rejected`
+2. **eventTypeCheck** — `eventType` ∈ frozen vocabulary (`flood, storm, drought, pest, disease, fire, other`) → `rejected`
+3. **areaCheck** — `claimedAreaAcres ≤ parcelAreaAcres × (1 + CLAIM_AREA_OVERAGE_FRACTION)` → `out_of_limit`
+4. **overlapCheck** — `overlaps_verified` → `duplicate_area`; `overlaps_in_flight` → `more_evidence_required`; **unchecked** (E9-S3 deferred to E9-S6) → passes with zero overlap, flagged `overlapUnchecked`
+5. **weatherCheck** — **supporting only**; absence never blocks → always `passed: true`
+6. **aiCheck** — confident no-damage (`damageDetected===false && uncertain===false && confidence∈{high,medium}`) → `rejected`; any insufficiency (`uncertain`, `null` damage, low confidence, cross-image inconsistency, poor quality) → `more_evidence_required`; otherwise `verified`
+
+Outcome `verified` produces geometry-derived `approvedGeometry`/`approvedAreaAcres`. AI acres/polygon/compensation/output are **structurally ignored** (guardrail). Crop consistency is informational only. The `verification` subdocument records the engine version, timing, and any failure stage (`storage` | `provider` | `assessment` | `processing`). The claim state is advanced via the centralized state machine (`submitted → processing → <outcome>`) with append-only `ClaimAudit` entries (actor `"engine"`, `requestId` correlated, metadata `{evidenceVersion, imageCount, overlapEvaluated:false, engineVersion}`).
 
 ---
 

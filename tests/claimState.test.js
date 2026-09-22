@@ -29,7 +29,7 @@ describe("claimState.service — centralized claim state machine", () => {
 
   it("exposes the allowed outgoing transitions for every state", () => {
     expect(allowedTransitions("draft")).toEqual(["submitted", "withdrawn"]);
-    expect(allowedTransitions("submitted")).toEqual(["withdrawn"]);
+    expect(allowedTransitions("submitted")).toEqual(["processing", "withdrawn"]);
     expect(allowedTransitions("processing")).toEqual([
       "verified",
       "partially_verified",
@@ -51,6 +51,7 @@ describe("claimState.service — centralized claim state machine", () => {
 
   it("resubmission is only ever legal from more_evidence_required (P6)", () => {
     expect(canTransition("more_evidence_required", "submitted")).toBe(true);
+    expect(canTransition("submitted", "processing")).toBe(true); // E9-S5: declared verification edge
     expect(canTransition("submitted", "submitted")).toBe(false);
     expect(canTransition("verified", "submitted")).toBe(false);
     expect(canTransition("withdrawn", "submitted")).toBe(false);

@@ -84,7 +84,7 @@
 | E9-S2 | Claim lifecycle API | `POST /claims` (draft, `idempotencyKey`), evidence presign/complete/delete/url, submit, withdraw, resubmit (from `MORE_EVIDENCE_REQUIRED` only); state machine guard; claim window (P2) | P0 | 8 | E9-S1 | DONE |
 | E9-S3 | Geometry checks | Authoritative area (Turf/geojson-area); overlap vs verified + in-flight claims; configurable tolerance (P5); no AI-derived acreage (P4) | P0 | 5 | E9-S2 | TODO |
 | E9-S4 | AI evidence analysis | Vision → structured observation (cropDetected, damageDetected, damageType, severity, visibleAffectedPortion, confidence, uncertain, inconsistencies, observations, imageQuality) — acreage/polygon/compensation/status are prohibited; weather as supporting-only evidence (P3) | P0 | 5 | E3-S2, E9-S3 | DONE (Phase 4) |
-| E9-S5 | Verification engine | Deterministic rules → verified / partially_verified / more_evidence_required / rejected / out_of_limit / duplicate_area; automated normal path; admin exception-only (P7) | P0 | 5 | E9-S4 | TODO |
+| E9-S5 | Verification engine | Deterministic rules → verified / partially_verified / more_evidence_required / rejected / out_of_limit / duplicate_area; automated normal path; admin exception-only (P7) | P0 | 5 | E9-S4 | DONE |
 | E9-S6 | Evidence storage | Presigned S3 upload (images only MVP, P9); pHash dedup; EXIF strip; owner-scoped keys; signed GET for owner/admin | P0 | 5 | E9-S2 | TODO |
 | E9-S7 | Audit & idempotency | Append-only `claimaudit` on transitions; unique `idempotencyKey`; DB-enforced resubmission limits | P0 | 3 | E9-S5 | TODO |
 | E9-S8 | Claim UI | MapLibre GL + OSM draw (not paid tiles, P8); ClaimWizard, ClaimMapDraw, ClaimStatusCard, ClaimEvidenceGallery, ClaimsPage | P0 | 8 | E9-S2, E9-S6 | TODO |
