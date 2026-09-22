@@ -19,7 +19,10 @@ import { CLAIM_STATES } from "../models/LossClaim.js";
 
 const ALLOWED = {
   draft: ["submitted", "withdrawn"],
-  submitted: ["withdrawn"],
+  submitted: ["processing", "withdrawn"], // processing added E9-S5 (Phase 5): the diagram below
+  // already documents `draft → submitted → processing → verified` and
+  // `more_evidence_required → (resubmitted →) processing`; without this inbound edge the
+  // verification engine could never legally reach any decision state. Minimal completion.
   processing: [
     "verified",
     "partially_verified",
