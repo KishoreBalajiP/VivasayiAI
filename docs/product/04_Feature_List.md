@@ -53,6 +53,7 @@
 | F-22 | **AI diagnosis pipeline (image + context fusion)** | Upload → vision analysis **fused with Context Engine signals (weather, soil, crop, location)** → structured diagnosis card (cause → treatment → safety → escalation). Image is never analyzed in isolation (APP-07) | H | L | P0 | F-15, F-46, vision pipeline |
 | F-23 | **Streaming responses (SSE)** | Token streaming so first text appears <2s; better perceived performance | M | M | P0 | Chat refactor |
 | F-24 | **Rate limiting & input caps** | Throttle auth/chat; cap message length; protect AI costs | H | S | P0 | F-19 |
+| F-49 | **Agricultural Loss / Affected-Area Claim Verification** | Farmer draws affected polygon on parcel; backend authoritative area; AI evidence analysis; deterministic verification rules; automated approval/rejection; admin exception-only. **Phase 1: Parcel foundation + claim lifecycle + AI evidence + verification engine.** | H | L | P0 | F-19, F-21, F-22, MapLibre, Turf.js |
 | F-26 | **Automated tests + AI eval harness** | Unit/integration tests (Vitest+Supertest); golden Tamil/English question set for answer quality | H | L | P0 | — |
 | F-27 | **Monitoring & cost analytics** | Structured logs, error tracking (Sentry), $/conversation dashboard | H | M | P1 | F-26 |
 | F-28 | **Message pagination / schema fix** | Move messages out of unbounded embedded array; paginated retrieval | M | M | P1 | F-19 |
@@ -117,13 +118,18 @@ graph LR
     F21 --> F30[Crop plan]
     F47 --> F30
     F26[Tests + AI eval] -. enables .-> F27[Monitoring]
+    F19 --> F49[Agricultural Loss Claim]
+    F21 --> F49
+    F22 --> F49
+    F49 --> MapLibre[MapLibre GL + OSM]
+    F49 --> Turf[Turf.js / geojson-area]
 ```
 
 ## 7. Feature status roll-up
 
 - **Completed (`[EXISTING]`):** 14 (F-01…F-14)
 - **In progress / partial (`[IN PROGRESS]`):** 4 (F-15…F-18)
-- **Planned (`[PLANNED]`, Phase 1):** 11 (F-19–F-24, F-26–F-28 + platform pillars F-45, F-46-first-slice)
+- **Planned (`[PLANNED]`, Phase 1):** 12 (F-19–F-24, F-26–F-28, F-49 + platform pillars F-45, F-46-first-slice)
 - **Future (`[FUTURE]`, Phase 2+):** 14 (F-25, F-29–F-39 + platform pillars F-46-full, F-47, F-48)
 - **Rejected (`[REJECTED]`):** 5 (F-40…F-44)
 

@@ -139,6 +139,25 @@ export const getSignedPutUrl = async ({ key, mediaType, expiresInSeconds }) => {
   }
 };
 
+// Generates a short-lived presigned GET URL for an OWNED image object (chat-history
+// reconstruction). The URL is minted on demand by the backend after ownership verification —
+// it is never persisted and never stored on any document, and the bucket/object stays
+// private (the URL is scoped to exactly one server-owned key, one method GET, one expiry).
+export const getSignedGetUrl = async ({ key, expiresInSeconds }) => {
+  try {
+    if (isMock()) {
+      // Dev/test-only deterministic stand-in (no real AWS). `expiresInSeconds` mirrors the
+      // real handler so regression suites can assert the TTL contract.
+      return `https://mock-bucket.local/${key}?X-Amz-Mock=1&Expires=${expiresInSeconds}`;
+    }
+    const command = new GetObjectCommand({ Bucket: env.s3Bucket, Key: key });
+    return await getSignedUrl(getS3Client(), command, { expiresIn: expiresInSeconds });
+  } catch (error) {
+    logger.error({ err: error }, "s3.getSignedGetUrl failed");
+    throw ApiError.internal("Image storage unavailable");
+  }
+};
+
 // Best-effort delete (used for rollback/cleanup). Never throws — a failed delete leaves an
 // orphaned object at worst and must not fail the request that triggered the rollback.
 export const deleteObject = async (key) => {
@@ -162,4 +181,12 @@ export const deleteObject = async (key) => {
 export const buildObjectKey = (dirname) =>
   `${env.uploadStoragePrefix}/${dirname}`;
 
-export default { putObject, getObject, headObject, deleteObject, getSignedPutUrl, buildObjectKey };
+export default {
+  putObject,
+  getObject,
+  headObject,
+  deleteObject,
+  getSignedPutUrl,
+  getSignedGetUrl,
+  buildObjectKey,
+};

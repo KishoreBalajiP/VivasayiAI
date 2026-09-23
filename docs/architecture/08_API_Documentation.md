@@ -387,7 +387,44 @@ the farm-profile line renders `unknown` and no profile data is used.
 | 429 | Per-user rate limit exceeded |
 | 500 | Image storage unavailable (S3/config failure; sanitized) |
 
-> **Diagnosis (E3-S2):** send `POST /chat { uploadId, message?, language?, chatId? }` (Section 3.1) to run vision analysis + agricultural reasoning on this image. The chat session's AI turn returns the diagnosis; the `image.vision` block carries the structured observation for the E3-S4 diagnosis card. **Remaining product decisions, unchanged by this work:** D-23 (S3 retention/lifecycle/signed-URL retrieval — configured on private storage with an `uploads/` prefix; bucket choice, 90-day lifecycle and presigned URL serving pending approval), D-24 (EXIF/consent — EXIF stripped at upload as the approved normalize side-effect), D-38 (privacy/consent framework). E3-S3/E3-S4 are frontend stories.
+> **Diagnosis (E3-S2):** send `POST /chat { uploadId, message?, language?, chatId? }` (Section 3.1) to run vision analysis + agricultural reasoning on this image. The chat session's AI turn returns the diagnosis; the `image.vision` block carries the structured observation for the E3-S4 diagnosis card. **Remaining product decisions, unchanged by this work:** D-23 (S3 retention/lifecycle — bucket choice and 90-day lifecycle remain pending; **authorized signed-URL retrieval is now shipped via `GET /upload/:uploadId/view` below**), D-24 (EXIF/consent — EXIF stripped at upload as the approved normalize side-effect), D-38 (privacy/consent framework). E3-S3/E3-S4 are frontend stories.
+
+#### `GET /upload/:uploadId/view`
+
+**Summary:** Authorized chat-image retrieval (persisted-chat-history reconstruction). The chat message persists only a stable `imageId` (= `uploadId`); this endpoint verifies the authenticated caller OWNS the `ImageRecord`, then mints a **short-lived presigned GET URL** so the frontend can render the actual private-S3 pixels on demand. The `imageId` stays the stable source of truth — the signed URL is never persisted anywhere (no Mongo document, no client storage), and the object remains private in S3.
+
+**Required headers:** `Authorization: Bearer <session-token>`
+
+**Constraints:**
+- Ownership is enforced server-side by `{ uploadId, cognitoSub }`; a foreign/unknown id → `404 Image upload not found` (indistinguishable from a non-existent upload — no existence disclosure, same E3 convention as `POST /chat`).
+- The client can **never** supply an S3 key or bucket — the key comes only from the matched owned `ImageRecord`.
+- The URL is minted on demand with a short TTL (`IMAGE_VIEW_URL_TTL_SECONDS`, default 300 s) — a leaked URL grants bounded, single-object, GET-only access.
+- A pending/uploaded (not yet completed) record → `400 Image has not been uploaded yet`; a record whose private object was removed → sanitized `404 Image not found`.
+- No `s3Key`, bucket configuration, region, or any AWS credential ever appears in the response.
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "message": "Image view authorized",
+  "data": {
+    "uploadId": "img_<uuid>",
+    "mediaType": "image/jpeg",
+    "signedUrl": "https://<bucket>.s3.<region>.amazonaws.com/uploads/...?...X-Amz-Signature=...",
+    "expiresIn": 300000
+  }
+}
+```
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Signed GET URL minted for the caller's own image (short TTL, on-demand) |
+| 400 | `Invalid image upload ID` / `Image has not been uploaded yet` |
+| 401 | No / invalid bearer token |
+| 404 | Unowned or unknown `uploadId` (`Image upload not found`); record present but object gone (`Image not found`) |
+| 500 | Image storage unavailable (S3/config failure; sanitized) |
+
+> The frontend consumes this in `src/components/PersistedChatImage.tsx`: a historical message with `imageId` requests the signed URL, renders the actual image, and falls back to a controlled "Image unavailable" chip on failure (bounded — one request per mount, no retry loop). The current-turn local preview (`previewUrl`) is unchanged and never waits for S3.
 
 ---
 
@@ -465,3 +502,39 @@ curl "http://localhost:8000/weather?district=Chennai"
 7. **Model provider health:** `GET /api/v1/ai/providers` → active adapter, model, latency — operational view for the Model Adapter (F-45).
 8. **Streaming:** `GET`/SSE variant or `stream: true` flag (F-23). **Blocked (E4-S1):** production path is Lambda + `serverless-http` (buffered responses) with no `RESPONSE_STREAM` invoke mode; requires D-05 (SSE transport decision) + streaming-capable deploy infra before implementation.
 9. **OpenAPI 3.1 spec** exported from the codebase (source of truth for QA tooling).
+10. **Agricultural Loss Claim (Phase 1 — Parcel Foundation + Claim Verification):**
+    - Farm Parcel Management (extends `/profile`):
+      - `POST /profile/parcels` — create parcel with geometry (server calculates area)
+      - `GET /profile/parcels` — list parcels with geometry + calculated area
+      - `PATCH /profile/parcels/:parcelId` — update name/crop
+      - `DELETE /profile/parcels/:parcelId`
+      - `POST /profile/parcels/:parcelId/area` — recalculate area from geometry
+    - Claim Lifecycle:
+      - `POST /claims` — create draft claim (parcelId, eventType, eventDate, geometry, idempotencyKey)
+      - `GET /claims` — list my claims (paginated)
+      - `GET /claims/:id` — claim detail + evidence + assessment
+      - `POST /claims/:id/submit` — draft → submitted (triggers processing)
+      - `POST /claims/:id/withdraw` — draft/submitted → withdrawn
+      - `POST /claims/:id/resubmit` — more_evidence_required → submitted (with new evidence)
+      - `POST /claims/:id/verify` — request deterministic verification (E9-S5 engine, Phase 6 exposure)
+    - Claim Evidence (reuses existing presigned S3 pipeline):
+      - `POST /claims/:id/evidence/presign` — { contentType, size, filename? } → { uploadId, uploadUrl, expiresIn }
+      - `POST /claims/:id/evidence/:evidenceId/complete` — verifies + stores (pHash dedup)
+      - `DELETE /claims/:id/evidence/:evidenceId` — allowed in draft/submitted/more_evidence_required
+      - `GET /claims/:id/evidence/:evidenceId/url` — signed GET (owner/admin only, 5 min TTL)
+    - Claim Area Calculation (authoritative backend):
+      - `POST /claims/calculate-area` — { geometry } → { areaAcres, remainingEligible, overlapWarnings }
+    - Admin (Phase 10, exception-only):
+      - `GET /admin/claims` — queue with filters/pagination
+      - `GET /admin/claims/:id` — full detail + evidence signed URLs + assessment + audit
+      - `POST /admin/claims/:id/override` — approved/rejected with reason (second-admin if >X acres)
+
+All claim endpoints: `requireAuth` + ownership scoping (`cognitoSub`); `claimLimiter` + `evidenceLimiter` rate limits; 404 for foreign resources; idempotency keys on create/submit.
+
+> **Status (Phase 2 implementation note):** implemented — `POST /claims`, `GET /claims`, `GET /claims/:id` (detail + evidence; `assessment: null` until the verification phases), `POST /claims/:id/submit`, `POST /claims/:id/withdraw`, `POST /claims/:id/resubmit`, and all four claim-evidence endpoints (presign / complete / delete / signed-GET url). **Deferred to later phases** (not part of Phase 2): `POST /claims/calculate-area` (needs the E9-S3/S4 area-eligibility/overlap engine, P5), admin endpoints (Phase 10), and pHash dedup on evidence complete (E9-S6). There is **no `PATCH /claims/:id`** draft-update endpoint — the finalized contract does not define one; draft claims are re-created or resubmitted per the contract.
+
+> **Status (Phase 3 hardening note — claim evidence + assessment foundation):** evidence layer hardened on the unchanged Phase 2 contract. `complete` is now **atomic + idempotent** (status CAS `pending → processing`; exactly one record per upload; repeated completes return the stored metadata; a missing S3 object leaves the record `pending` so the same presigned capability retries). Every evidence mutation (`presign` / `complete` / `delete`) appends an append-only `ClaimAudit` row (`evidence_presigned` / `evidence_completed` / `evidence_deleted`, actor `farmer`, `requestId` correlation; no `s3Key`/bucket/owner in metadata). Submit remains **explicitly evidence-optional** (Phase 2 contract) — no client `evidenceUploaded` flag is ever trusted; evidence presence is server-derived from persisted `ClaimEvidence` rows. **Not implemented in Phase 3** (explicit boundary): no AI/vision/weather/RAG calls, no deterministic verification, no pHash/duplicate-image/fraud detection, no acreage derived from images (P4 — the server-computed geometry area remains the only authoritative area), no `claimassessment` writes (persistence boundary only), and no frontend claim wizard/admin UI. 17-scenario Phase 3 hardening suite added beside the Phase 1/2 suites (125 total).
+
+> **Status (Phase 5 note — Deterministic Verification, E9-S5):** the public claim API surface remains **unchanged** — no new verification endpoint was added (internal service only). The deterministic verification engine (`verifyClaim` internal service) is invoked after the assessment completes; it writes the final decision to `claimassessment` (`state`, `reason`, `decidedAt`, `decidedBy:"engine"`, `approvedGeometry`, `approvedAreaAcres`, `rules`, `verification` subdoc) and advances the claim state via the centralized machine (`submitted → processing → <verified|rejected|out_of_limit|duplicate_area|more_evidence_required>`) with append-only `ClaimAudit` entries (actor `"engine"`, `fromState`/`toState`, `requestId` correlated, metadata `{evidenceVersion, imageCount, overlapEvaluated:false, engineVersion}`). `GET /claims/:id` now returns the decided assessment additively in the claim detail (`assessment.state`, `assessment.rules`, `assessment.approvedAreaAcres`, etc.). No compensation, admin override, or pHash/fraud is implemented. 28-scenario Phase 5 verification suite added (full suite target 194+).
+
+> **Status (Phase 6 note — Verification API & Lifecycle Integration, E9-S6 integration slice):** the frozen Phase 5 engine is now exposed through a **thin public endpoint** `POST /claims/:id/verify` (auth required + claim-scoped ownership + `claimLimiter` + `claimParams` validation; **no request body contract**). The controller forwards only `{ claimId, cognitoSub, requestId }` — any client-supplied result/state/area/AI payload is structurally ignored (P5-20 preserved). The server loads the authoritative claim/evidence/assessment, runs the deterministic rules, persists the decision, and advances the state via the frozen machine. **Response:** `ApiResponse.success` with `data.verification` = `{ claimId, idempotent, inProgress, claimState, outcome, reason, rules, approvedGeometry, approvedAreaAcres, weatherCorrelation, decidedAt, decidedBy:"engine", claimedAreaAcres, parcelAreaAcres, evidenceVersion, engineVersion }`. **Idempotency/concurrency/retry:** an already-decided claim reuses the persisted decision (`idempotent:true`, no re-run, no duplicate audit); concurrent requests settle via the atomic `submitted → processing` CAS — exactly one decision, observers either reuse the winner's decision or receive `inProgress:true` with `outcome:null`; a missing/stale assessment (evidence present) is a **retryable 500** (never a silent rejection) that succeeds once the internal assessment completes; terminal claims (`verified`, `rejected`, `out_of_limit`, `duplicate_area`, `more_evidence_required`, `withdrawn`) can never be re-processed. **Frozen boundary preserved:** `partially_verified` and `duplicate_area` are never emitted by these rules (overlap unchecked, E9-S6). `GET /claims` stays backward compatible (`assessment: null` in the list; detail exposes it additively). 40-scenario Phase 6 API suite added (`tests/claim.verify.api.test.js`; full suite 285).

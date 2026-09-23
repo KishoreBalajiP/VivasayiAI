@@ -14,7 +14,7 @@
 
 ## 1. Overall architecture (today)
 
-The product is a **serverless monolith**: one Express API (wrapped with `serverless-http`) runs on AWS Lambda; a React SPA calls it from the browser; an external SaaS vector store (ChromaDB cloud) holds the knowledge base; MongoDB Atlas holds users and chat sessions. Notably, **weather is fetched directly by the frontend** (Open-Meteo) and never reaches the AI — there is **no Context Engine, no Model Adapter, and no Farm Memory yet** (those are the vision-v2 target; see [AI_Product_Principles.md](../product/AI_Product_Principles.md)).
+The product is a **serverless monolith**: one Express API (wrapped with `serverless-http`) runs on AWS Lambda; a React SPA calls it from the browser; an external SaaS vector store (ChromaDB cloud) holds the knowledge base; MongoDB Atlas holds users, chat sessions, and farm profiles. Notably, **weather is fetched directly by the frontend** (Open-Meteo) and also via backend proxy; there is **no Context Engine, no Model Adapter, no Farm Memory, and no Agricultural Loss Claim system yet** (those are the vision-v2 target; see [AI_Product_Principles.md](../product/AI_Product_Principles.md)).
 
 ```mermaid
 flowchart LR
@@ -27,17 +27,21 @@ flowchart LR
     end
 
     subgraph External SaaS
-        Mongo[(MongoDB Atlas<br/>users · sessions)]
+        Mongo[(MongoDB Atlas<br/>users · sessions · farm profiles)]
         Chroma[(ChromaDB Cloud<br/>farming-documents)]
         Gemini[Google Gemini 2.5 Flash]
         Cohere[Cohere embeddings<br/>embed-english-v3.0]
         Cognito[AWS Cognito<br/>OAuth2]
         WeatherAPI[Open-Meteo API]
-        S3[(AWS S3<br/>CSV datasets)]
+        S3[(AWS S3<br/>CSV datasets + claim images)]
     end
 
     FE -- "POST /chat (text+lang+email)" --> Lambda
     FE -- "GET/POST/DELETE /chatsessions/*" --> Lambda
+    FE -- "POST/GET /profile/parcels" --> Lambda
+    FE -- "POST/GET /claims/*" --> Lambda
+    FE -- "POST /claims/:id/evidence/presign" --> Lambda
+    FE -- "PUT claim image (direct)" --> S3
     FE -- "auth code → tokens" --> Cognito
     FE -- "weather (direct)" --> WeatherAPI
     Lambda --> Mongo
@@ -45,6 +49,8 @@ flowchart LR
     Lambda --> Gemini
     Lambda --> Cohere
     Lambda --> Cognito
+    Lambda --> S3
+    Lambda --> WeatherAPI
     S3 -. "ingest script (rag/ingest.js)" .-> Chroma
 ```
 
@@ -179,6 +185,7 @@ flowchart LR
         API[Express API<br/>auth middleware + streaming SSE]
         CE[Context Engine<br/>profile · GPS · weather · soil · season<br/>history · advisories · RAG]
         FM[Farm Memory<br/>long-term farm intelligence]
+        CL[Claim Verification Engine<br/>geometry · AI evidence · deterministic rules]
         ING[Ingestion service<br/>scheduled]
         JOB[Async jobs<br/>alerts, ingestion]
     end
@@ -194,7 +201,7 @@ flowchart LR
     end
 
     subgraph Data
-        PG[(MongoDB Atlas<br/>users · farms · memory · sessions · content)]
+        PG[(MongoDB Atlas<br/>users · farms · memory · sessions · content · claims)]
         VEC[(ChromaDB Cloud<br/>knowledge base)]
         CACHE[(Cache: district weather/soil)]
     end
@@ -208,6 +215,11 @@ flowchart LR
     API --> FM
     FM --> PG
     CE --> FM
+    API --> CL
+    CL --> PG
+    CL --> MA
+    CL --> VISION
+    CL --> WeatherAPI
     API --> MA
     MA --> GEM
     MA --> LLM2
@@ -219,7 +231,7 @@ flowchart LR
     JOB --> WA
 ```
 
-**Key changes vs today:** auth middleware; **Context Engine** assembles context before every LLM call (F-46, ADR-014); **Model Adapter** makes the provider swappable by config (F-45, ADR-015); **Farm Memory** persists farm intelligence (F-47, ADR-016); weather/context proxy in backend; streaming; typed client; message pagination; scheduled ingestion; monitoring/alerting.
+**Key changes vs today:** auth middleware; **Context Engine** assembles context before every LLM call (F-46, ADR-014); **Model Adapter** makes the provider swappable by config (F-45, ADR-015); **Farm Memory** persists farm intelligence (F-47, ADR-016); **Claim Verification Engine** computes authoritative geometry, runs AI evidence analysis, applies deterministic rules (**implemented in Phase 5 / E9-S5**; pure engine + orchestration service; overlap unchecked E9-S6; pHash/fraud deferred) and is now reachable through a **thin public endpoint `POST /claims/:claimId/verify` (Phase 6 integration slice)** — authenticated, ownership-scoped, `claimLimiter` + params-only validation, no request-body contract; the server loads the authoritative claim/evidence/assessment, runs the frozen rules, persists the decision, and advances the state via the centralized machine (idempotent decision reuse + atomic `submitted → processing` CAS). Weather/context proxy in backend; streaming; typed client; message pagination; scheduled ingestion; monitoring/alerting.
 
 ---
 

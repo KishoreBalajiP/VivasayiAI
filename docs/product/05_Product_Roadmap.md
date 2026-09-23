@@ -46,6 +46,8 @@ The current prototype has a working core loop but cannot carry real users: auth 
 - **Model Adapter:** extract all model access behind a provider-agnostic layer (interface `ask`/`stream`/`vision`/`embed`); Gemini becomes one configurable provider, not the only one (F-45, ADR-015, APP-05). `[PLANNED]`
 - **Context Engine — first slice:** backend weather/location/soil/farm-profile auto-assembly injected into prompts (replaces dead `{{...}}` placeholders); zero-question onboarding (F-20; the full nine-domain engine F-46 completes in Phase 2 — see below, ADR-014, APP-02/03). `[DONE]`
 - **Farm profile:** district/crops/acres onboarding as the Context Engine + Farm Memory seed (F-21). `[DONE]`
+- **Farm parcel foundation:** parcels array on FarmProfile with GeoJSON geometry + server-calculated area; multiple parcels per farm; legacy users must configure a parcel before claiming (F-49 Phase 1a, additive migration). `[PLANNED]`
+- **Agricultural Loss Claim Verification:** farmer draws affected polygon on parcel → backend authoritative area → AI evidence analysis (structured observation only) → deterministic verification rules → automated approval/rejection; evidence images via presigned S3; MapLibre GL + OSM map. (F-49 Phase 1b; derivation from geometry never uses AI-invented acreage (P4); claim window 30d configurable (P2); weather is supporting evidence only (P3); overlap checks with configurable tolerance (P5); resubmission only from `MORE_EVIDENCE_REQUIRED` (P6); admin exception-only (P7)). `[PLANNED]`
 - **AI diagnosis pipeline:** upload → vision analysis **fused with weather/soil/crop/location context** → structured diagnosis (F-22, ADR-017, APP-07). E3-S1 transport DONE. E3-S2 blocked (D-23: S3 storage, D-24: EXIF/consent pending).
 - **Streaming chat (SSE).** `[BLOCKED]` — Lambda + `serverless-http` buffers responses; needs D-05 (SSE transport) + `RESPONSE_STREAM` deploy infra (17_Backlog E4-S1)
 - **Tamil-first onboarding:** language selection before login, suggested questions; **no re-asking for what GPS/profile can resolve** (APP-02). `[PLANNED]`
@@ -58,6 +60,8 @@ The current prototype has a working core loop but cannot carry real users: auth 
 - "The platform knows your district + weather + farm without asking" — provable in a demo (Context Engine).
 - Working context-fused photo diagnosis.
 - Provider swappable by config (`MODEL_PROVIDER`) with business logic untouched.
+- Farm parcel creation + authoritative area calculation; claim wizard with polygon draw on MapLibre; claim status cards/summaries.
+- Automated claim verification (geometry + AI evidence + deterministic rules) with audit trail; exception-only admin path.
 - Test suite + CI gate.
 - Cost & quality dashboards.
 

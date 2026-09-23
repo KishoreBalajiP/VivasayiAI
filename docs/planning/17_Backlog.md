@@ -76,6 +76,25 @@
 | E5-S5 | Monitoring | Structured logs (pino), Sentry, $/conversation + latency dashboards | P1 | 5 | — | TODO |
 | E5-S6 | Staging env + gated deploys | No direct-to-prod on push; tag → staging → prod | P0 | 5 | E5-S4 | TODO |
 
+## EPIC 9 — Agricultural Loss / Affected-Area Claim Verification (F-49, Phase 1, P0)
+
+| ID | Feature | Story / Task | Pri | Est | Dep | Status |
+|---|---|---|---|---|---|---|
+| E9-S1 | Parcel foundation | `parcels[]` on FarmProfile; GeoJSON Polygon; server-authoritative area calc; multiple parcels per farm; additive migration | P0 | 5 | E2-S4 | DONE |
+| E9-S2 | Claim lifecycle API | `POST /claims` (draft, `idempotencyKey`), evidence presign/complete/delete/url, submit, withdraw, resubmit (from `MORE_EVIDENCE_REQUIRED` only); state machine guard; claim window (P2) | P0 | 8 | E9-S1 | DONE |
+| E9-S3 | Geometry checks | Authoritative area (Turf/geojson-area); overlap vs verified + in-flight claims; configurable tolerance (P5); no AI-derived acreage (P4) | P0 | 5 | E9-S2 | TODO |
+| E9-S4 | AI evidence analysis | Vision → structured observation (cropDetected, damageDetected, damageType, severity, visibleAffectedPortion, confidence, uncertain, inconsistencies, observations, imageQuality) — acreage/polygon/compensation/status are prohibited; weather as supporting-only evidence (P3) | P0 | 5 | E3-S2, E9-S3 | DONE (Phase 4) |
+| E9-S5 | Verification engine | Deterministic rules → verified / partially_verified / more_evidence_required / rejected / out_of_limit / duplicate_area; automated normal path; admin exception-only (P7) | P0 | 5 | E9-S4 | DONE |
+| E9-S6 | Evidence storage | Presigned S3 upload (images only MVP, P9); pHash dedup; EXIF strip; owner-scoped keys; signed GET for owner/admin | P0 | 5 | E9-S2 | TODO |
+| E9-S7 | Audit & idempotency | Append-only `claimaudit` on transitions; unique `idempotencyKey`; DB-enforced resubmission limits | P0 | 3 | E9-S5 | TODO |
+| E9-S8 | Claim UI | MapLibre GL + OSM draw (not paid tiles, P8); ClaimWizard, ClaimMapDraw, ClaimStatusCard, ClaimEvidenceGallery, ClaimsPage | P0 | 8 | E9-S2, E9-S6 | TODO |
+
+> **Phase 3 (E9-S2 hardening, 2026-09):** the "claim evidence + assessment foundation" pass completed the E9-S6 *evidence storage* slice already seeded inside E9-S2 — presigned upload, magic-byte + sharp validation, EXIF strip, owner-scoped keys, signed GET, and now **evidence mutation audit (`evidence_presigned`/`evidence_completed`/`evidence_deleted`) + atomic/idempotent complete** (E9-S7 audit portion; 17-scenario hardening suite, `tests/claims.evidence.test.js`). **Explicitly NOT implemented** (per ADR-019 frozen boundaries): pHash/duplicate-image fraud detection (E9-S6 remainder), AI evidence analysis (E9-S4), weather correlation (E9-S4), deterministic verification engine (E9-S5), `POST /claims/calculate-area` overlap checks (E9-S3), frontend claim UI (E9-S8), admin UI, and `claimassessment` writes (persistence boundary only). No simulation of processing was introduced — `submitted` remains a farmer submit path with no engine.
+
+> **Phase 4 (E9-S4, 2026-09):** implemented the **AI evidence assessment** slice — a dedicated claim-loss vision prompt + normalizer (`src/ai/ClaimLossVisionTemplates.js`, `services/claimVision.service.js`, reusing the existing shared Gemini adapter), and an internal `services/claimAssessment.service.js` that writes `claimassessment` rows (`status` lifecycle, `version`, `model`, `evidenceVersion`, per-image frozen observations in `aiImageAssessments`, deterministic `aiAggregate`) with idempotent/concurrency-safe slot acquisition. 28-scenario integration suite (`tests/claim.assessment.test.js`) + 13 vision unit tests (`tests/claim.vision.test.js`) added (full suite 166). **Explicitly NOT implemented** (per ADR-019 frozen boundaries): final verification engine (E9-S5 — decision fields stay `null`), weather correlation, `POST /claims/calculate-area` overlap checks (E9-S3), pHash/duplicate-image fraud detection (E9-S6 remainder), frontend claim UI (E9-S8), admin UI, any public assessment/verification endpoint (internal service only per §18), and any severity→acreage conversion (P4 — area stays backend-derived from geometry only).
+
+> **Phase 6 (E9-S6 integration slice — Verification API & Lifecycle Integration, 2026-09):** the frozen E9-S5 engine is now reachable through **one thin endpoint** `POST /claims/:claimId/verify` (auth + ownership + `claimLimiter` + zod params; **no request-body contract**). Server-authoritative-only: the controller forwards `{ claimId, cognitoSub, requestId }`, loads the persisted claim/evidence/assessment, runs the deterministic rules, persists the decision, and advances the state via the frozen machine. Idempotent decision reuse + atomic `submitted → processing` CAS (exactly one decision under concurrency); retryable gates stay retryable (never a silent rejection); terminal claims cannot be re-processed; `GET /claims/:id` already exposes the decided assessment additively and `GET /claims` stays backward compatible. 40-scenario API suite (`tests/claim.verify.api.test.js`; full suite 285). **Explicitly NOT implemented** (unchanged frozen boundaries): pHash/duplicate-image fraud (E9-S6 remainder), overlap checks (E9-S3 — `duplicate_area` never emitted), weather integration, compensation, admin UI / admin override, and the frontend claim UI (E9-S8 — the verification contract is ready to be consumed by the future ClaimStatusCard).
+
 ## EPIC 6 — WhatsApp (Phase 2, P1)
 
 | ID | Feature | Story / Task | Pri | Est | Dep | Status |
@@ -116,6 +135,8 @@ flowchart LR
     A[Sprint 1<br/>E1-S1..S9 security core] --> B[Sprint 2<br/>E2 context + E3 image]
     B --> C[Sprint 3<br/>E4 UX + E5 quality]
     C --> D[Sprint 4<br/>E5 CI/deploy + E1-S12]
+    D --> E[Sprint 5+<br/>E9 claim: parcels + lifecycle + geometry]
+    E --> F[E9 claim: AI evidence + verification + UI]
 ```
 
 ## Backlog hygiene rules
