@@ -11,7 +11,10 @@ import {
   VERIFICATION_ENGINE_VERSION,
 } from "./claimVerificationEngine.service.js";
 
-// E9-S5 (ADR-019) — Claim Verification orchestration (internal service, NO public endpoint; §18).
+// E9-S5/E9-S6 (ADR-019) — Claim Verification orchestration. Phase 5 shipped it as an internal
+// service with no public endpoint; Phase 6 (integration) exposes it through the THIN HTTP surface
+// POST /claims/:claimId/verify (08_API_Documentation §10.8) — the controller only forwards
+// { claimId, cognitoSub, requestId } and any client-supplied payload is structurally ignored.
 //
 // Consumes a SUBMITTED claim + its Phase 4 ClaimAssessment and runs the pure deterministic engine,
 // then persists the decision additively into `claimassessment` and transitions the claim via the
