@@ -10,6 +10,7 @@ import {
 } from "../utils/imageFormat.js";
 import {
   getSignedPutUrl,
+  getSignedGetUrl,
   headObject,
   getObject,
   putObject,
@@ -220,4 +221,52 @@ export const completeUpload = async ({ uploadId, cognitoSub }) => {
   return toUploadResult(record);
 };
 
-export default { createPresignedUpload, completeUpload };
+// Authorized chat-image retrieval (chat-history reconstruction). The persisted message stores
+// only the stable `imageId` (= uploadId); the client asks for a SHORT-LIVED, on-demand signed
+// GET URL to actually render the private pixel data — never a permanent URL, never a stored
+// URL, never the raw s3Key/credentials/bucket (15_Security §5).
+//
+// Ownership is enforced the same way as every other E3 path: lookup is `{ uploadId,
+// cognitoSub }`, so a foreign/unknown id is a 404 — indistinguishable from a non-existent
+// upload (no resource-existence disclosure, no cross-user leak). The URL itself is minted in
+// s3.service from the SERVER-OWNED key of the matched record; the client can never supply a
+// key. `headObject` guards against a record whose object was cleaned up (sanitized 404),
+// so a broken/deleted image cannot leak internals or crash the request.
+export const createImageViewUrl = async ({ uploadId, cognitoSub }) => {
+  const record = await ImageRecord.findOne({ uploadId, cognitoSub });
+  if (!record) {
+    throw ApiError.notFound("Image upload not found");
+  }
+  if (record.status === "pending" || record.status === "uploaded") {
+    throw ApiError.badRequest("Image has not been uploaded yet");
+  }
+
+  let verified;
+  try {
+    verified = await headObject(record.s3Key);
+  } catch (error) {
+    throw error; // sanitized ApiError.internal from s3.service
+  }
+  if (!verified) {
+    // Record exists but the private object is gone — sanitized, no key/bucket details.
+    throw ApiError.notFound("Image not found");
+  }
+
+  const signedUrl = await getSignedGetUrl({
+    key: record.s3Key,
+    expiresInSeconds: env.imageViewUrlTtlSeconds,
+  });
+
+  logger.info({ uploadId, cognitoSub }, "image.view_url_minted");
+
+  // Only the capability the browser needs: the scoped id, the scoped URL and its TTL. The
+  // raw key/bucket/config and all credentials stay server-side.
+  return {
+    uploadId,
+    mediaType: record.processed?.mediaType || record.mediaType,
+    signedUrl,
+    expiresIn: env.imageViewUrlTtlSeconds * 1000,
+  };
+};
+
+export default { createPresignedUpload, completeUpload, createImageViewUrl };

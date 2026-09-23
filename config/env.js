@@ -94,6 +94,10 @@ export const env = Object.freeze({
   // E3: object-key namespace inside S3_BUCKET for farmer uploads (kept separate from the
   // dataset/ingestion keys so ingestion scripts never pick up uploads).
   uploadStoragePrefix: process.env.UPLOAD_STORAGE_PREFIX || "uploads",
+  // E3: short-lived presigned GET URL lifetime for authorized chat-image retrieval
+  // (GET /upload/:uploadId/view). Seconds; intentionally short so a leaked URL grants
+  // bounded access. Never persisted — minted on demand per history reconstruction.
+  imageViewUrlTtlSeconds: Number(process.env.IMAGE_VIEW_URL_TTL_SECONDS) || 300,
   // E3 dev/test-only seams (documented in .env.example; server-side config, never client-
   // controlled): "mock" swaps S3/AI for deterministic in-memory/fake implementations.
   imageStorageMode: process.env.IMAGE_STORAGE_MODE || "live",
