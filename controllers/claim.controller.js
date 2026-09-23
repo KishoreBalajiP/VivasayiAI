@@ -3,6 +3,7 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import * as claimService from "../services/claim.service.js";
 import * as claimEvidenceService from "../services/claimEvidence.service.js";
+import claimVerificationService from "../services/claimVerification.service.js";
 
 // F-49 (ADR-019) — claim lifecycle + claim-scoped evidence (08_API_Documentation §10).
 // Identity always derives from the verified token (req.user.id = cognitoSub), never from the
@@ -56,6 +57,28 @@ const resubmitClaim = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Claim resubmitted", { claim });
 });
 
+// E9-S5/E9-S6 (ADR-019, Phase 6 integration) — POST /claims/:claimId/verify.
+// Thin endpoint over the Phase 5 internal `verifyClaim` orchestration. The CLIENT only requests
+// verification; the server loads the authoritative claim/evidence/assessment, runs the pure
+// deterministic engine, persists the decision, and advances the state via the frozen machine.
+// Only { claimId, cognitoSub, requestId } are read — ANY client-supplied result/state/area/AI
+// payload is structurally ignored (P5-20 preserve). Idempotent + concurrency-safe (CAS).
+const verifyClaim = asyncHandler(async (req, res) => {
+  const verification = await claimVerificationService.verifyClaim({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+    requestId: req.requestId ?? null,
+  });
+  const message = verification.inProgress
+    ? "Claim verification in progress"
+    : verification.idempotent
+      ? "Verification decision already exists"
+      : verification.claimState === "verified"
+        ? "Claim verified"
+        : "Claim verification completed";
+  return ApiResponse.success(res, message, { verification });
+});
+
 const presignEvidence = asyncHandler(async (req, res) => {
   const result = await claimEvidenceService.presignEvidence({
     claimId: req.params.claimId,
@@ -104,6 +127,7 @@ export {
   submitClaim,
   withdrawClaim,
   resubmitClaim,
+  verifyClaim,
   presignEvidence,
   completeEvidence,
   deleteEvidence,

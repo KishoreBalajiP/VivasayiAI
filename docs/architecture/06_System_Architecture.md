@@ -231,7 +231,7 @@ flowchart LR
     JOB --> WA
 ```
 
-**Key changes vs today:** auth middleware; **Context Engine** assembles context before every LLM call (F-46, ADR-014); **Model Adapter** makes the provider swappable by config (F-45, ADR-015); **Farm Memory** persists farm intelligence (F-47, ADR-016); **Claim Verification Engine** computes authoritative geometry, runs AI evidence analysis, applies deterministic rules (**implemented in Phase 5 / E9-S5**; pure engine + orchestration service; overlap unchecked E9-S6; pHash/fraud deferred); weather/context proxy in backend; streaming; typed client; message pagination; scheduled ingestion; monitoring/alerting.
+**Key changes vs today:** auth middleware; **Context Engine** assembles context before every LLM call (F-46, ADR-014); **Model Adapter** makes the provider swappable by config (F-45, ADR-015); **Farm Memory** persists farm intelligence (F-47, ADR-016); **Claim Verification Engine** computes authoritative geometry, runs AI evidence analysis, applies deterministic rules (**implemented in Phase 5 / E9-S5**; pure engine + orchestration service; overlap unchecked E9-S6; pHash/fraud deferred) and is now reachable through a **thin public endpoint `POST /claims/:claimId/verify` (Phase 6 integration slice)** — authenticated, ownership-scoped, `claimLimiter` + params-only validation, no request-body contract; the server loads the authoritative claim/evidence/assessment, runs the frozen rules, persists the decision, and advances the state via the centralized machine (idempotent decision reuse + atomic `submitted → processing` CAS). Weather/context proxy in backend; streaming; typed client; message pagination; scheduled ingestion; monitoring/alerting.
 
 ---
 

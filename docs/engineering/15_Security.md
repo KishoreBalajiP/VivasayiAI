@@ -100,6 +100,14 @@ flowchart LR
      - Overlap remains `unchecked` (E9-S3 deferred to E9-S6); `partially_verified` is never emitted by Phase 5 rules (P5-19, P5-47).
      - Compensation, admin UI, pHash/fraud remain unimplemented (explicit boundary).
 
+- **Phase 6 — Verification API & Lifecycle Integration (E9-S6 integration slice, implemented):** the frozen Phase 5 engine is exposed through **one thin endpoint** `POST /claims/:claimId/verify` (auth required, claim-scoped ownership via `cognitoSub`, `claimLimiter`, zod `claimParams` param validation, and **no request-body contract**). **Security invariants carried from Phase 5 (verified by the 40-scenario P6 API suite):**
+  - Controller reads only `{ claimId, cognitoSub, requestId }`; any client-supplied target state, verification result, acreage, geometry, AI assessment, or forged evidence reference (uploadId/evidenceId/s3Key/evidenceVersion) is structurally ignored — the server always loads the authoritative claim/evidence/assessment (P6-07..P6-10, P6-37..P6-40).
+  - Errors never leak internals: no `s3Key`/bucket/`cognitoSub`/`idempotencyKey`/`uploadId` in responses; malformed JSON → 400 `Invalid JSON payload`; foreign/unknown claim → 404 (IDOR-safe) with no audit side-effect.
+  - Idempotent/concurrency-safe: an already-decided claim reuses the persisted decision (`idempotent:true`, no re-run, no duplicate audit — append-only trail preserved); concurrent requests settle via the atomic `submitted → processing` CAS (exactly one `verification_started` + one decision audit row; observers reuse the winner's decision or see `inProgress:true`).
+  - Retryable failures stay retryable: a missing/stale assessment with stored evidence is a **500 (never a silent rejection)** and succeeds once the internal assessment completes.
+  - Terminal claims can never be re-processed (`verified`, `rejected`, `out_of_limit`, `duplicate_area`, `more_evidence_required`, `withdrawn`).
+  - No new privileges/secrets/external calls introduced by the endpoint; audit rows (actor `"engine"`) remain hygienic and `requestId`-correlated.
+
 ## 6. Data privacy
 
 - **Minimization:** collect only what the product needs (district, crops — not precise GPS by default).

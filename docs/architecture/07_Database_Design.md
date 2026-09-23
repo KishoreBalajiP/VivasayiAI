@@ -387,6 +387,10 @@ rules evaluated in strict precedence:
 
 Outcome `verified` produces geometry-derived `approvedGeometry`/`approvedAreaAcres`. AI acres/polygon/compensation/output are **structurally ignored** (guardrail). Crop consistency is informational only. The `verification` subdocument records the engine version, timing, and any failure stage (`storage` | `provider` | `assessment` | `processing`). The claim state is advanced via the centralized state machine (`submitted → processing → <outcome>`) with append-only `ClaimAudit` entries (actor `"engine"`, `requestId` correlated, metadata `{evidenceVersion, imageCount, overlapEvaluated:false, engineVersion}`).
 
+### Phase 6 integration note (Verification API — the same persisted decision is now served by `POST /claims/:claimId/verify`)
+
+The **write path is unchanged** from Phase 5 — Phase 6 added no new persistence structure. The new thin endpoint invokes the same guarded orchestration (`verifyClaim`), which persists the decision exactly as above (`claimassessment` row + claim-state transition + audit). Idempotent requests reuse the persisted row (`verification.status: "completed"`, no overwrite, no duplicate audit); concurrent requests write exactly one decision via the atomic `submitted → processing` CAS; a retryable gate failure leaves `verification.status: "failed"` with a `verification_failed` audit until the internal assessment completes. `GET /claims/:id` surfaces the same row additively (`assessment.state/rules/approvedAreaAcres/…`); `GET /claims` keeps the original contract (`assessment: null` in the list).
+
 ---
 
 ## 9. Collection: `claimaudit` (Append-Only Claim Audit Trail)

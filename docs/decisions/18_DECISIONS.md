@@ -311,6 +311,15 @@ Implemented the **E9-S5 deterministic verification engine** additively on the fr
 
 **No new decisions**: all rules/configs are existing frozen knobs (`CLAIM_WINDOW_DAYS`, `CLAIM_AREA_OVERAGE_FRACTION`, `CLAIM_OVERLAP_TOLERANCE_M`, frozen vocabularies, P1–P10). No new secrets, models, endpoints, frontend, admin, compensation, pHash/fraud, or weather integration. The public API surface is unchanged — `GET /claims/:id` now returns the decided assessment additively.
 
+### Phase 6 implementation note (Verification API & Lifecycle Integration, E9-S6 integration slice / ADR-019)
+
+Phase 6 exposes the frozen E9-S5 engine through **one thin public endpoint** `POST /claims/:claimId/verify` — a deliberate boundary decision:
+
+- **Endpoint shape (matches existing conventions, no new contract areas):** mounted after `requireAuth` in `app.js`, carries `claimLimiter` + zod `claimParams` param validation, and defines **no request-body schema**. The controller (`controllers/claim.controller.js` `verifyClaim`) forwards exactly `{ claimId, cognitoSub: req.user.id, requestId: req.requestId ?? null }` and responds `ApiResponse.success(res, message, { verification })` where `verification` is the persisted `serializeDecision` output. Any client-supplied result/state/area/AI payload is structurally ignored — the server loads the authoritative claim/evidence/assessment.
+- **One boundary decision documented here (not a rule change):** the Phase 5 service header previously said "internal service, NO public endpoint". Existing §18 rationale (no public exposure while the engine was unproven) is superseded by this integration slice: the engine's idempotency, CAS, and audit semantics are already battle-tested by Phase 5, so exposing the same guarded orchestration (unchanged passed-through call) is additive and reversible (rollback = drop the route/controller). The pure deterministic rules themselves were **not modified**.
+- **Lifecycle/invariants preserved:** state machine untouched (`submitted → processing` remains the only inbound to `processing`); terminal claims (`verified | rejected | out_of_limit | duplicate_area | more_evidence_required | withdrawn`) can never be re-processed; idempotent decision reuse; atomic CAS under concurrency (one decision, one audit pair); retryable gate failures stay retryable (never a silent rejection); `partially_verified` and `duplicate_area` remain never-emitted (overlap unchecked, E9-S6); no compensation/admin/fraud/frontend/weather added.
+- **Tests:** new `tests/claim.verify.api.test.js` — 40 API scenarios (P6-01..P6-40: authorization, request validation + client-tampering guardrails, lifecycle incl. frozen never-emitted outcomes, idempotency, concurrency/CAS, persistence, audit, security). Full suite: **285 tests, all passing** (245 + 40). Docs updated: 08 (§10), 15 (§5), 17, and this changelog.
+
 - New decisions: create a new ADR entry, update this file, and link it from affected docs.
 - Reversals: mark the old ADR `SUPERSEDED` and cite the new ADR.
 - Reference ADRs in commits/PRs that implement them (e.g., `security: verified JWT (ADR-013)`).

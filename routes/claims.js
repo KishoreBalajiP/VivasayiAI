@@ -14,6 +14,7 @@ import {
   submitClaim,
   withdrawClaim,
   resubmitClaim,
+  verifyClaim,
   presignEvidence,
   completeEvidence,
   deleteEvidence,
@@ -35,6 +36,11 @@ router.get("/:claimId", claimLimiter, validate(claimParams, "params"), getClaim)
 router.post("/:claimId/submit", claimLimiter, validate(claimParams, "params"), submitClaim);
 router.post("/:claimId/withdraw", claimLimiter, validate(claimParams, "params"), withdrawClaim);
 router.post("/:claimId/resubmit", claimLimiter, validate(claimParams, "params"), resubmitClaim);
+
+// E9-S5/E9-S6 (Phase 6) — deterministic verification gateway. Same ownership/limit conventions
+// as the rest of the lifecycle; NO body contract (the client only requests verification — any
+// client-supplied result/state/area/AI payload is ignored by the service, P5-20).
+router.post("/:claimId/verify", claimLimiter, validate(claimParams, "params"), verifyClaim);
 
 // Claim evidence (reuses the existing presigned S3 pipeline)
 router.post(
