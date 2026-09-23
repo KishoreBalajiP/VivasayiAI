@@ -38,23 +38,36 @@ const chromaClient = new CloudClient({
   database: env.chromaDatabase
 });
 
+// Lazy ChromaDB collection connection — avoid blocking at import time so that integration
+// tests which import the full Express app do not fail when ChromaDB is unreachable.
+let collectionPromise = null;
+let collectionReady = false;
 let collection;
-try {
-  collection = await chromaClient.getCollection({
-    name: "farming-documents"
-  });
-  logger.info("Connected to ChromaDB collection: farming-documents");
-  logger.info("Note: Embedding warnings are expected - we use Cohere embeddings externally");
-} catch (error) {
-  logger.error({ err: error }, "Failed to connect to ChromaDB collection");
-  throw new Error("ChromaDB collection not found. Please run ingestion first.");
-}
+
+const ensureCollection = async () => {
+  if (collectionReady) return collection;
+  if (!collectionPromise) {
+    collectionPromise = (async () => {
+      try {
+        collection = await chromaClient.getCollection({ name: "farming-documents" });
+        collectionReady = true;
+        logger.info("Connected to ChromaDB collection: farming-documents");
+        return collection;
+      } catch (error) {
+        logger.error({ err: error }, "Failed to connect to ChromaDB collection");
+        throw new Error("ChromaDB collection not found. Please run ingestion first.");
+      }
+    })();
+  }
+  return collectionPromise;
+};
 
 // RAG function using ChromaDB with chat context
 async function performRAG(userMessage, chatHistory = []) {
   try {
+    const coll = await ensureCollection();
     const messageEmbedding = await embeddings.embedQuery(userMessage);
-    const results = await collection.query({
+    const results = await coll.query({
       queryEmbeddings: [messageEmbedding],
       nResults: AIConfig.ragTopK,
     });

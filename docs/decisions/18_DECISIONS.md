@@ -224,7 +224,101 @@
 
 ---
 
-## Decision log conventions
+## ADR-019 — AI-Driven Agricultural Loss / Affected-Area Claim Verification
+- **Status:** ACCEPTED (Domain & MVP scope; implementation Phase 1) · **Date:** 2026-09-20 · **Deciders:** Founding team + Product Owner
+
+**Problem:** The product must verify farmer-reported agricultural loss / affected-area claims (e.g., crop loss from weather/insects) with trust, determinism, and no human bottleneck, while keeping AI exactly inside — not beyond — its safe boundary. Ten decision points (P1–P10 below) were mandated and are frozen for Phase 1 scope.
+
+### Approved decisions (P1–P10)
+
+**P1 — Parcels & claim binding.**
+FarmProfile supports **multiple parcels**; every claim binds to **exactly one `parcelId`**. Geometry is farmer-drawn on the parcel; the system **never fabricates geometry** (no district-centroid polygons, no GPS-derived shapes). Claims without a configured parcel are **not** permitted.
+
+**P2 — Claim window.**
+Claimable loss window = **30 days** default before submission, configurable (`CLAIM_WINDOW_DAYS`). The window is **backend-authoritative** — clients never compute eligibility. Future-dated event dates are rejected.
+
+**P3 — Weather as supporting evidence only.**
+Weather (Open-Meteo) is gathered as **supporting context** for the claim record. There are **no hard weather thresholds** (e.g., "rain ≥ 50 mm ⇒ reject") in Phase 1; the **absence of weather data must never cause a rejection** (it may only reduce confidence). Any future thresholds are added as **configurable** rules, never hardcoded, and require a new ADR.
+
+**P4 — No AI-derived acreage.**
+AI is **prohibited** from estimating area, remaining/approved area, or compensation. Area comes **only** from backend geometric computation on the authoritative parcel/claim polygon (Turf.js / geojson-area). Insufficient evidence ⇒ `MORE_EVIDENCE_REQUIRED`, never an AI guess.
+
+**P5 — Overlap policy.**
+Overlapping-claims detection uses a **configurable geometric tolerance/epsilon** (contract-style, avoiding floating-point false positives). Outcomes are distinguished: **(a) no overlap**, **(b) overlaps a verified claim**, **(c) overlaps a draft/in-flight claim** — each maps to a different verification result.
+
+**P6 — Resubmission.**
+Resubmission is allowed **only from `MORE_EVIDENCE_REQUIRED`** → `submitted` → `processing`. Limits/cooldowns are **configurable**. Terminal states (`verified`, `rejected`, `out_of_limit`, `duplicate_area`, `withdrawn`) cannot be resubmitted.
+
+**P7 — Admin is exception-only.**
+Normal verification is **fully automated** (geometry + AI evidence + deterministic rules). Admin review is a deferred, **exception-only** UI (Phase 10 backlog); admin identity reuses existing `requireRole('admin')`.
+
+**P8 — Maps: free stack.**
+Browser maps = **MapLibre GL + free OSM tiles** (no Google Maps / Mapbox). Tile source is **isolated in config** for future swapping. No map in Phase 1 (claim UI is Phase 1; map drawing is subsequent within the claim epic).
+
+**P9 — Evidence = images only (MVP).**
+Only raster images (JPEG/PNG/WEBP) in the MVP. No PDF/OCR/scan parsing. Evidence upload reuses the **existing private S3 presigned pipeline** (owner-scoped keys, EXIF stripped).
+
+**P10 — No auto-created parcels.**
+Parcels are **never auto-created** from survey/district data. Legacy users must **configure a parcel before claiming**; migration is **additive** (new fields/collections only; nothing removed).
+
+### Frozen boundaries (must not be overridden)
+
+- **AI may output:** `cropDetected`, `damageDetected`, `damageType`, `severity`, `visibleAffectedPortion`, `confidence`, `uncertain`, `inconsistencies`, `observations`, `imageQuality`.
+- **AI must NOT output:** `acreage`, `polygon`, `parcel boundary`, `remaining/approved area`, `compensation`, `final status`.
+- **Claim states (frozen):** `draft`, `submitted`, `processing`, `verified`, `partially_verified`, `more_evidence_required`, `rejected`, `out_of_limit`, `duplicate_area`, `withdrawn`.
+- **Evidence mutation allowed only in:** `draft | submitted | more_evidence_required`.
+- **Idempotency:** claim creation/submission requires a DB-enforced unique `idempotencyKey`.
+- **Frontend modules (frozen for later phases):** `api/claims.ts`, `api/types/claim.ts`, `components/ClaimWizard.tsx`, `ClaimMapDraw.tsx`, `ClaimStatusCard.tsx`, `ClaimEvidenceGallery.tsx`, `services/mapDraw.ts`, `claimFlow.ts`, `i18n/claim.ts`, `pages/ClaimsPage.tsx` — the claim feature is part of the product UI, not the chatbot.
+
+**Options considered:**
+1. Manual/paper-based loss assessment with human inspectors only.
+2. Pure ML "AI approves/rejects + AI computes acreage" end-to-end.
+3. **Hybrid deterministic pipeline (chosen):** backend-authoritative geometry + AI structured observation (bounded) + deterministic rule engine + configurable policies + append-only audit.
+
+**Chosen:** Option 3 — the Claim Verification Engine (see 06_System_Architecture §9, 07_Database_Design collections `lossclaims`/`claimevidence`/`claimassessment`/`claimaudit`, 08_API_Documentation item 10).
+
+**Reason:** Deterministic geometry + rules give **auditable, explainable, court-defensible** outcomes (no black-box acreage); the bounded AI observation adds scalable damage evidence without delegating money/staking decisions to a model; all policy knobs are config vars, not code; idempotency + audit protect against double-claims and fraud.
+
+**Tradeoffs:** Requires a **parcel foundation** first (no claims until geometry exists — P10); legitimate unverified claims may be flagged for more evidence (P4) with a slower path; maps (P8) are free-tier which trades polish for zero cost; admin override is deliberately deferred (P7), so edge cases wait on the Phase-10 UI. Related: ADR-017 (vision pipeline reused for claim evidence), ADR-013/018 (ownership by `cognitoSub`), SEC-14…18 (07_Database_Design + 15_Security).
+
+### Phase 2 implementation note (E9-S2, ADR-019)
+
+Implemented additive (07_Database_Design §14 rule 1 — nothing removed, no existing collection altered): new `lossclaims` / `claimevidence` / `claimassessment` (structure only, never written) / `claimaudit` collections with the documented indexes (incl. owner-scoped compound-sparse unique `{ cognitoSub, idempotencyKey }` and the partial unique verified-claims guard). `claimState.service.js` is the single source of truth for the 10-state machine; only `draft → submitted` exists as a farmer submit path (no simulated processing), with `withdrawn`/`resubmitted` transitions and configurable P6 limits that are already enforced. Explicitly deferred per the frozen boundaries: AI/weather correlation, pHash dedup, overlap/remaining-eligibility (P5), `POST /claims/calculate-area`, admin endpoints (P7), and any draft-`PATCH` endpoint (the finalized 08 §10 contract defines none). 58-scenario integration suite + 9 state-machine unit tests pass alongside the Phase 1 suite (108 tests).
+
+### Phase 3 implementation note (claim evidence + assessment foundation, ADR-019)
+
+No new decision: Phase 3 hardened the Phase 2 evidence layer **additively on the same frozen rules**, with no new public contract. Additions: (1) every evidence mutation (`presign` / `complete` / `delete`) now appends an append-only `ClaimAudit` row (`evidence_presigned` / `evidence_completed` / `evidence_deleted`, actor `farmer`, `requestId`); (2) `complete` is atomic + idempotent via a status CAS (`pending → processing`) — one record per upload, repeated completes return stored metadata, a missing S3 object keeps the record retryable; (3) a 17-scenario hardening suite (`tests/claims.evidence.test.js`) proving the IDOR/ownership/validation/state/rate-limit/idempotency guarantees on the unchanged contract. Boundary restated and enforced: no AI/vision/weather/RAG, no pHash/fraud scoring, no `claimassessment` writes, no acreage from images (P4), and submit remains **explicitly evidence-optional** per the finalized 08 §10 contract (a client `evidenceUploaded` flag is never trusted — evidence status is server-derived from persisted `ClaimEvidence` rows). Full suite: **125 tests** — 10 parcel geometry + 31 parcel API + 9 state machine + 58 claims API + 17 evidence hardening.
+
+### Phase 4 implementation note (AI evidence assessment, ADR-019)
+
+No new decision: Phase 4 implemented the **E9-S4 AI evidence assessment** slice additively on the frozen **P4 decisions** with no new public contract (internal service only per §18). Highlights: (1) a dedicated claim-loss vision prompt + normalizer (`src/ai/ClaimLossVisionTemplates.js`, `services/claimVision.service.js`) that reuses the existing shared Gemini adapter (`chat.service.js` model) — no second client/secrets; (2) `services/claimAssessment.service.js` writes `claimassessment` rows scoped to the claim/owner and to usable (`stored`) evidence, with a unique-row **status CAS slot (`acquireProcessingSlot` → `{ assessment, proceed }`)**: an in-flight or completed-for-same-`evidenceVersion` assessment is returned as-is (never duplicated), changed evidence re-assesses on a new version boundary, failures persist as retryable `failed` (`stage: storage|provider`, sanitized); (3) persistence is bounded by a server-side scrub to the **frozen per-image contract** — acreage/polygon/compensation/approval/status output is structurally impossible to store; no severity→acreage conversion exists (P4); (4) guardrail pages added to 15_Security §5; (5) audit `ai_completed` / `assessment_failed` (actor `engine`). The decision fields (`approvedGeometry`, `approvedAreaAcres`, `state`, `reason`, `decidedAt`, `decidedBy`, `adminNote`, `weatherCorrelation`, `rules`) remain `null` — final verification is E9-S5. **Regressions fixed during Phase 4:** a real concurrency defect found by the P4-24 test (in-flight reuse previously let the second caller re-run the pipeline). Full suite: **166 tests** — 10 parcel geometry + 31 parcel API + 9 state machine + 58 claims API + 17 evidence + 13 vision + 28 assessment.
+
+### Phase 5 implementation note (Deterministic Verification, E9-S5 / ADR-019)
+
+Implemented the **E9-S5 deterministic verification engine** additively on the frozen P1–P10 decisions with **no new public contract** (internal service only per §18; no controller/route changes). Components added:
+
+- **Pure engine** `services/claimVerificationEngine.service.js`: `evaluateClaimVerification({ claim, assessment, overlap, weatherCorrelation, evidenceCount, now })` → `{ outcome, reason, reasons[], rules, approvedGeometry, approvedAreaAcres, overlapUnchecked, engineVersion }`. Pure function, no DB/Express/Gemini/S3/network. `now` injectable (only time source). Rules evaluated in strict precedence: (1) timelinessCheck (P2) → rejected, (2) eventTypeCheck (frozen vocab) → rejected, (3) areaCheck (server-derived; P4) → out_of_limit, (4) overlapCheck (P5) → duplicate_area / more_evidence_required / unchecked (passes with flag), (5) weatherCheck (P3 supporting-only) → always passed, (6) aiCheck (P4) → confident no-damage → rejected; any insufficiency → more_evidence_required; else verified. `approvedGeometry`/`approvedAreaAcres` only on `verified`. AI acres/polygon/compensation/approval are structurally ignored (guardrails P5-16, P5-48, P5-49, P5-51). Crop consistency is informational only. `partially_verified` never emitted.
+
+- **Orchestration** `services/claimVerification.service.js`: `verifyClaim({ claimId, cognitoSub, requestId })`. Ownership-scoped (404 for foreign). DECIDED_STATES (including `more_evidence_required`) → idempotent reuse of persisted decision. Withdrawn/draft → 409. Processing (in-flight) → `inProgress:true`. Submitted path: evidence/assessment gate → missing/stale/failed assessment with stored evidence = 500 internal (retryable; `verification_failed` audit + `verification` failed stage `assessment`). CAS `submitted → processing` (applyTransition; frozen machine now allows `submitted → processing`). Engine evaluation. Persist decision to `claimassessment` (create if no evidence row; unique claimId, 11000 fallback). CAS `processing → <outcome>`. `ClaimAudit` rows: `verification_started` (submitted→processing) + decision action (processing→outcome), actor `"engine"`, `fromState`/`toState`, `requestId`, metadata `{evidenceVersion, imageCount, overlapEvaluated:false, engineVersion}`. Best-effort rollback on failure (`processing → submitted` + `verification_failed` audit).
+
+- **Model additive**: `models/ClaimAssessment.js` — added `verification` subdocument (`status: pending|verifying|completed|failed`, `version`, `startedAt`, `completedAt`, `failedAt`, `error:{stage,message}`). Decision fields now written by the engine.
+
+- **Export**: `services/claimAssessment.service.js` — `computeEvidenceVersion` exported (was internal).
+
+- **Tests**: 51 unit engine scenarios (`tests/claim.verificationEngine.test.js`, P5-E01..E51) + 28 integration scenarios (`tests/claim.verification.test.js`, P5-01..P5-28) covering ownership/preconditions, no-evidence mer, assessment gate (retryable internal failures), happy verified, idempotent re-verify, in-flight safety, deterministic decisions (rejected, mer, out_of_limit), resubmission loop, gate-retry, AI guardrails (leaky AI ignored, AI acreage can't rescue, weather absence never blocks, overlap unchecked, partially_verified never emitted, extra args ignored, audit append-only + hygiene, eventType `other` no damage-type compare), claim detail additive.
+
+- **State machine amendment**: The frozen machine's own header documents `draft → submitted → processing → verified` and `more_evidence_required → (resubmitted →) processing` but the `ALLOWED` table omitted `submitted → processing`. Added the minimal inbound edge (`submitted: ["processing", "withdrawn"]`) in `claimState.service.js` and updated the corresponding assertion in `tests/claimState.test.js` (`["processing", "withdrawn"]`) — this completes the machine's declared flow, enabling verification to legally advance claims.
+
+**No new decisions**: all rules/configs are existing frozen knobs (`CLAIM_WINDOW_DAYS`, `CLAIM_AREA_OVERAGE_FRACTION`, `CLAIM_OVERLAP_TOLERANCE_M`, frozen vocabularies, P1–P10). No new secrets, models, endpoints, frontend, admin, compensation, pHash/fraud, or weather integration. The public API surface is unchanged — `GET /claims/:id` now returns the decided assessment additively.
+
+### Phase 6 implementation note (Verification API & Lifecycle Integration, E9-S6 integration slice / ADR-019)
+
+Phase 6 exposes the frozen E9-S5 engine through **one thin public endpoint** `POST /claims/:claimId/verify` — a deliberate boundary decision:
+
+- **Endpoint shape (matches existing conventions, no new contract areas):** mounted after `requireAuth` in `app.js`, carries `claimLimiter` + zod `claimParams` param validation, and defines **no request-body schema**. The controller (`controllers/claim.controller.js` `verifyClaim`) forwards exactly `{ claimId, cognitoSub: req.user.id, requestId: req.requestId ?? null }` and responds `ApiResponse.success(res, message, { verification })` where `verification` is the persisted `serializeDecision` output. Any client-supplied result/state/area/AI payload is structurally ignored — the server loads the authoritative claim/evidence/assessment.
+- **One boundary decision documented here (not a rule change):** the Phase 5 service header previously said "internal service, NO public endpoint". Existing §18 rationale (no public exposure while the engine was unproven) is superseded by this integration slice: the engine's idempotency, CAS, and audit semantics are already battle-tested by Phase 5, so exposing the same guarded orchestration (unchanged passed-through call) is additive and reversible (rollback = drop the route/controller). The pure deterministic rules themselves were **not modified**.
+- **Lifecycle/invariants preserved:** state machine untouched (`submitted → processing` remains the only inbound to `processing`); terminal claims (`verified | rejected | out_of_limit | duplicate_area | more_evidence_required | withdrawn`) can never be re-processed; idempotent decision reuse; atomic CAS under concurrency (one decision, one audit pair); retryable gate failures stay retryable (never a silent rejection); `partially_verified` and `duplicate_area` remain never-emitted (overlap unchecked, E9-S6); no compensation/admin/fraud/frontend/weather added.
+- **Tests:** new `tests/claim.verify.api.test.js` — 40 API scenarios (P6-01..P6-40: authorization, request validation + client-tampering guardrails, lifecycle incl. frozen never-emitted outcomes, idempotency, concurrency/CAS, persistence, audit, security). Full suite: **285 tests, all passing** (245 + 40). Docs updated: 08 (§10), 15 (§5), 17, and this changelog.
 
 - New decisions: create a new ADR entry, update this file, and link it from affected docs.
 - Reversals: mark the old ADR `SUPERSEDED` and cite the new ADR.

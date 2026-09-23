@@ -21,6 +21,27 @@ const authLimiter = rateLimit({
 const chatKeyGenerator = (req) =>
   req.user?.id || ipKeyGenerator(req.ip || "unknown");
 
+// F-49 (ADR-019 — 15_Security §5): per-user claim and claim-evidence rate limits, keyed by the
+// authenticated cognitoSub (same pattern as the chat/session/upload limiters — runs after
+// requireAuth). Defaults match .env.example: 5 claims/hour, 20 evidence uploads/hour per user.
+const claimLimiter = rateLimit({
+  windowMs: env.claimRateLimitWindowMs,
+  limit: env.claimRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: handleLimitExceeded,
+  keyGenerator: chatKeyGenerator,
+});
+
+const evidenceLimiter = rateLimit({
+  windowMs: env.evidenceRateLimitWindowMs,
+  limit: env.evidenceRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: handleLimitExceeded,
+  keyGenerator: chatKeyGenerator,
+});
+
 const chatLimiter = rateLimit({
   windowMs: env.chatRateLimitWindowMs,
   limit: env.chatRateLimitMax,
@@ -65,4 +86,6 @@ export {
   chatDailyLimiter,
   sessionMutationLimiter,
   uploadLimiter,
+  claimLimiter,
+  evidenceLimiter,
 };
