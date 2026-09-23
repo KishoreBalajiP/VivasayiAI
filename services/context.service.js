@@ -148,7 +148,11 @@ export const renderContextBlock = (snapshot) => {
   }
   if (snapshot.soil.status === "ok") {
     lines.push(`- Region type: ${snapshot.soil.regionType}`);
-    lines.push(`- Soil type (typical for the district): ${snapshot.soil.soilType === "unknown" ? "unknown" : snapshot.soil.soilType}`);
+    // District-level soil is empty for every seeded district today (D-19 backfilles later
+    // from the TNAU soil table). It must not read as a prerequisite: it is rendered as an
+    // optional refinement. (The system prompt reinforces that general crop recommendations
+    // never block on soil, per the crop-question fix.)
+    lines.push(`- Soil type (typical for the district): ${snapshot.soil.soilType === "unknown" ? "not available (optional refinement only)" : snapshot.soil.soilType}`);
   } else {
     lines.push("- Soil type: unknown");
   }
