@@ -7,6 +7,7 @@ import {
   uploadImage,
   presignUpload,
   completeImageUpload,
+  viewImage,
 } from "../controllers/upload.controller.js";
 
 const router = express.Router();
@@ -29,5 +30,10 @@ router.post(
   validate(uploadParams, "params"),
   completeImageUpload
 );
+// E3 chat-history retrieval: authorized short-lived signed GET URL for the caller's OWN
+// persisted chat image (ownership enforced against req.user.id; foreign/unknown -> 404).
+// GET reads are unmetered like every other GET (GET /chatsessions/:id, /weather), so no
+// limiter is applied. `uploadParams` reuses the exact uploadId validation of /complete.
+router.get("/:uploadId/view", validate(uploadParams, "params"), viewImage);
 
 export default router;
