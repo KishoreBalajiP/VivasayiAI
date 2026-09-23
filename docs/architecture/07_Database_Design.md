@@ -137,7 +137,7 @@
 - **Relationships:** 1 → N `chatsessions` via `chatSessionId`; the chat-session message stores the uploadId link via `messages[].imageId` (link-only; no binary stored there).
 - **Binary:** the normalized image bytes live in **private S3** (`s3Key`). Mongo stores zero bytes of the image itself (07 rule: never store binary in Mongo).
 - **State machine:** `stored → processing → completed | failed`. A completed image can be re-analyzed (status resets to `processing`, vision/response overwritten with the latest run).
-- **D-23 pending (buckets/lifecycle):** today the image is stored under the existing `S3_BUCKET` with an `uploads/` prefix; a dedicated private bucket and 90-day lifecycle / signed-URL retrieval remain pending product approval (see `ARCHITECTURE_DECISIONS_PENDING.md` D-23).
+- **D-23 (partially shipped):** signed-URL **retrieval** for a user's own chat images is implemented (`GET /upload/:uploadId/view` — ownership-checked, short-TTL presigned GET, never persisted; tokens embed the key inside the URL exactly as AWS presigning requires). Still pending product approval: a dedicated private bucket and the 90-day lifecycle (`ARCHITECTURE_DECISIONS_PENDING.md` D-23).
 
 ---
 

@@ -387,7 +387,44 @@ the farm-profile line renders `unknown` and no profile data is used.
 | 429 | Per-user rate limit exceeded |
 | 500 | Image storage unavailable (S3/config failure; sanitized) |
 
-> **Diagnosis (E3-S2):** send `POST /chat { uploadId, message?, language?, chatId? }` (Section 3.1) to run vision analysis + agricultural reasoning on this image. The chat session's AI turn returns the diagnosis; the `image.vision` block carries the structured observation for the E3-S4 diagnosis card. **Remaining product decisions, unchanged by this work:** D-23 (S3 retention/lifecycle/signed-URL retrieval — configured on private storage with an `uploads/` prefix; bucket choice, 90-day lifecycle and presigned URL serving pending approval), D-24 (EXIF/consent — EXIF stripped at upload as the approved normalize side-effect), D-38 (privacy/consent framework). E3-S3/E3-S4 are frontend stories.
+> **Diagnosis (E3-S2):** send `POST /chat { uploadId, message?, language?, chatId? }` (Section 3.1) to run vision analysis + agricultural reasoning on this image. The chat session's AI turn returns the diagnosis; the `image.vision` block carries the structured observation for the E3-S4 diagnosis card. **Remaining product decisions, unchanged by this work:** D-23 (S3 retention/lifecycle — bucket choice and 90-day lifecycle remain pending; **authorized signed-URL retrieval is now shipped via `GET /upload/:uploadId/view` below**), D-24 (EXIF/consent — EXIF stripped at upload as the approved normalize side-effect), D-38 (privacy/consent framework). E3-S3/E3-S4 are frontend stories.
+
+#### `GET /upload/:uploadId/view`
+
+**Summary:** Authorized chat-image retrieval (persisted-chat-history reconstruction). The chat message persists only a stable `imageId` (= `uploadId`); this endpoint verifies the authenticated caller OWNS the `ImageRecord`, then mints a **short-lived presigned GET URL** so the frontend can render the actual private-S3 pixels on demand. The `imageId` stays the stable source of truth — the signed URL is never persisted anywhere (no Mongo document, no client storage), and the object remains private in S3.
+
+**Required headers:** `Authorization: Bearer <session-token>`
+
+**Constraints:**
+- Ownership is enforced server-side by `{ uploadId, cognitoSub }`; a foreign/unknown id → `404 Image upload not found` (indistinguishable from a non-existent upload — no existence disclosure, same E3 convention as `POST /chat`).
+- The client can **never** supply an S3 key or bucket — the key comes only from the matched owned `ImageRecord`.
+- The URL is minted on demand with a short TTL (`IMAGE_VIEW_URL_TTL_SECONDS`, default 300 s) — a leaked URL grants bounded, single-object, GET-only access.
+- A pending/uploaded (not yet completed) record → `400 Image has not been uploaded yet`; a record whose private object was removed → sanitized `404 Image not found`.
+- No `s3Key`, bucket configuration, region, or any AWS credential ever appears in the response.
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "message": "Image view authorized",
+  "data": {
+    "uploadId": "img_<uuid>",
+    "mediaType": "image/jpeg",
+    "signedUrl": "https://<bucket>.s3.<region>.amazonaws.com/uploads/...?...X-Amz-Signature=...",
+    "expiresIn": 300000
+  }
+}
+```
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Signed GET URL minted for the caller's own image (short TTL, on-demand) |
+| 400 | `Invalid image upload ID` / `Image has not been uploaded yet` |
+| 401 | No / invalid bearer token |
+| 404 | Unowned or unknown `uploadId` (`Image upload not found`); record present but object gone (`Image not found`) |
+| 500 | Image storage unavailable (S3/config failure; sanitized) |
+
+> The frontend consumes this in `src/components/PersistedChatImage.tsx`: a historical message with `imageId` requests the signed URL, renders the actual image, and falls back to a controlled "Image unavailable" chip on failure (bounded — one request per mount, no retry loop). The current-turn local preview (`previewUrl`) is unchanged and never waits for S3.
 
 ---
 

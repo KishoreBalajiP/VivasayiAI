@@ -4,6 +4,7 @@ import { receiveUpload } from "../services/upload.service.js";
 import {
   createPresignedUpload,
   completeUpload,
+  createImageViewUrl,
 } from "../services/uploadPresign.service.js";
 
 // E3 thin controller (12 §4): delegates to the upload service. Identity is never read
@@ -43,5 +44,16 @@ const completeImageUpload = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Image uploaded successfully", result);
 });
 
-export { uploadImage, presignUpload, completeImageUpload };
+// Authorized chat-image retrieval: verify ownership and mint a short-lived signed GET URL for
+// the caller's own persisted image (chat-history reconstruction). Identity comes from
+// requireAuth (req.user), never from the query/body; the raw s3Key/bucket stay server-side.
+const viewImage = asyncHandler(async (req, res) => {
+  const result = await createImageViewUrl({
+    uploadId: req.params.uploadId,
+    cognitoSub: req.user.id,
+  });
+  return ApiResponse.success(res, "Image view authorized", result);
+});
+
+export { uploadImage, presignUpload, completeImageUpload, viewImage };
 export default uploadImage;
