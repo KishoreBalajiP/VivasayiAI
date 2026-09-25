@@ -56,6 +56,14 @@ export const serializeClaim = (claim, assessment = null) => {
 const serializeAssessment = (assessment) => ({
   approvedGeometry: assessment.approvedGeometry,
   approvedAreaAcres: assessment.approvedAreaAcres,
+  // E9-S9 (Phase 9) — additive decision surface so claim detail renders remaining-eligible /
+  // overlap-warning cards without re-deriving (07 §8 attachment, 08_API_Documentation §10.8).
+  verifiedAreaAcres: assessment.verifiedAreaAcres,
+  remainingEligible: assessment.remainingEligible,
+  previouslyVerifiedAcres: assessment.previouslyVerifiedAcres,
+  inFlightAreaAcres: assessment.inFlightAreaAcres,
+  overlapWarnings: assessment.overlapWarnings,
+  spatialEvaluated: assessment.spatialEvaluated,
   aiAggregate: assessment.aiAggregate,
   weatherCorrelation: assessment.weatherCorrelation,
   rules: assessment.rules,
