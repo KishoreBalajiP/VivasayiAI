@@ -4,8 +4,11 @@ import LossClaim from "../models/LossClaim.js";
 import ClaimEvidence from "../models/ClaimEvidence.js";
 import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
+import { env } from "../config/env.js";
 import { applyTransition } from "./claimState.service.js";
 import { computeEvidenceVersion } from "./claimAssessment.service.js";
+import { buildSpatialContext } from "./claimSpatial.service.js";
+import { getForUser as getParcelForUser } from "./parcel.service.js";
 import {
   evaluateClaimVerification,
   VERIFICATION_ENGINE_VERSION,
@@ -15,6 +18,9 @@ import {
 // service with no public endpoint; Phase 6 (integration) exposes it through the THIN HTTP surface
 // POST /claims/:claimId/verify (08_API_Documentation §10.8) — the controller only forwards
 // { claimId, cognitoSub, requestId } and any client-supplied payload is structurally ignored.
+// E9-S9 (Phase 9) — Real Overclaim-Prevention Engine: the orchestration now supplies the engine
+// with the spatial engine's facts (inside-parcel, verified/in-flight overlap, remaining eligible
+// budget). The fundamental invariants above are unchanged: backend calculates, validates, stores.
 //
 // Consumes a SUBMITTED claim + its Phase 4 ClaimAssessment and runs the pure deterministic engine,
 // then persists the decision additively into `claimassessment` and transitions the claim via the
@@ -30,13 +36,16 @@ import {
 //   - Deterministic inputs (same claim + same assessment + same overlap signal) ⇒ same outcome, so
 //     any race that does resolve converges on the identical persisted decision.
 //
-// Phase 5 scope (documented deferrals, never pretended):
-//   - Overlap (E9-S3) is NOT evaluated: the engine input is always `{ status: "unchecked",
-//     overlapAreaAcres: 0 }`; audit metadata records `overlapEvaluated: false`.
-//   - `partially_verified` has no frozen trigger → the orchestration NEVER emits it.
+// Phase 9 (E9-S9) — overclaim prevention (resolves the Phase 5 deferral):
+//   - Overlap IS evaluated every run via services/claimSpatial.service.js (Turf). The engine input
+//     is `spatial` + `eligibleContext`; audit metadata now records `overlapEvaluated: true` with
+//     the overlap result, remaining eligible budget, and requestId (08_API_Documentation §10.8).
+//   - `partially_verified` has a real trigger (partial overlap); the approved geometry/area are
+//     the Turf-computed non-overlapping remainder.
 //   - No weather integration: `weatherCorrelation` stays null; the weather rule is supporting-only
 //     (P3) and cannot reject.
-//   - Returns the serialized decision (same additive shape already exposed via claim detail).
+//   - Returns the serialized decision enriched with verifiedAreaAcres / remainingEligible /
+//     overlapWarnings / decision (same additive envelope already consumed by claim detail).
 
 const DECIDED_STATES = new Set([
   "verified",
@@ -49,16 +58,103 @@ const DECIDED_STATES = new Set([
 
 const ALLOWED_EVIDENCE_STATUS = ["stored"];
 
+// E9-S9 — load the owner-scoped sibling claims on the same parcel and build the spatial facts
+// (services/claimSpatial.service.js). The current claim is EXCLUDED from its own budget.
+// - verified / partially_verified siblings reserve their APPROVED geometry+area (assessment
+//   authoritative; falls back to the claimed geometry+area when no assessment row exists).
+// - submitted / processing (in-flight) siblings reserve their CLAIMED geometry+area; they cannot
+//   be cancelled and are never excluded from the budget.
+// Returns { spatial, eligibleContext } consumed by the deterministic engine. Never throws: a
+// missing parcel/profile/geometry degrades to the frozen legacy "unchecked" spatial facts.
+const buildSpatialFacts = async ({ claim, cognitoSub }) => {
+  const parcelId = claim.parcelSnapshot ? claim.parcelSnapshot.parcelId : null;
+  const parcelAreaAcres = claim.parcelSnapshot ? claim.parcelSnapshot.parcelAreaAcres : 0;
+
+  const siblingClaims = parcelId
+    ? await LossClaim.find({
+        cognitoSub,
+        parcelId,
+        _id: { $ne: claim._id },
+        state: { $in: ["verified", "partially_verified", "submitted", "processing"] },
+      }).lean()
+    : [];
+
+  const siblingIds = siblingClaims.map((s) => String(s._id));
+  const siblingAssessments =
+    siblingIds.length > 0
+      ? await ClaimAssessment.find({ claimId: { $in: siblingIds } }).lean()
+      : [];
+  const assessmentByClaim = new Map(siblingAssessments.map((a) => [String(a.claimId), a]));
+
+  const verifiedSiblings = [];
+  const inFlightSiblings = [];
+  for (const sibling of siblingClaims) {
+    const assessment = assessmentByClaim.get(String(sibling._id)) || null;
+    const decided = sibling.state === "verified" || sibling.state === "partially_verified";
+    const geometry =
+      decided && assessment && assessment.approvedGeometry
+        ? assessment.approvedGeometry
+        : sibling.claimedGeometry;
+    const areaAcres =
+      decided && assessment && typeof assessment.approvedAreaAcres === "number"
+        ? assessment.approvedAreaAcres
+        : sibling.claimedAreaAcres;
+    const entry = {
+      claimId: String(sibling._id),
+      siblingState: sibling.state,
+      geometry,
+      areaAcres,
+    };
+    if (decided) verifiedSiblings.push(entry);
+    else inFlightSiblings.push(entry);
+  }
+
+  let parcelGeometry = null;
+  try {
+    const parcel = parcelId ? await getParcelForUser(cognitoSub, parcelId) : null;
+    parcelGeometry = parcel ? parcel.geometry : null;
+  } catch {
+    parcelGeometry = null;
+  }
+
+  const spatial = buildSpatialContext({
+    claimedGeometry: claim.claimedGeometry,
+    claimedAreaAcres: claim.claimedAreaAcres,
+    parcelGeometry,
+    parcelAreaAcres,
+    verifiedSiblings,
+    inFlightSiblings,
+    toleranceMeters: Number(env.claimOverlapToleranceM) || 0,
+  });
+
+  return {
+    spatial,
+    eligibleContext: {
+      remainingEligibleAcres: spatial.remainingEligibleAcres,
+      previouslyVerifiedAcres: spatial.previouslyVerifiedAcres,
+      inFlightAreaAcres: spatial.inFlightAreaAcres,
+    },
+  };
+};
+
 export const serializeDecision = ({ claim, assessment, idempotent, inProgress }) => ({
   claimId: String(claim._id),
   idempotent,
   inProgress,
   claimState: claim.state,
   outcome: assessment && assessment.state ? assessment.state : null,
+  decision: assessment && assessment.state ? assessment.state : null,
   reason: assessment ? assessment.reason : null,
   rules: assessment ? assessment.rules : null,
   approvedGeometry: assessment ? assessment.approvedGeometry : null,
   approvedAreaAcres: assessment ? assessment.approvedAreaAcres : null,
+  // E9-S9 — real overclaim-prevention surface (additive; always server-derived).
+  verifiedAreaAcres: assessment ? assessment.verifiedAreaAcres : null,
+  remainingEligible: assessment ? assessment.remainingEligible : null,
+  previouslyVerifiedAcres: assessment ? assessment.previouslyVerifiedAcres : null,
+  inFlightAreaAcres: assessment ? assessment.inFlightAreaAcres : null,
+  overlapWarnings: assessment ? assessment.overlapWarnings || [] : [],
+  spatialEvaluated: assessment ? Boolean(assessment.spatialEvaluated) : false,
   weatherCorrelation: assessment ? assessment.weatherCorrelation || null : null,
   decidedAt: assessment ? assessment.decidedAt : null,
   decidedBy: assessment ? assessment.decidedBy : null,
@@ -174,12 +270,17 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
     }
   }
 
+  // ---- E9-S9: real overlap-prevention facts (owner-scoped siblings + Turf spatial engine) ----
+  const { spatial, eligibleContext } = await buildSpatialFacts({ claim, cognitoSub });
+
   // ---- pure deterministic evaluation (no DB/network/LLM) ----
   const now = new Date();
   const evaluation = evaluateClaimVerification({
     claim: claim.toObject(),
     assessment: assessment ? assessment.toObject() : null,
-    overlap: { status: "unchecked", overlapAreaAcres: 0 },
+    overlap: { status: spatial.overlapStatus, overlapAreaAcres: spatial.overlapAreaAcres },
+    spatial,
+    eligibleContext,
     weatherCorrelation: null,
     evidenceCount: evidenceDocs.length,
     now,
@@ -231,7 +332,13 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
       metadata: {
         evidenceVersion: fingerprint,
         imageCount: evidenceDocs.length,
-        overlapEvaluated: false,
+        overlapEvaluated: evaluation.spatialEvaluated,
+        overlapStatus: spatial.overlapStatus,
+        overlapAreaAcres: spatial.overlapAreaAcres,
+        insideParcel: spatial.insideParcel,
+        remainingEligible: evaluation.remainingEligible,
+        previouslyVerifiedAcres: evaluation.previouslyVerifiedAcres,
+        inFlightAreaAcres: evaluation.inFlightAreaAcres,
         engineVersion: evaluation.engineVersion,
       },
       requestId: requestId || null,
@@ -262,6 +369,12 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
       decidedBy: "engine",
       approvedGeometry: evaluation.approvedGeometry,
       approvedAreaAcres: evaluation.approvedAreaAcres,
+      verifiedAreaAcres: evaluation.verifiedAreaAcres,
+      remainingEligible: evaluation.remainingEligible,
+      previouslyVerifiedAcres: evaluation.previouslyVerifiedAcres,
+      inFlightAreaAcres: evaluation.inFlightAreaAcres,
+      overlapWarnings: evaluation.overlapWarnings,
+      spatialEvaluated: evaluation.spatialEvaluated,
       rules: evaluation.rules,
       weatherCorrelation: null,
       verification: {
@@ -320,7 +433,13 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
       metadata: {
         evidenceVersion: fingerprint,
         imageCount: evidenceDocs.length,
-        overlapEvaluated: false,
+        overlapEvaluated: evaluation.spatialEvaluated,
+        overlapStatus: spatial.overlapStatus,
+        overlapAreaAcres: spatial.overlapAreaAcres,
+        insideParcel: spatial.insideParcel,
+        remainingEligible: evaluation.remainingEligible,
+        previouslyVerifiedAcres: evaluation.previouslyVerifiedAcres,
+        inFlightAreaAcres: evaluation.inFlightAreaAcres,
         engineVersion: evaluation.engineVersion,
       },
       requestId: requestId || null,

@@ -71,6 +71,12 @@ const rulesSchema = new mongoose.Schema(
   {
     areaCheck: { passed: Boolean, remainingEligible: Number },
     overlapCheck: { passed: Boolean, overlapArea: Number },
+    // E9-S9 (Phase 9) — real overclaim-prevention rules (additive; legacy rows lack them).
+    spatialCheck: {
+      passed: Boolean,
+      insideParcel: { type: Boolean, default: null },
+    },
+    remainingCheck: { passed: Boolean, remainingEligible: Number },
     aiCheck: { passed: Boolean, reason: String },
     weatherCheck: { passed: Boolean, reason: String },
     eventTypeCheck: { passed: Boolean },
@@ -137,6 +143,16 @@ const claimAssessmentSchema = new mongoose.Schema(
     // --- E9-S5 (Phase 5) — final deterministic decision (written by the verification engine) ---
     approvedGeometry: { type: Object, default: null },
     approvedAreaAcres: { type: Number, default: null },
+    // E9-S9 (Phase 9) — real overclaim-prevention decision surface (additive, 07 §8 attachment:
+    //   verifiedAreaAcres, remainingEligible, previouslyVerifiedAcres, inFlightAreaAcres,
+    //   overlapWarnings, spatialEvaluated). Persisted so claim detail can render remaining-eligible
+    // / overlap-warning cards without re-deriving.
+    verifiedAreaAcres: { type: Number, default: null },
+    remainingEligible: { type: Number, default: null },
+    previouslyVerifiedAcres: { type: Number, default: null },
+    inFlightAreaAcres: { type: Number, default: null },
+    overlapWarnings: { type: [Object], default: [] },
+    spatialEvaluated: { type: Boolean, default: false },
     aiAggregate: { type: aiAggregateSchema, default: null },
     weatherCorrelation: { type: weatherCorrelationSchema, default: null },
     rules: { type: rulesSchema, default: null },

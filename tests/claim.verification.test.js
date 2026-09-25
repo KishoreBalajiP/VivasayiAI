@@ -324,7 +324,7 @@ describe("D. happy path + idempotency + in-flight safety", () => {
       expect(doc.approvedAreaAcres).toBe(claim.claimedAreaAcres);
       expect(doc.weatherCorrelation).toBeNull();
       expect(doc.verification.status).toBe("completed");
-      expect(doc.verification.version).toBe("1");
+      expect(doc.verification.version).toBe("2");
 
       expect(await countAudit(claim.id, "verification_started")).toBe(1);
       expect(await countAudit(claim.id, "verified")).toBe(1);
@@ -524,7 +524,7 @@ describe("F. verification-gate retry (never a silent rejection)", () => {
       expect(result.weatherCorrelation).toBeNull();
       expect(result.rules.overlapCheck).toEqual({ passed: true, overlapArea: 0 });
       const decision = await ClaimAudit.findOne({ claimId: claim.id, action: "verified" }).lean();
-      expect(decision.metadata.overlapEvaluated).toBe(false);
+      expect(decision.metadata.overlapEvaluated).toBe(true);
     });
 
     it("P5-19: partially_verified is NEVER emitted by this phase's rules", async () => {
@@ -588,7 +588,7 @@ describe("F. verification-gate retry (never a silent rejection)", () => {
       expect(decision.actor).toBe("engine");
       expect(decision.fromState).toBe("processing");
       expect(decision.toState).toBe("verified");
-      expect(decision.metadata).toMatchObject({ overlapEvaluated: false, engineVersion: "1" });
+      expect(decision.metadata).toMatchObject({ overlapEvaluated: true, engineVersion: "2" });
       const serialized = JSON.stringify(rows.map((row) => row.metadata)).toLowerCase();
       expect(serialized).not.toMatch(/s3|bucket|cognito|url|buffer|summary/i);
       // append-only: re-verifying adds nothing
