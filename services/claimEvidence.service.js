@@ -20,6 +20,7 @@ import {
   deleteObject,
 } from "./s3.service.js";
 import { normalizeImage } from "./imageProcess.service.js";
+import { getActiveAppeal, recordAppealEvidence, removeAppealEvidence } from "./appeal.service.js";
 
 // F-49 (ADR-019) — claim-scoped evidence lifecycle (07_Database_Design §7). Reuses the existing
 // presigned-S3 pipeline end to end (s3.service + imageProcess.service) rather than duplicating
@@ -48,6 +49,21 @@ const assertEvidenceMutable = (claim) => {
       "Evidence can only be modified while the claim is draft, submitted, or requires more evidence"
     );
   }
+};
+
+// Phase 10 (E9-S10): while the farmer has an ACTIVE appeal on an eligible engine decision
+// (rejected / out_of_limit / duplicate_area / more_evidence_required), the evidence surface stays
+// open so additional supporting material can be attached to the appeal. The gate is OPEN when the
+// claim is in a mutable state (no appeal needed) OR an active appeal exists; otherwise it throws
+// the original conflict. Returns the active appeal (or null) so callers can record on it.
+const assertEvidenceGate = async (claim) => {
+  if (EVIDENCE_MUTABLE_STATES.includes(claim.state)) return null;
+  const appeal = await getActiveAppeal(claim._id);
+  if (!appeal) {
+    assertEvidenceMutable(claim);
+    return null;
+  }
+  return appeal;
 };
 
 const serializeEvidence = (evidence) => ({
@@ -98,7 +114,7 @@ export const presignEvidence = async ({
 }) => {
   const claim = await findOwned(cognitoSub, claimId);
   if (!claim) throw ApiError.notFound("Claim not found");
-  assertEvidenceMutable(claim);
+  const activeAppeal = await assertEvidenceGate(claim);
 
   if (claim.evidence.length >= env.claimEvidenceMaxImages) {
     throw ApiError.badRequest("Evidence limit reached for this claim");
@@ -161,7 +177,7 @@ export const presignEvidence = async ({
 export const completeEvidence = async ({ claimId, uploadId, cognitoSub, requestId = null }) => {
   const claim = await findOwned(cognitoSub, claimId);
   if (!claim) throw ApiError.notFound("Claim not found");
-  assertEvidenceMutable(claim);
+  const activeAppeal = await assertEvidenceGate(claim);
 
   // uploadId (`img_<uuid>`) is NOT the Mongo _id — it is the server-generated upload key.
   // Claim-scoped lookup (`{ uploadId, claimId }`) means a foreign uploadId (another user's
@@ -256,13 +272,27 @@ export const completeEvidence = async ({ claimId, uploadId, cognitoSub, requestI
     requestId,
   });
 
+  // Phase 10 (E9-S10): while an appeal is active, the newly stored evidence is also recorded on
+  // the appeal so the admin review shows exactly what the farmer attached as support.
+  if (activeAppeal) {
+    await recordAppealEvidence({
+      claimId: claim._id,
+      uploadId,
+      mediaType: evidence.mediaType,
+      size: evidence.size,
+      width: evidence.width,
+      height: evidence.height,
+      uploadedAt: evidence.uploadedAt,
+    });
+  }
+
   return serializeEvidence(evidence);
 };
 
 export const deleteEvidence = async ({ claimId, uploadId, cognitoSub, requestId = null }) => {
   const claim = await findOwned(cognitoSub, claimId);
   if (!claim) throw ApiError.notFound("Claim not found");
-  assertEvidenceMutable(claim);
+  const activeAppeal = await assertEvidenceGate(claim);
 
   const evidence = await ClaimEvidence.findOne({ uploadId, claimId: claim._id });
   if (!evidence) throw ApiError.notFound("Evidence not found");
@@ -283,6 +313,10 @@ export const deleteEvidence = async ({ claimId, uploadId, cognitoSub, requestId 
     metadata: { uploadId },
     requestId,
   });
+
+  if (activeAppeal) {
+    await removeAppealEvidence({ claimId: claim._id, uploadId });
+  }
 
   return { removed: true };
 };

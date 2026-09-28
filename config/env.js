@@ -84,6 +84,12 @@ export const env = Object.freeze({
   claimAreaOverageFraction: Number(process.env.CLAIM_AREA_OVERAGE_FRACTION) || 0.05,
   claimMaxResubmissions: Number(process.env.CLAIM_MAX_RESUBMISSIONS) || 2,
   claimResubmitCooldownMs: Number(process.env.CLAIM_RESUBMIT_COOLDOWN_MS) || 86400000,
+  // Phase 10 (E9-S10) — admin operations. Admin endpoints are rate-limited per admin identity
+  // (15_Security §5). `adminOverrideApproverAcreThreshold` optionally requires a SECOND admin
+  // approval for overrides affecting more than the configured acreage (0 = disabled).
+  adminRateLimitWindowMs: Number(process.env.ADMIN_RATE_LIMIT_WINDOW_MS) || 60000,
+  adminRateLimitMax: Number(process.env.ADMIN_RATE_LIMIT_MAX) || 120,
+  adminOverrideApproverAcreThreshold: Number(process.env.ADMIN_OVERRIDE_APPROVER_ACRE_THRESHOLD) || 0,
   // E3-S1 (D-22 Option 1): multipart image upload — per-user rate limit and in-memory size cap.
   uploadRateLimitWindowMs: Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_MS) || 60000,
   uploadRateLimitMax: Number(process.env.UPLOAD_RATE_LIMIT_MAX) || 10,
