@@ -69,6 +69,8 @@ const requireSessionSecret = () => {
 };
 
 // E1-S3 (ADR-013 / D-34): sign a short-lived access token carrying the stable cognitoSub identity.
+// Phase 10 (E9-S10): the token also carries the caller's role (from the Cognito groups at login,
+// see services/auth.service.js) so `requireRole("admin")` can gate the admin endpoints.
 const signAccessToken = (identity) => {
   const secret = requireSessionSecret();
   return jwt.sign(
@@ -76,6 +78,7 @@ const signAccessToken = (identity) => {
       sub: identity.cognitoSub,
       email: identity.email ?? null,
       name: identity.name ?? null,
+      role: identity.role ?? null,
       tokenType: "access",
     },
     secret,

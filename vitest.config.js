@@ -33,6 +33,13 @@ export default defineConfig({
       CLAIM_RESUBMIT_COOLDOWN_MS: "0",
       IMAGE_STORAGE_MODE: "mock",
       IMAGE_AI_MODE: "mock",
+      // Phase 10 (E9-S10) — admin workflow tests: raised admin rate limit (no self-throttle)
+      // and override-approver threshold DISABLED so single-admin overrides are testable; the
+      // approval gate is proven in pure tests (adminOverrideRules) + one explicit API test that
+      // re-enables the threshold inline.
+      ADMIN_RATE_LIMIT_WINDOW_MS: "3600000",
+      ADMIN_RATE_LIMIT_MAX: "1000",
+      ADMIN_OVERRIDE_APPROVER_ACRE_THRESHOLD: "0",
     },
   },
 });
