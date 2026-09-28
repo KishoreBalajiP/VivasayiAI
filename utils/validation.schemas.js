@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { validateParcelGeometry } from "../services/parcelGeometry.service.js";
+import { DECISION_STATES } from "../services/adminOverrideRules.service.js";
 
 const MONGO_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
 
@@ -257,6 +258,93 @@ const claimParams = z.object({ claimId });
 // Evidence identifiers use the same server-generated `img_<uuid>` format as /upload.
 const claimEvidenceParams = z.object({ evidenceId: uploadId });
 
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// Phase 10 (E9-S10) — Admin exception workflow + appeals (08_API_Documentation §10.9/§10.10).
+// Ownership still derives from the token; admin identity (role) is validated by requireRole.
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+
+const APPEAL_ELIGIBLE_STATES = [
+  "rejected",
+  "out_of_limit",
+  "duplicate_area",
+  "more_evidence_required",
+];
+
+const appealReason = z
+  .string({ message: "Appeal reason is required" })
+  .trim()
+  .min(10, "Appeal reason must be at least 10 characters")
+  .max(2000, "Appeal reason exceeds 2000 characters");
+
+const appealStatement = z
+  .string({ message: "Invalid appeal statement" })
+  .trim()
+  .max(4000, "Appeal statement exceeds 4000 characters")
+  .optional();
+
+const appealBody = z.object({
+  reason: appealReason,
+  statement: appealStatement,
+});
+
+const appealParams = z.object({ appealId: mongoId("Invalid appeal ID format") });
+
+const overrideState = z.enum(DECISION_STATES, {
+  message: "override toState must be a decision state",
+});
+
+const overrideBody = z.object({
+  toState: overrideState,
+  reason: z
+    .string({ message: "Override reason is required" })
+    .trim()
+    .min(10, "Override reason must be at least 10 characters")
+    .max(2000, "Override reason exceeds 2000 characters"),
+  adminNote: z
+    .string({ message: "Invalid admin note" })
+    .trim()
+    .max(4000, "Admin note exceeds 4000 characters")
+    .optional(),
+  approverSub: z
+    .string({ message: "Invalid approver" })
+    .trim()
+    .max(128, "Invalid approver")
+    .optional(),
+  overrideKey: z
+    .string({ message: "Invalid override idempotency key" })
+    .trim()
+    .min(8, "overrideKey must be at least 8 characters")
+    .max(64, "overrideKey exceeds 64 characters")
+    .regex(/^[A-Za-z0-9_-]+$/, "overrideKey contains invalid characters")
+    .optional(),
+});
+
+const adminQueueQuery = z
+  .object({
+    status: z
+      .string({ message: "Invalid status filter" })
+      .trim()
+      .max(120, "Invalid status filter")
+      .optional(),
+    eventType: z.string({ message: "Invalid event type filter" }).trim().max(40).optional(),
+    search: z.string({ message: "Invalid search" }).trim().max(200).optional(),
+    withAppeal: z
+      .enum(["true", "false"], { message: "withAppeal must be true or false" })
+      .optional(),
+    aiFailed: z
+      .enum(["true", "false"], { message: "aiFailed must be true or false" })
+      .optional(),
+    page: z.coerce.number({ message: "Invalid page" }).int().positive().max(10000).optional(),
+    limit: z.coerce.number({ message: "Invalid limit" }).int().positive().max(100).optional(),
+  })
+  .strict();
+
+const adminDashboardQuery = z
+  .object({
+    rangeDays: z.coerce.number({ message: "Invalid range" }).int().positive().max(3650).optional(),
+  })
+  .strict();
+
 export {
   googleLoginBody,
   chatBody,
@@ -279,4 +367,11 @@ export {
   createClaimBody,
   claimParams,
   claimEvidenceParams,
+  appealBody,
+  appealParams,
+  overrideBody,
+  adminQueueQuery,
+  adminDashboardQuery,
+  APPEAL_ELIGIBLE_STATES,
+  DECISION_STATES,
 };

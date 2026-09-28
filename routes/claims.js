@@ -6,6 +6,7 @@ import {
   claimEvidenceParams,
   createClaimBody,
   presignUploadBody,
+  appealBody,
 } from "../utils/validation.schemas.js";
 import {
   createClaim,
@@ -20,6 +21,7 @@ import {
   deleteEvidence,
   getEvidenceUrl,
 } from "../controllers/claim.controller.js";
+import { submitAppeal, getAppeal } from "../controllers/appeal.controller.js";
 
 // F-49 (ADR-019) — Agricultural Loss Claim endpoints (08_API_Documentation §10).
 // Mounted after requireAuth in app.js; all claim endpoints carry the per-user claim/evidence
@@ -41,6 +43,11 @@ router.post("/:claimId/resubmit", claimLimiter, validate(claimParams, "params"),
 // as the rest of the lifecycle; NO body contract (the client only requests verification — any
 // client-supplied result/state/area/AI payload is ignored by the service, P5-20).
 router.post("/:claimId/verify", claimLimiter, validate(claimParams, "params"), verifyClaim);
+
+// Phase 10 (E9-S10) — farmer appeal of an eligible engine decision (08 §10.9). Idempotent: an
+// active appeal returns as-is. Claim ownership still flows through claim.service lookups.
+router.post("/:claimId/appeal", claimLimiter, validate(claimParams, "params"), validate(appealBody), submitAppeal);
+router.get("/:claimId/appeal", claimLimiter, validate(claimParams, "params"), getAppeal);
 
 // Claim evidence (reuses the existing presigned S3 pipeline)
 router.post(
