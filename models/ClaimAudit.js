@@ -26,6 +26,29 @@ const claimAuditSchema = new mongoose.Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+// Phase 10 (E9-S10) — enforce append-only behavior at the Mongoose layer (07 §9). The audit is
+// the immutable source of truth for every claim event; no app path may ever update or delete an
+// existing row. (deleteMany stays available for test/maintenance tooling — no application code
+// path uses it.)
+claimAuditSchema.pre("findOneAndUpdate", function () {
+  throw new Error("ClaimAudit is append-only");
+});
+claimAuditSchema.pre("updateOne", function () {
+  throw new Error("ClaimAudit is append-only");
+});
+claimAuditSchema.pre("findOneAndDelete", function () {
+  throw new Error("ClaimAudit is append-only");
+});
+claimAuditSchema.pre("deleteOne", function () {
+  throw new Error("ClaimAudit is append-only");
+});
+claimAuditSchema.pre("save", function (next) {
+  if (!this.isNew) {
+    return next(new Error("ClaimAudit is append-only"));
+  }
+  return next();
+});
+
 claimAuditSchema.index({ claimId: 1, createdAt: 1 });
 
 export default mongoose.model("ClaimAudit", claimAuditSchema);

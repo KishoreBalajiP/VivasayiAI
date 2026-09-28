@@ -22,10 +22,14 @@ export const clearTestDatabase = async () => {
   await FarmProfile.deleteMany({});
 };
 
-export const authHeader = (cognitoSub, email = "farmer@example.com") => {
-  const token = signAccessToken({ cognitoSub, email });
+export const authHeader = (cognitoSub, email = "farmer@example.com", role = null) => {
+  const token = signAccessToken({ cognitoSub, email, role });
   return { Authorization: `Bearer ${token}` };
 };
+
+// Phase 10 (E9-S10): convenience header for an authenticated ADMIN (role claim in the token).
+export const adminHeader = (cognitoSub, email = "admin@example.com") =>
+  authHeader(cognitoSub, email, "admin");
 
 export const seedProfile = async (cognitoSub, overrides = {}) => {
   const agent = api();

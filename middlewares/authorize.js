@@ -4,7 +4,9 @@ import ApiError from "../utils/ApiError.js";
 // Provider-agnostic: they only read req.user, never tokens or the DB.
 
 // requireRole(...roles) — allow only requests whose req.user.role is listed.
-// Shipped unused (no route mounts it yet); admin gating arrives with D-35 approval.
+// Provider-agnostic: they only read req.user, never tokens or the DB. Mounted by the admin
+// router (app.js /admin) since Phase 10 (E9-S10); role is minted into the session token at
+// login from the verified Cognito identity (services/auth.service.js).
 const requireRole = (...allowedRoles) => (req, res, next) => {
   if (!req.user) {
     return next(ApiError.unauthorized("Authentication required"));

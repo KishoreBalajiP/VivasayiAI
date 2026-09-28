@@ -6,6 +6,7 @@ import ClaimAudit from "../models/ClaimAudit.js";
 import { putObject } from "../services/s3.service.js";
 import claimAssessmentService from "../services/claimAssessment.service.js";
 import { computeEvidenceVersion } from "../services/claimAssessment.service.js";
+import { VERIFICATION_ENGINE_VERSION } from "../services/claimVerificationEngine.service.js";
 import {
   api,
   authHeader,
@@ -634,9 +635,9 @@ describe("agricultural loss claim — Phase 6 verification API (POST /claims/:cl
     it("P6-27: the engine version is persisted and exposed", async () => {
       const { user, claim } = await seedSubmittedVerified("f2");
       const response = await verify(user, claim.id);
-      expect(response.body.data.verification.engineVersion).toBe("1");
+      expect(response.body.data.verification.engineVersion).toBe(VERIFICATION_ENGINE_VERSION);
       const doc = await assessmentDoc(claim.id);
-      expect(doc.verification.version).toBe("1");
+      expect(doc.verification.version).toBe(VERIFICATION_ENGINE_VERSION);
     });
 
     it("P6-28: the evidence version is computed server-side and persisted for both outcomes", async () => {
@@ -725,7 +726,7 @@ describe("agricultural loss claim — Phase 6 verification API (POST /claims/:cl
       expect(decision.fromState).toBe("processing");
       expect(decision.toState).toBe("verified");
       expect(decision.reason).toBe("All deterministic verification rules passed");
-      expect(decision.metadata).toMatchObject({ overlapEvaluated: false, engineVersion: "1" });
+      expect(decision.metadata).toMatchObject({ overlapEvaluated: true, engineVersion: VERIFICATION_ENGINE_VERSION });
       expect(decision.metadata.evidenceVersion).toBeTruthy();
       const serialized = JSON.stringify(rows.map((row) => row.metadata)).toLowerCase();
       expect(serialized).not.toMatch(/s3|bucket|cognito|url|buffer/i);

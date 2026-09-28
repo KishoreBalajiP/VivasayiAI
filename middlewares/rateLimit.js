@@ -80,6 +80,18 @@ const uploadLimiter = rateLimit({
   keyGenerator: chatKeyGenerator,
 });
 
+// Phase 10 (E9-S10): admin operations are per-admin rate limited (keyed by req.user.id after
+// requireAuth + requireRole). Prevents a compromised admin token from hammering the queue /
+// override / dashboard endpoints.
+const adminLimiter = rateLimit({
+  windowMs: env.adminRateLimitWindowMs,
+  limit: env.adminRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: handleLimitExceeded,
+  keyGenerator: chatKeyGenerator,
+});
+
 export {
   authLimiter,
   chatLimiter,
@@ -88,4 +100,5 @@ export {
   uploadLimiter,
   claimLimiter,
   evidenceLimiter,
+  adminLimiter,
 };
