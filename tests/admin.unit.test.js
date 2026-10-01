@@ -224,12 +224,26 @@ describe("adminQueue — ordering + serialization", () => {
   });
 
   it("compareQueueRows uses createdAt as a stable tiebreak", () => {
-    const a = { decidedAt: daysIso(5), createdAt: daysIso(9) };
-    const b = { decidedAt: daysIso(5), createdAt: daysIso(2) };
+    // Every timestamp below is computed EXACTLY once and then compared by identity.
+    // daysIso() reads Date.now() on every call, so calling it again inside the expectation
+    // produces a string that can differ by 1ms from the one under test. Two separate
+    // daysIso(5) calls could also differ by 1ms, which makes the primary decidedAt comparison
+    // decide the order so the createdAt tiebreak is never reached. Both mistakes made this test
+    // fail intermittently under load instead of testing what it claims to test.
+    const decidedAt = daysIso(5);
+    const olderCreatedAt = daysIso(9);
+    const newerCreatedAt = daysIso(2);
+
+    const a = { decidedAt, createdAt: olderCreatedAt };
+    const b = { decidedAt, createdAt: newerCreatedAt };
+
     expect([a, b].sort(compareQueueRows).map((row) => row.createdAt)).toEqual([
-      daysIso(2),
-      daysIso(9),
+      newerCreatedAt,
+      olderCreatedAt,
     ]);
+    // Equal decidedAt must fall through to the createdAt comparison, newest created first.
+    expect(compareQueueRows(a, b)).toBeGreaterThan(0);
+    expect(compareQueueRows(b, a)).toBeLessThan(0);
   });
 
   it("serializeQueueEntry maps a row to the safe API shape", () => {

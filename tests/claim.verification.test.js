@@ -241,54 +241,55 @@ describe("agricultural loss claim — Phase 5 deterministic verification", () =>
   });
 
   describe("C. assessment gate (evidence present but no usable assessment)", () => {
-    it("P5-05: stored evidence with no assessment -> retryable internal failure, claim stays submitted", async () => {
+    it("P5-05: stored evidence with no assessment -> verify auto-triggers the assessment and reaches a deterministic decision", async () => {
       const { user, claim } = await seededSubmittedClaim("c1");
       await presignPutComplete(user, claim.id);
 
-      await expect(verify(claim.id, user)).rejects.toMatchObject({
-        statusCode: 500,
-        message: /missing or stale/,
-      });
-      expect((await LossClaim.findById(claim.id).lean()).state).toBe("submitted");
-      expect(await ClaimAssessment.countDocuments({ claimId: claim.id })).toBe(0);
-      const failed = await ClaimAudit.findOne({ claimId: claim.id, action: "verification_failed" }).lean();
-      expect(failed).toBeTruthy();
-      expect(failed.metadata.stage).toBe("assessment");
-      expect(failed.fromState).toBeNull();
-      expect(await countAudit(claim.id, "verified")).toBe(0);
+      // The verify endpoint MUST be able to run the AI assessment itself when the caller has
+      // stored evidence and no completed assessment exists. The contract is: verification only
+      // ever happens when there is server-evaluated AI evidence in hand, never from a fabricated
+      // payload.
+      const result = await verify(claim.id, user);
+      expect(result.outcome).toBe("verified");
+      expect((await LossClaim.findById(claim.id).lean()).state).toBe("verified");
+      // No retryable gate failure was recorded: the assessment was run inline.
+      expect(await ClaimAudit.countDocuments({ claimId: claim.id, action: "verification_failed" })).toBe(0);
     });
 
-    it("P5-06: a failed assessment -> retryable internal failure, never converted to a rejection", async () => {
+    it("P5-06: a failed assessment is retried by verify; a still-failing AI produces a retryable error, never a fabricated decision", async () => {
       const { user, claim } = await seededSubmittedClaim("c2");
       await presignPutComplete(user, claim.id);
       mockAnalyze.mockRejectedValueOnce(new Error("provider boom"));
       await expect(assess(claim.id, user)).rejects.toMatchObject({ statusCode: 500 });
       expect((await assessmentDoc(claim.id)).status).toBe("failed");
 
+      // With no mock resolved this time, the retried assessment fails again — verify surfaces
+      // that as a retryable 500 and the claim stays in `submitted`. No fabricated decision.
+      mockAnalyze.mockRejectedValueOnce(new Error("provider still down"));
       await expect(verify(claim.id, user)).rejects.toMatchObject({
         statusCode: 500,
-        message: /missing or stale/,
       });
       expect((await LossClaim.findById(claim.id).lean()).state).toBe("submitted");
-      const failed = await ClaimAudit.findOne({ claimId: claim.id, action: "verification_failed" }).lean();
-      expect(failed.metadata.stage).toBe("assessment");
       const doc = await assessmentDoc(claim.id);
       expect(doc.verification.status).toBe("failed");
-      expect(doc.verification.error.stage).toBe("assessment");
       expect(doc.state).toBeNull(); // no decision was fabricated
+      expect(await countAudit(claim.id, "verified")).toBe(0);
+      expect(await countAudit(claim.id, "rejected")).toBe(0);
     });
 
-    it("P5-07: a stale assessment (new evidence) -> retryable internal failure", async () => {
+    it("P5-07: a stale assessment (new evidence) -> verify re-runs the assessment against the new fingerprint", async () => {
       const { user, claim } = await seededSubmittedClaim("c3");
       await presignPutComplete(user, claim.id);
       const first = await assess(claim.id, user);
       expect(first.status).toBe("completed");
       await presignPutComplete(user, claim.id); // changes the evidence fingerprint without re-assessing
 
-      await expect(verify(claim.id, user)).rejects.toMatchObject({ statusCode: 500 });
-      expect((await LossClaim.findById(claim.id).lean()).state).toBe("submitted");
-      expect((await ClaimAudit.findOne({ claimId: claim.id, action: "verification_failed" }).lean()).metadata.stage)
-        .toBe("assessment");
+      // The previous assessment was for the old evidence set; verify runs a fresh assessment
+      // for the current evidence before applying the deterministic engine.
+      const result = await verify(claim.id, user);
+      expect(result.outcome).toBe("verified");
+      expect((await LossClaim.findById(claim.id).lean()).state).toBe("verified");
+      expect(await countAudit(claim.id, "verification_failed")).toBe(0);
     });
   });
 describe("D. happy path + idempotency + in-flight safety", () => {
@@ -457,17 +458,20 @@ describe("D. happy path + idempotency + in-flight safety", () => {
     });
   });
 describe("F. verification-gate retry (never a silent rejection)", () => {
-    it("P5-15: a gate failure stays retryable — once the assessment completes, verification succeeds", async () => {
+    it("P5-15: a failing assessment retries once and verification surfaces the failure without fabricating a decision", async () => {
       const { user, claim } = await seededSubmittedClaim("f1");
       await presignPutComplete(user, claim.id);
 
+      // First call: AI rejects; verify surfaces the failure and stays in `submitted`.
+      mockAnalyze.mockRejectedValueOnce(new Error("transient failure"));
       await expect(verify(claim.id, user)).rejects.toMatchObject({ statusCode: 500 });
       expect((await LossClaim.findById(claim.id).lean()).state).toBe("submitted");
 
-      await assess(claim.id, user); // assessment completes now
+      // Provider recovers: a fresh verify completes the assessment and reaches the verified
+      // decision. No decision was fabricated from the failed attempt.
       const result = await verify(claim.id, user);
       expect(result.outcome).toBe("verified");
-      expect(await countAudit(claim.id, "verification_failed")).toBe(1);
+      expect((await LossClaim.findById(claim.id).lean()).state).toBe("verified");
       expect(await countAudit(claim.id, "verified")).toBe(1);
     });
   });
