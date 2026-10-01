@@ -3,6 +3,7 @@ import logger from "../utils/logger.js";
 import ApiError from "../utils/ApiError.js";
 import { env } from "../config/env.js";
 import { model } from "./chat.service.js";
+import { withAiTimeout, AiTimeoutError } from "../utils/aiTimeout.js";
 import { VISION_INSTRUCTIONS } from "../src/ai/ImageDiagnosisTemplates.js";
 
 // E3 (D-24): vision analysis stage. Runs a single multimodal Gemini call against the
@@ -127,7 +128,15 @@ export const analyzeImage = async ({ imageBuffer, mediaType }) => {
       }),
     ];
 
-    const result = await model.generate([messages]);
+    const result = await withAiTimeout(
+      () => model.generate([messages]),
+      "vision.image_analyze",
+    ).catch((err) => {
+      if (err instanceof AiTimeoutError) {
+        throw ApiError.internal("AI service did not respond in time");
+      }
+      throw err;
+    });
     const text = result.generations?.[0]?.[0]?.text || "";
 
     const parsed = extractJson(text);

@@ -248,11 +248,39 @@ const failAssessment = async ({ claimId, version, stage, message, requestId }) =
   throw ApiError.internal(message);
 };
 
+// The evidence loop is SEQUENTIAL (one S3 GET + one multimodal Gemini call per image), so bounding
+// each call individually is not enough: two slow images would still overrun the API Gateway /
+// Lambda ceiling and be cut off with an opaque 503. Instead the whole loop runs against one
+// request-level deadline that stays under that ceiling, and each per-image AI call is shrunk to
+// whatever budget remains.
+//
+// Exceeding the budget is a REAL, retryable failure: it routes through the same `failAssessment`
+// path as any provider error, so the assessment is marked `failed` (never left stuck in
+// `processing`, which would make every later retry a no-op reuse) and the caller gets a sanitized
+// 5xx instead of a gateway 503. The claim itself stays `submitted` and its evidence is untouched.
+const getAssessmentBudgetMs = () => Number(process.env.CLAIM_ASSESSMENT_TIMEOUT_MS) || 25000;
+
 const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, version, requestId }) => {
   const images = [];
+  const deadline = Date.now() + getAssessmentBudgetMs();
 
   try {
     for (const evidence of evidenceDocs) {
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) {
+        logger.warn(
+          { claimId, uploadId: evidence.uploadId, imageCount: evidenceDocs.length },
+          "Claim evidence assessment exhausted its request time budget"
+        );
+        return failAssessment({
+          claimId,
+          version,
+          stage: "provider",
+          message: "Claim evidence assessment exceeded its time budget",
+          requestId,
+        });
+      }
+
       let object;
       try {
         object = await s3Service.getObject(evidence.s3Key);
@@ -278,6 +306,7 @@ const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, vers
       const observation = await analyzeClaimImage({
         imageBuffer: object.buffer,
         mediaType: object.mediaType || evidence.mediaType,
+        timeoutMs: remainingMs,
       });
       images.push({
         evidenceId: evidence._id,
