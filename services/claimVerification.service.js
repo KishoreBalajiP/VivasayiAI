@@ -6,6 +6,7 @@ import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
 import { env } from "../config/env.js";
 import { applyTransition } from "./claimState.service.js";
+import claimAssessmentService from "./claimAssessment.service.js";
 import { computeEvidenceVersion } from "./claimAssessment.service.js";
 import { buildSpatialContext } from "./claimSpatial.service.js";
 import { getForUser as getParcelForUser } from "./parcel.service.js";
@@ -224,7 +225,8 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
 
   // In-flight: reuse the winner's persisted decision, or report progress (never duplicate).
   if (claim.state === "processing") {
-    const assessment = await ClaimAssessment.findOne({ claimId: claim._id });
+  const assessment = await ClaimAssessment.findOne({ claimId: claim._id });
+
     if (
       assessment &&
       assessment.state &&
@@ -249,24 +251,58 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
     .lean();
 
   const fingerprint = computeEvidenceVersion(evidenceDocs);
-  const assessment = await ClaimAssessment.findOne({ claimId: claim._id });
+  let assessment = await ClaimAssessment.findOne({ claimId: claim._id });
 
+  // Auto-trigger the AI evidence assessment when the caller has stored evidence but no
+  // matching completed assessment exists. The assessment service is concurrency-safe (atomic
+  // CAS) and idempotent: concurrent /verify requests share the slot, and a re-run with the
+  // same evidence fingerprint returns the cached completed assessment. Before this auto-trigger
+  // the production flow required the (untested, never deployed) public /assess endpoint, so
+  // every /verify against a real claim failed with 500 "assessment missing or stale".
   if (evidenceDocs.length > 0) {
-    if (
+    const needsAssessment =
       !assessment ||
       assessment.status !== "completed" ||
-      assessment.evidenceVersion !== fingerprint
-    ) {
-      const message =
-        "Claim evidence assessment is missing or stale; verification is retryable after the assessment completes";
-      await failVerification({
-        claimId: claim._id,
-        assessment,
-        stage: "assessment",
-        message,
-        requestId,
-      });
-      throw ApiError.internal(message);
+      assessment.evidenceVersion !== fingerprint;
+    if (needsAssessment) {
+      try {
+        await claimAssessmentService.assessClaimEvidence({
+          claimId: claim._id,
+          cognitoSub,
+          requestId,
+        });
+      } catch (error) {
+        // Surface assessment failure as a retryable internal error WITHOUT advancing the claim.
+        // The claim stays in `submitted` so the farmer can retry once the AI provider recovers.
+        await failVerification({
+          claimId: claim._id,
+          assessment,
+          stage: "assessment",
+          message:
+            error && error.message
+              ? `Claim evidence assessment could not be completed (${error.message}); verification is retryable after the assessment completes`
+              : "Claim evidence assessment could not be completed; verification is retryable after the assessment completes",
+          requestId,
+        }).catch(() => {});
+        throw error;
+      }
+      assessment = await ClaimAssessment.findOne({ claimId: claim._id });
+      if (
+        !assessment ||
+        assessment.status !== "completed" ||
+        assessment.evidenceVersion !== fingerprint
+      ) {
+        const message =
+          "Claim evidence assessment is missing or stale; verification is retryable after the assessment completes";
+        await failVerification({
+          claimId: claim._id,
+          assessment,
+          stage: "assessment",
+          message,
+          requestId,
+        });
+        throw ApiError.internal(message);
+      }
     }
   }
 

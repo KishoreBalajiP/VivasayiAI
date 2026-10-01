@@ -3,6 +3,7 @@ import LossClaim from "../models/LossClaim.js";
 import ClaimEvidence from "../models/ClaimEvidence.js";
 import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
+import ApiError from "../utils/ApiError.js";
 import { putObject } from "../services/s3.service.js";
 import claimAssessmentService from "../services/claimAssessment.service.js";
 import { computeEvidenceVersion } from "../services/claimAssessment.service.js";
@@ -536,21 +537,63 @@ describe("agricultural loss claim — Phase 6 verification API (POST /claims/:cl
       expect(await countAudit(claim.id, "verified")).toBe(1);
     });
 
-    it("P6-22: a retryable gate failure returns 500 and later succeeds — never a silent rejection", async () => {
+    it("P6-22: /verify auto-triggers a missing assessment and ends in a verified decision", async () => {
       const { user, claim } = await seedSubmitted("d4");
       await presignPutComplete(user, claim.id); // evidence without a completed assessment
+      mockAnalyze.mockResolvedValue({ ...CLEAR });
 
-      const failed = await verify(user, claim.id);
-      expect(failed.status).toBe(500);
-      expect(failed.body.message).toMatch(/missing or stale/);
-      expect((await LossClaim.findById(claim.id).lean()).state).toBe("submitted");
-
-      await assess(claim.id, user); // assessment completes now
+      // Production must never require a separate /assess call: the verify endpoint runs the
+      // assessment itself when the caller has stored evidence and a matching completed
+      // assessment does not exist yet (the assessment service is concurrency-safe under CAS).
       const recovered = await verify(user, claim.id);
       expect(recovered.status).toBe(200);
       expect(recovered.body.data.verification.outcome).toBe("verified");
-      expect(await countAudit(claim.id, "verification_failed")).toBe(1);
+      // Claim moves to a decision state through the frozen state machine, not a silent override.
+      expect((await LossClaim.findById(claim.id).lean()).state).toBe("verified");
       expect(await countAudit(claim.id, "verified")).toBe(1);
+      // No retryable "missing or stale" failure is logged for a successful auto-trigger.
+      expect(await countAudit(claim.id, "verification_failed")).toBe(0);
+    });
+
+    it("P6-22b: a failing AI assessment surfaces as a retryable 5xx without a false decision", async () => {
+      const { user, claim } = await seedSubmitted("d4b");
+      await presignPutComplete(user, claim.id);
+      mockAnalyze.mockRejectedValueOnce(ApiError.internal("Failed to analyze claim evidence image"));
+
+      const failed = await verify(user, claim.id);
+      expect(failed.status).toBe(500);
+      // The auto-trigger surfaces the original sanitized AI error verbatim so the user can act
+      // on it; in addition a verification_failed audit row is recorded with the wrapped message.
+      expect(failed.body.message).toMatch(/analyz|assessment/);
+      // The claim must NOT have been transitioned to a decision state — the deterministic
+      // engine never sees fabricated inputs and the farmer can retry once the AI recovers.
+      const stored = await LossClaim.findById(claim.id).lean();
+      expect(stored.state).toBe("submitted");
+      // The failed verification is recorded for audit, the claim state is preserved.
+      expect(await countAudit(claim.id, "verification_failed")).toBeGreaterThanOrEqual(1);
+      expect(await countAudit(claim.id, "verified")).toBe(0);
+      expect(await countAudit(claim.id, "rejected")).toBe(0);
+
+      // Recovery: a second /verify (with a working provider) completes the verification.
+      mockAnalyze.mockResolvedValueOnce({ ...CLEAR });
+      const recovered = await verify(user, claim.id);
+      expect(recovered.status).toBe(200);
+      expect(recovered.body.data.verification.outcome).toBe("verified");
+    });
+
+    it("P6-22c: a matching completed assessment is reused without spawning a duplicate run", async () => {
+      const { user, claim } = await seedSubmitted("d4c");
+      await presignPutComplete(user, claim.id);
+      mockAnalyze.mockResolvedValue({ ...CLEAR });
+      // Pre-create a completed assessment for the existing evidence fingerprint.
+      await assess(claim.id, user);
+      const analyzeBefore = mockAnalyze.mock.calls.length;
+
+      const recovered = await verify(user, claim.id);
+      expect(recovered.status).toBe(200);
+      expect(recovered.body.data.verification.outcome).toBe("verified");
+      // No extra vision call was made: the assessment was reused.
+      expect(mockAnalyze.mock.calls.length).toBe(analyzeBefore);
     });
   });
 

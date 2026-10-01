@@ -1,6 +1,7 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
+import { withAiTimeout, AiTimeoutError } from "../utils/aiTimeout.js";
 import ImageRecord from "../models/ImageRecord.js";
 import ChatSession from "../models/ChatSession.js";
 import { env } from "../config/env.js";
@@ -149,11 +150,38 @@ const generateImageResponse = async ({
       const lmMessages = messages.map((m) =>
         m.role === "system" ? new SystemMessage(m.content) : new HumanMessage(m.content)
       );
-      const result = await model.generate([lmMessages]);
-      response =
-        result.generations?.[0]?.[0]?.text ||
-        result.generations?.[0]?.[0]?.message?.content ||
-        "";
+      // Bounded under the API Gateway/Lambda ceiling. A slow Gemini call MUST NOT produce a 503
+      // (which the user then retries, tripping the per-user chatLimiter → 429).
+      //
+      // A reasoning TIMEOUT is a transient provider failure, not a finding about the photo. It must
+      // NOT be downgraded to `fallbackResponse` and persisted as a `completed` diagnosis: that would
+      // tell the farmer to contact an officer for something a retry 10s later would have answered,
+      // and it would hide the recoverable error the UI surfaces. Throw a sanitized 5xx instead —
+      // `failRecord` below marks the ImageRecord failed while the S3 object stays stored and
+      // viewable, so nothing is lost and the farmer can retry.
+      const result = await withAiTimeout(
+        () => model.generate([lmMessages]),
+        "image.reason_generate",
+      ).catch((err) => {
+        if (err instanceof AiTimeoutError) {
+          throw ApiError.internal("AI service did not respond in time");
+        }
+        throw err;
+      });
+      if (!result) {
+        // Model answered with no usable generation — a genuine "could not analyze this photo".
+        response = fallbackResponse(responseLanguage);
+      } else {
+        response =
+          result.generations?.[0]?.[0]?.text ||
+          result.generations?.[0]?.[0]?.message?.content ||
+          "";
+        if (!response || !response.trim()) {
+          logger.warn({ conversationId }, "Empty image response; using fallback");
+          response = fallbackResponse(responseLanguage);
+        }
+        response = cleanupResponse(response);
+      }
       if (!response || !response.trim()) {
         logger.warn({ conversationId }, "Empty image response; using fallback");
         response = fallbackResponse(responseLanguage);

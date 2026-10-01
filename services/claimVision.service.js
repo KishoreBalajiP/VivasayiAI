@@ -3,6 +3,7 @@ import logger from "../utils/logger.js";
 import ApiError from "../utils/ApiError.js";
 import { env } from "../config/env.js";
 import { model } from "./chat.service.js";
+import { withAiTimeout, AiTimeoutError, getDefaultTimeoutMs } from "../utils/aiTimeout.js";
 import {
   CLAIM_LOSS_VISION_INSTRUCTIONS,
   CLAIM_LOSS_OBSERVATION_FIELDS,
@@ -142,7 +143,10 @@ export const normalizeClaimObservation = (raw) => {
   };
 };
 
-export const analyzeClaimImage = async ({ imageBuffer, mediaType }) => {
+// `timeoutMs` lets the caller (claimAssessment) shrink a single call to whatever remains of the
+// request's overall time budget, so N sequential evidence images can never accumulate past the
+// API Gateway / Lambda ceiling. Omitted -> the shared GEMINI default.
+export const analyzeClaimImage = async ({ imageBuffer, mediaType, timeoutMs }) => {
   if (env.imageAiMode === "mock") {
     return { ...MOCK_CLAIM_OBSERVATION };
   }
@@ -166,7 +170,24 @@ export const analyzeClaimImage = async ({ imageBuffer, mediaType }) => {
       }),
     ];
 
-    const result = await model.generate([messages]);
+    // Effective bound is the TIGHTER of the shared per-call default and whatever budget the
+    // caller says is left. Callers may only ever shorten a call, never extend it past the
+    // configured per-call ceiling.
+    const effectiveTimeoutMs = Math.min(
+      getDefaultTimeoutMs(),
+      typeof timeoutMs === "number" ? timeoutMs : Number.POSITIVE_INFINITY,
+    );
+
+    const result = await withAiTimeout(
+      () => model.generate([messages]),
+      "claim.vision_analyze",
+      effectiveTimeoutMs,
+    ).catch((err) => {
+      if (err instanceof AiTimeoutError) {
+        throw ApiError.internal("AI service did not respond in time");
+      }
+      throw err;
+    });
     const text = result.generations?.[0]?.[0]?.text || "";
 
     const parsed = extractJson(text);
