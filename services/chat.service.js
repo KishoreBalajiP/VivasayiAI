@@ -4,6 +4,7 @@ import { CohereEmbeddings } from "@langchain/cohere";
 import { CloudClient } from "chromadb";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
+import { withAiTimeout, AiTimeoutError } from "../utils/aiTimeout.js";
 import ChatSession from "../models/ChatSession.js";
 import { env, validateEnv, CHAT_REQUIRED } from "../config/env.js";
 import { deriveTitle, getForUser } from "./chatSession.service.js";
@@ -133,8 +134,25 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
     );
 
     const modelStart = Date.now();
-    const result = await model.generate([lmMessages]);
+    // Bounded under the API Gateway/Lambda ceiling so a slow Gemini call cannot produce a 503
+    // and cause the user's retries to trip the per-user application rate limiter (429).
+    const result = await withAiTimeout(
+      () => model.generate([lmMessages]),
+      "chat.text_generate",
+    ).catch((err) => {
+      if (err instanceof AiTimeoutError) {
+        logger.warn(
+          { conversationId, latencyMs: Date.now() - modelStart, timeoutMs: err.timeoutMs },
+          "chat.text_generate_timeout",
+        );
+        return null;
+      }
+      throw err;
+    });
     const latency = Date.now() - modelStart;
+    if (!result) {
+      throw ApiError.internal("AI service did not respond in time");
+    }
 
     let response = result.generations?.[0]?.[0]?.text || result.generations?.[0]?.[0]?.message?.content || "";
     if (!response || !response.trim()) {
