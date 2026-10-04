@@ -35,15 +35,6 @@ const googleSignIn = async (code) => {
     const { email, name } = decoded;
     const cognitoSub = decoded.sub;
 
-    // Phase 10 (E9-S10): the admin role derives ONLY from the verified Cognito identity
-    // (cognito:groups / custom:role claims) — never from a client-supplied value. Whatever the
-    // user object stores, the token is minted here with the authoritative role.
-    const groups = Array.isArray(decoded?.["cognito:groups"]) ? decoded["cognito:groups"] : [];
-    const role =
-      groups.includes("admin") || String(decoded?.["custom:role"] || "") === "admin"
-        ? "admin"
-        : "farmer";
-
     // E1-S3: stable identity = cognitoSub (07_Database_Design §6). Look up by cognitoSub first; if
     // that misses, fall back to the legacy email-based record and backfill its cognitoSub, else create.
     let user = await User.findOne({ cognitoSub });
@@ -51,18 +42,49 @@ const googleSignIn = async (code) => {
       user = await User.findOne({ email });
       if (user) {
         user.cognitoSub = cognitoSub;
+        if (!user.role) user.role = "user";
+        if (!user.status) user.status = "active";
         await user.save();
       } else {
-        user = await User.create({ name, email, cognitoSub });
+        user = await User.create({
+          name,
+          email,
+          cognitoSub,
+          role: "user",
+          status: "active",
+        });
       }
+    } else {
+      // Backfill defaults for legacy records created before role/status were introduced.
+      let changed = false;
+      if (!user.role) {
+        user.role = "user";
+        changed = true;
+      }
+      if (!user.status) {
+        user.status = "active";
+        changed = true;
+      }
+      if (changed) await user.save();
     }
 
-    const accessToken = signAccessToken({ cognitoSub, email, name, role });
+    if (user.status === "blocked") {
+      throw ApiError.forbidden("Your account has been blocked");
+    }
+
+    const accessToken = signAccessToken({
+      cognitoSub,
+      email,
+      name,
+      role: user.role,
+      status: user.status,
+    });
     const refreshToken = signRefreshToken({ cognitoSub });
 
-    return { user, accessToken, refreshToken, role };
+    return { user, accessToken, refreshToken };
   } catch (error) {
     logger.error({ err: error }, "Auth error");
+    if (error instanceof ApiError) throw error;
     throw new ApiError(500, "Authentication failed");
   }
 };

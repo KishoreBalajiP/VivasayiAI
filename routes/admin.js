@@ -13,6 +13,9 @@ import {
   overrideClaim,
   dashboard,
   investigation,
+  getUsers,
+  getUser,
+  changeUserStatus,
 } from "../controllers/admin.controller.js";
 
 // Phase 10 (E9-S10) — Admin exception-workflow endpoints (08_API_Documentation §10.10–10.12).
@@ -37,5 +40,10 @@ router.get("/dashboard", validate(adminDashboardQuery, "query"), dashboard);
 
 // Fraud investigation (observation-only).
 router.get("/investigation", validate(adminDashboardQuery, "query"), investigation);
+
+// User management
+router.get("/users", getUsers);
+router.get("/users/:id", getUser);
+router.patch("/users/:id/status", changeUserStatus);
 
 export default router;

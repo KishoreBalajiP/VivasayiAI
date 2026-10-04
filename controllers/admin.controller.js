@@ -2,14 +2,6 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import * as adminService from "../services/admin.service.js";
 
-// Phase 10 (E9-S10) — Admin endpoints (08_API_Documentation §10.10–10.12).
-//
-// Mounted as /admin behind requireAuth + requireRole("admin") + adminLimiter (app.js + routes).
-// The actor identity (req.user.id = cognitoSub, req.user.email) ALWAYS comes from the verified
-// session token — never from the request body. The queue/dashboard/investigation views are
-// READ-ONLY; `overrideClaim` is the single mutable admin operation and records an immutable
-// AdminAction + ClaimAudit on every apply (never silent, with replay protection).
-
 const listQueue = asyncHandler(async (req, res) => {
   const result = await adminService.listReviewQueue({
     actorSub: req.user.id,
@@ -59,4 +51,33 @@ const investigation = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Investigation view computed", result);
 });
 
-export { listQueue, getDetail, overrideClaim, dashboard, investigation };
+const getUsers = asyncHandler(async (req, res) => {
+  const { page, limit, search, status, role } = req.query;
+  const result = await adminService.listUsers({ page, limit, search, status, role });
+  return ApiResponse.success(res, "Users fetched", result);
+});
+
+const getUser = asyncHandler(async (req, res) => {
+  const result = await adminService.getUserById(req.params.id);
+  return ApiResponse.success(res, "User details fetched", result);
+});
+
+const changeUserStatus = asyncHandler(async (req, res) => {
+  const user = await adminService.updateUserStatus({
+    userId: req.params.id,
+    status: req.body.status,
+    requesterCognitoSub: req.user.id,
+  });
+  return ApiResponse.success(res, "User status updated", { user });
+});
+
+export {
+  listQueue,
+  getDetail,
+  overrideClaim,
+  dashboard,
+  investigation,
+  getUsers,
+  getUser,
+  changeUserStatus,
+};

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import LossClaim from "../models/LossClaim.js";
 import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
@@ -10,6 +11,7 @@ import ApiError from "../utils/ApiError.js";
 import { env } from "../config/env.js";
 import { serializeClaim, findOwned } from "./claim.service.js";
 import { getSignedGetUrl } from "./s3.service.js";
+import ChatSession from "../models/ChatSession.js";
 import {
   QUEUE_STATES,
   normalizeQueueFilters,
@@ -298,7 +300,13 @@ export const getDashboard = async ({ rangeDays = 90 } = {}) => {
     appeal: activeAppealMap.get(String(claim._id)) ?? null,
   }));
   const metrics = computeDashboardMetrics({ claims: rows, appeals });
-  return { rangeDays: Number(rangeDays) || 90, metrics };
+  const userStats = await getDashboardStats();
+  return {
+    rangeDays: Number(rangeDays) || 90,
+    metrics,
+    counts: userStats.counts,
+    recentUsers: userStats.recentUsers,
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -489,10 +497,206 @@ export const overrideClaim = async ({
   };
 };
 
+const normalizePage = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const normalizeLimit = (value, fallback = 20) => {
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+
+  return Math.min(parsed, 100);
+};
+
+const getDashboardStats = async () => {
+  const [
+    totalUsers,
+    activeUsers,
+    blockedUsers,
+    adminUsers,
+    totalFarmProfiles,
+    totalChatSessions,
+    recentUsers,
+  ] = await Promise.all([
+    User.countDocuments(),
+    User.countDocuments({ status: "active" }),
+    User.countDocuments({ status: "blocked" }),
+    User.countDocuments({ role: "admin" }),
+    FarmProfile.countDocuments(),
+    ChatSession.countDocuments(),
+    User.find({})
+      .select("name email role status createdAt")
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean(),
+  ]);
+
+  return {
+    counts: {
+      totalUsers,
+      activeUsers,
+      blockedUsers,
+      adminUsers,
+      totalFarmProfiles,
+      totalChatSessions,
+    },
+    recentUsers,
+  };
+};
+
+const listUsers = async ({
+  page = 1,
+  limit = 20,
+  search = "",
+  status,
+  role,
+}) => {
+  const currentPage = normalizePage(page, 1);
+  const currentLimit = normalizeLimit(limit);
+
+  const filter = {};
+
+  if (search && search.trim()) {
+    const safeSearch = search
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const regex = new RegExp(safeSearch, "i");
+
+    filter.$or = [
+      { name: regex },
+      { email: regex },
+      { cognitoSub: regex },
+    ];
+  }
+
+  if (status && ["active", "blocked"].includes(status)) {
+    filter.status = status;
+  }
+
+  if (role && ["user", "admin"].includes(role)) {
+    filter.role = role;
+  }
+
+  const skip = (currentPage - 1) * currentLimit;
+
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select(
+        "name email cognitoSub language role status createdAt updatedAt"
+      )
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(currentLimit)
+      .lean(),
+
+    User.countDocuments(filter),
+  ]);
+
+  return {
+    users,
+    pagination: {
+      page: currentPage,
+      limit: currentLimit,
+      total,
+      totalPages: Math.ceil(total / currentLimit),
+    },
+  };
+};
+
+const getUserById = async (userId) => {
+  if (!mongoose.isValidObjectId(userId)) throw ApiError.badRequest("Invalid user id");
+
+  const user = await User.findById(userId)
+    .select(
+      "name email cognitoSub language role status createdAt updatedAt"
+    )
+    .lean();
+
+  if (!user) {
+    throw ApiError.notFound("User not found");
+  }
+
+  const [farmProfile, chatSessionCount] = await Promise.all([
+    FarmProfile.findOne({ cognitoSub: user.cognitoSub }).lean(),
+
+    user.cognitoSub
+      ? ChatSession.countDocuments({
+          cognitoSub: user.cognitoSub,
+        })
+      : 0,
+  ]);
+
+  return {
+    user,
+    farmProfile: farmProfile || null,
+    chatSessionCount,
+  };
+};
+
+const updateUserStatus = async ({
+  userId,
+  status,
+  requesterCognitoSub,
+}) => {
+  if (!mongoose.isValidObjectId(userId)) {
+    throw ApiError.badRequest("Invalid user id");
+  }
+
+  if (!["active", "blocked"].includes(status)) {
+    throw ApiError.badRequest("Status must be active or blocked");
+  }
+
+  const existingUser = await User.findById(userId)
+    .select("cognitoSub")
+    .lean();
+
+  if (!existingUser) {
+    throw ApiError.notFound("User not found");
+  }
+
+  if (
+    existingUser.cognitoSub === requesterCognitoSub &&
+    status === "blocked"
+  ) {
+    throw ApiError.badRequest(
+      "You cannot block your own admin account"
+    );
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $set: { status } },
+    {
+      new: true,
+      runValidators: true,
+    }
+  )
+    .select(
+      "name email cognitoSub language role status createdAt updatedAt"
+    )
+    .lean();
+
+  if (!user) {
+    throw ApiError.notFound("User not found");
+  }
+
+  return user;
+};
+
 export default {
   getAdminClaimDetail,
   listReviewQueue,
+  overrideClaim,
   getDashboard,
   getInvestigation,
-  overrideClaim,
+
+  getDashboardStats,
+  listUsers,
+  getUserById,
+  updateUserStatus,
 };
