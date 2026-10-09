@@ -29,7 +29,7 @@
 | `claimevidence` | `ClaimEvidence.js` | Claim evidence images (owner-scoped, presigned S3) | `[ACTIVE]` Phase 2 (presign/complete/delete/url; pHash deferred to E9-S6) |
 | `claimassessment` | `ClaimAssessment.js` | Deterministic verification result + AI aggregate | `[ACTIVE]` Phase 4 = AI evidence assessment stage (E9-S4; decision fields reserved until E9-S5) |
 | `claimaudit` | `ClaimAudit.js` | Append-only claim state-transition audit trail | `[ACTIVE]` Phase 2 (farmer transitions; engine/admin with verification phases) |
-| `verificationevidences` | `VerificationEvidence.js` | Source-neutral verification evidence (source + status), additive Phase 11 foundation | `[ACTIVE]` Phase 11 (E11-S11; OWNERSHIP/SATELLITE represented but non-operative) |
+| `verificationevidences` | `VerificationEvidence.js` | Source-neutral verification evidence (source + status), additive Phase 11 foundation | `[ACTIVE]` Phase 11 (E11-S11; OWNERSHIP/SATELLITE represented but non-operative); Phase 12 (E12) writes `source:"OWNERSHIP"` for land-ownership documents (still non-operative) |
 
 > **Note:** `queries` and `contexts` were designed for the capstone (context injection, query audit trail) but the chat flow never writes to them today. Under vision-v2, `contexts` becomes the seed for the **Context Engine's reference data** (districts/soil/season) and `queries` (or a successor) becomes the context-snapshot audit store (see §7). Phase 1 re-introduces their purpose via the redesigned Context Engine (F-20/F-46).
 
@@ -458,6 +458,37 @@ verification, does not grant any new decision power, and never alters the determ
 - **Backward compatibility:** existing claims need no rows; reads project existing `GEOMETRY` / `AI_IMAGE` /
   `WEATHER` evidence from the current `lossclaims` / `claimevidence` / `claimassessment` records without
   fabricating historical rows.
+
+### 9A.1 Phase 12 — Land Ownership evidence (source `OWNERSHIP`)
+
+Phase 12 (E12) is the first phase to **write** the foundation: it represents a claimant's supporting
+land-ownership documents as `verificationevidences` rows with `source: "OWNERSHIP"`. It introduces **no new
+collection, no new claim state, and no new decision rule**, and does not touch the deterministic engine or any
+claim outcome.
+
+- **Document bytes stay in the existing private upload pipeline.** A document is first uploaded through the
+  existing `POST /upload/presign` → Browser→S3 PUT → `POST /upload/:uploadId/complete` flow, producing an
+  owner-scoped `status:"stored"` `ImageRecord` (server-owned `s3Key`; never exposed). The ownership row stores
+  only the opaque `reference = uploadId`; signed GET URLs are minted on demand.
+- **Ownership row fields:**
+  - `source: "OWNERSHIP"`; `status` starts `PENDING` (an evidence-level state — never a claim state).
+  - `reference` = document `uploadId`; `metadata` = `{ parcelId, documentCategory, mediaType, size }`
+    (vocabulary-validated + sanitized). `documentCategory` ∈ `land_record | ownership_deed |
+    lease_agreement | authorization_letter | tax_receipt | identity_proof | other`.
+  - `evidenceVersion` = fingerprint of `{ uploadId, mediaType, size }`; `evaluationVersion = "1"`.
+  - `idempotencyKey` = `owndoc_<uploadId>` (derived) — the existing partial unique index makes re-attaching
+    the same document a no-op.
+  - `result` (after review) = `{ verificationMethod, authoritative, reviewedByRole, reviewedAt, reason }`.
+  - `provider` = `"admin-manual-review"` after review (labels WHO produced the outcome, not authority).
+- **Vocabulary + rules** live in the pure `utils/ownershipEvidence.js` (document categories; review statuses
+  `AVAILABLE | VERIFIED | INSUFFICIENT | INCONSISTENT | UNAVAILABLE`; the review-outcome rule). `VERIFIED`
+  requires an authoritative method — none is configured in Phase 12, so it is deliberately **unreachable**.
+- **Audit (append-only):** attach appends `ClaimAudit` (`ownership_evidence_submitted`, actor `farmer`); review
+  appends an immutable `AdminAction` (`action:"manual_review"`, actor from the token,
+  `idempotencyKey:"ownreview_<evidenceId>"`) **and** `ClaimAudit` (`ownership_evidence_reviewed`, actor `admin`).
+- **Non-operative:** `OWNERSHIP` remains excluded from `OPERATIVE_EVIDENCE_SOURCES`; ownership evidence never
+  changes `claim.state`, the `claimassessment` decision, claimed acreage, or parcel geometry, and the engine
+  never consumes it this phase.
 
 ---
 
