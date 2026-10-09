@@ -490,3 +490,171 @@ modified. No satellite evidence was persisted into any claim. No credentials wer
 requested, printed, logged, or committed. No commit, push, PR, or deployment was performed. The PoC
 is experiment-supporting evidence only and **must not** be represented as a validated production
 capability.
+
+---
+
+# Addendum — Phase 13.2.1: Live Satellite Analysis Validation
+
+**Document type:** Phase 13.2.1 follow-up addendum to the Phase 13.2 PoC report (above).
+**Status:** LIVE PROCESSING **STILL BLOCKED** — credential prerequisite not satisfied. No live NDVI
+was produced. Implementation re-audited against official provider documentation and confirmed
+technically correct; all safe local tests pass; no production file touched.
+**Date:** 2026-10-09
+**Scope:** Complete the *live* validation portion of Phase 13.2 using the **existing** PoC (no
+duplication, no new adapter). This addendum **preserves** all Phase 13.2 findings; it does not
+rewrite them.
+
+> **Honesty statement.** Nothing in this addendum is a live NDVI result. Every number below is either
+> (a) an actual measured value (request counts, durations, discovery scene lists, test pass counts),
+> (b) an actual live provider response (STAC discovery), or (c) explicitly-labeled engineering
+> inference. No mocked value is presented as live, and no NDVI/damage figure is fabricated.
+
+## 13.2.1.1 Credential Availability (checked; presence only, no values printed)
+
+| Variable | Status |
+|---|---|
+| `CDSE_CLIENT_ID` | **absent** |
+| `CDSE_CLIENT_SECRET` | **absent** |
+| `SENTINEL_HUB_CLIENT_ID` | **absent** |
+| `SENTINEL_HUB_CLIENT_SECRET` | **absent** |
+| `SATELLITE_POC_ENABLED` | **absent** |
+| `SATELLITE_POC_PROVIDER` | **absent** |
+| `backend/.env` | **does not exist** |
+
+Determination: **no usable provider credentials are present in this environment.** Per Phase 13.2.1
+rules, no credentials were requested in chat, generated, or stored; the presence check prints
+booleans, never values.
+
+## 13.2.1.2 Authentication Result
+
+**No authentication attempt was made in Phase 13.2.1.** Because credentials were confirmed absent
+*first*, the PoC short-circuits before any token call (`liveProcessingAttempted: false`). This is the
+required behaviour: repeated auth attempts against a missing/known-bad client are prohibited, and the
+OAuth2 flow is never weakened or bypassed. (The Phase 13.2 probe in which the token endpoint returned
+HTTP 401 for a deliberately bogus client is **not** repeated here.)
+
+Safe re-confirmation from the bounded runner: the token endpoint is **not** contacted when
+`hasCdseCredentials` is false.
+
+## 13.2.1.3 Live-Processing Result & Exact Blocker
+
+| Field | Value |
+|---|---|
+| Live NDVI processing attempted | **No** (`liveProcessingAttempted: false`) |
+| Outcome | `IMAGERY_FOUND` (mode `discovery-only`) |
+| Proposed evidence status | `PENDING` (non-operative `SATELLITE`) |
+| Provider error surfaced | None — the run stops *before* the processing stage |
+| Blocker classification | **Credential/authorization prerequisite not satisfied** (not a provider outage, quota, or data-quality failure) |
+| What is NOT claimed | Live NDVI, biophysical change, or crop damage — none were produced |
+
+**Exact prerequisite to unblock (single, bounded action):** provision a **CDSE Sentinel Hub OAuth2
+client** (client id + client secret, granted the Sentinel Hub / Processing API scope) into the
+**PoC-only** environment variables `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` (or the `SENTINEL_HUB_*`
+aliases), then re-run `node poc/satellite/runPoc.js`. No production env var, secret store, or config
+file should be modified for this.
+
+## 13.2.1.4 Implementation Re-Audit vs. Official Documentation
+
+The implemented token/processing path was checked against current official Sentinel Hub / CDSE docs
+(no code change required):
+
+- **OAuth2 token flow** matches exactly: `POST` to
+  `https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token` with
+  `grant_type=client_credentials`, `client_id`, `client_secret` (form-urlencoded), reading
+  `access_token` as a Bearer token. ✅ Confirmed against CDSE Authentication docs.
+- **Statistical API request** is well-formed: `input.bounds` (`bbox` + `properties.crs`),
+  `input.data[].type = "sentinel-2-l2a"`, `dataFilter.timeRange`/`maxCloudCoverage`,
+  `aggregation.timeRange`, `aggregationInterval`, `evalscript`, and `resx`/`resy`. ✅ Confirmed
+  against the Statistical API reference.
+- **Statistical API response** parsing matches the documented shape
+  `{ data: [ { interval, outputs: { default: { bands: { B0..Bn: { stats: { mean } } } } } } ] }`.
+  ✅ The parser reads named band outputs and never assumes extra fields.
+- **`dataMask` requirement** is honored: Statistical API evalscripts must return a `dataMask`
+  output; the PoC returns it as the final band and uses its mean as the valid-pixel fraction.
+  ✅ Confirmed.
+- **NDVI bands & scaling** are correct: NDVI = `(B08 − B04) / (B08 + B04)` with Red = B04 and
+  NIR = B08. In Sentinel Hub, Sentinel-2 L2A evalscript values default to **REFLECTANCE in [0,1]**
+  (DN = `10000 × reflectance`), so **no `/10000` rescaling is applied** — applying one would be a
+  bug. ✅ Confirmed against S2 L2A data-options docs.
+
+Optional (not applied in this phase, listed as future hardening): set evalscript `units:
+"REFLECTANCE"` explicitly, add `dataFilter.mosaickingOrder: "leastCC"` to prefer the least-cloudy
+pixel per interval, AOI-level masking via SCL/s2cloudless, and geometry-based AOI instead of bbox
+for non-rectangular parcels. These were **not** implemented because they cannot be live-validated
+without credentials, and unvalidated changes to the processing path are out of scope.
+
+## 13.2.1.5 Selected Product & Acquisition Dates (from live discovery)
+
+Discovery is **live and real**; acquisition dates below are actual provider metadata. The
+preferred/selected pair is documented, but **no pixels were processed**:
+
+- **Optical (preferred):** Sentinel-2 L2A — best pre `S2B_MSIL2A_20240310T045649_..._T44PKT`
+  (2024-03-10, cloud **0.2 %**); best post `S2B_MSIL2A_20240419T045659_..._T44PKT` (2024-04-19,
+  cloud **23.8 %**).
+- **SAR (discovered only):** Sentinel-1 IW GRD, e.g. descending passes 2024-03-05, 2024-03-17,
+  2024-03-29, 2024-04-22.
+- **AOI:** synthetic `SYNTHETIC-POC-PARCEL-THANJAVUR-TN`, 1.0829 acres, bbox
+  `[79.1375, 10.7864, 79.1381, 10.787]`, 66 m × 67 m.
+
+## 13.2.1.6 Actual Metrics
+
+| Metric | Value | Type |
+|---|---|---|
+| Live NDVI (pre/post) | **none produced** | blocked (no credentials) |
+| Live `deltaNdvi` | **none produced** | blocked (no credentials) |
+| Optical scenes discovered | 20 (real) | live provider response |
+| SAR scenes discovered | 6 (real) | live provider response |
+
+There are **no live NDVI numbers to report**, and none are fabricated. Mocked NDVI values exist only
+inside `tests/satellitePoc.unit.test.js` (offline) and are **not** live results.
+
+## 13.2.1.7 Data-Quality & Scientific Limitations
+
+Unchanged from Phase 13.2 and reconfirmed: cloud-cover metadata is **scene-level, not AOI-level**;
+the monsoon window is cloud-prone (observed scene cloud 0.2 %–~67 %); NDVI over the aggregate path
+uses the ratio of band means (an approximation) rather than full per-pixel statistics; SAR is
+discovered but not processed; the parcel is synthetic. No result here supports any statement about
+real crop damage, and missing/cloud-obscured imagery is never a negative agricultural finding.
+
+## 13.2.1.8 Request Count & Duration (this phase's safe re-run)
+
+| Run | Requests | Duration | Result |
+|---|---|---|---|
+| `npx vitest run tests/satellitePoc.unit.test.js --no-file-parallelism` | 0 network | ~1.2 s | 18/18 passed |
+| Regression set (6 files) | 0 network | ~10.6 s | 141/141 passed |
+| `node poc/satellite/runPoc.js` (bounded, read-only) | **3** | **~3.1 s** | `IMAGERY_FOUND`, `PENDING`, `liveProcessingAttempted: false` |
+
+No imagery bytes were downloaded; only JSON metadata. No retries or repeated auth requests occurred.
+
+## 13.2.1.9 Files Changed in Phase 13.2.1
+
+- **Modified:** this report (`backend/PHASE_13_2_SATELLITE_POC_REPORT.md`) — Phase 13.2.1 addendum
+  appended only; original Phase 13.2 content preserved verbatim.
+- **Created:** none.
+- **Code changed:** none — the PoC re-audit required no code change (implementation already matches
+  official docs).
+
+## 13.2.1.10 Production-Untouched Confirmation
+
+No production code, config, schema, route, controller, service, model, or engine was modified. No
+satellite evidence was persisted into any claim. No claim status was created or altered. No
+credentials were created, requested, printed, logged, or committed. No commit, push, PR, deploy, or
+AWS configuration change was performed. Claim-decision boundaries and the frozen evidence contract
+remain intact (`SATELLITE` stays non-operative; every PoC outcome maps only to a frozen evidence
+status).
+
+## 13.2.1.11 Phase 13.3 Readiness
+
+| Item | State |
+|---|---|
+| Isolated PoC + unit tests | Ready |
+| Live discovery path | Validated live |
+| Processing path | Implemented + doc-verified, **not** live-validated |
+| SAR follow-up | Discovered only; analysis correctly **deferred to Phase 13.3** according to plan |
+| Open prerequisite | CDSE Sentinel Hub OAuth2 client credentials (PoC-only env) |
+| Blocking condition for Phase 13.3 scientific work | Resolve the credential prerequisite; otherwise Phase 13.3 live-analysis work remains **BLOCKED** and must not proceed on mocked data |
+
+**Phase 13.2.1 conclusion:** the live-validation portion is **complete to the extent the environment
+permits** — the sole unmet prerequisite is provider credentials, which are absent by design and were
+**not** worked around. Per the phase stop conditions, work halts here pending review. No mocked output
+is presented as live evidence.
