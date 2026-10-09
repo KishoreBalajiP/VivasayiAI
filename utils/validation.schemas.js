@@ -2,6 +2,13 @@ import { z } from "zod";
 import { env } from "../config/env.js";
 import { validateParcelGeometry } from "../services/parcelGeometry.service.js";
 import { DECISION_STATES } from "../services/adminOverrideRules.service.js";
+import {
+  OWNERSHIP_DOCUMENT_CATEGORIES,
+  OWNERSHIP_REVIEW_REASON_MAX,
+  OWNERSHIP_REVIEW_REASON_MIN,
+  OWNERSHIP_REVIEW_STATUSES,
+  OWNERSHIP_VERIFICATION_METHODS,
+} from "./ownershipEvidence.js";
 
 const MONGO_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
 
@@ -345,6 +352,39 @@ const adminDashboardQuery = z
   })
   .strict();
 
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// Phase 12 (E12) — Land ownership evidence (08_API_Documentation §10.13).
+// A claimant attaches a document they ALREADY uploaded (stored private upload); ownership/identity
+// always derives from the verified token. `uploadId` is the server-generated `img_<uuid>`;
+// `documentCategory` is a fixed vocabulary. Review is admin-only and its outcome is limited to the
+// ownership review vocabulary. Unknown body keys are stripped (never client authority).
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+
+const ownershipBody = z.object({
+  uploadId,
+  documentCategory: z
+    .enum(OWNERSHIP_DOCUMENT_CATEGORIES, { message: "Unknown ownership document category" })
+    .optional(),
+});
+
+const ownershipEvidenceParams = z.object({
+  claimId,
+  evidenceId: mongoId("Invalid evidence ID format"),
+});
+
+const ownershipReviewBody = z.object({
+  status: z.enum(OWNERSHIP_REVIEW_STATUSES, { message: "Unsupported ownership review outcome" }),
+  method: z
+    .enum(OWNERSHIP_VERIFICATION_METHODS, { message: "Unknown ownership verification method" })
+    .optional()
+    .default("manual_review"),
+  reason: z
+    .string({ message: "Review reason is required" })
+    .trim()
+    .min(OWNERSHIP_REVIEW_REASON_MIN, `Review reason must be at least ${OWNERSHIP_REVIEW_REASON_MIN} characters`)
+    .max(OWNERSHIP_REVIEW_REASON_MAX, `Review reason exceeds ${OWNERSHIP_REVIEW_REASON_MAX} characters`),
+});
+
 export {
   googleLoginBody,
   chatBody,
@@ -372,6 +412,9 @@ export {
   overrideBody,
   adminQueueQuery,
   adminDashboardQuery,
+  ownershipBody,
+  ownershipEvidenceParams,
+  ownershipReviewBody,
   APPEAL_ELIGIBLE_STATES,
   DECISION_STATES,
 };

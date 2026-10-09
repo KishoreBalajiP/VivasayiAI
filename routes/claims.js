@@ -7,6 +7,8 @@ import {
   createClaimBody,
   presignUploadBody,
   appealBody,
+  ownershipBody,
+  ownershipEvidenceParams,
 } from "../utils/validation.schemas.js";
 import {
   createClaim,
@@ -22,6 +24,11 @@ import {
   getEvidenceUrl,
 } from "../controllers/claim.controller.js";
 import { submitAppeal, getAppeal } from "../controllers/appeal.controller.js";
+import {
+  submitOwnershipEvidence,
+  listOwnershipEvidence,
+  getOwnershipDocumentUrl,
+} from "../controllers/ownership.controller.js";
 
 // F-49 (ADR-019) — Agricultural Loss Claim endpoints (08_API_Documentation §10).
 // Mounted after requireAuth in app.js; all claim endpoints carry the per-user claim/evidence
@@ -77,6 +84,24 @@ router.get(
   validate(claimParams, "params"),
   validate(claimEvidenceParams, "params"),
   getEvidenceUrl
+);
+
+// Phase 12 (E12) — Land ownership evidence (08_API_Documentation §10.13). The document bytes use
+// the EXISTING private presigned /upload pipeline; these routes attach an owned, stored upload to
+// the claim and expose owner-scoped reads. The attach mutation reuses evidenceLimiter (per-user,
+// matching the claim-evidence surface); the GETs are unmetered like the other read endpoints.
+router.post(
+  "/:claimId/ownership",
+  evidenceLimiter,
+  validate(claimParams, "params"),
+  validate(ownershipBody),
+  submitOwnershipEvidence
+);
+router.get("/:claimId/ownership", validate(claimParams, "params"), listOwnershipEvidence);
+router.get(
+  "/:claimId/ownership/:evidenceId/url",
+  validate(ownershipEvidenceParams, "params"),
+  getOwnershipDocumentUrl
 );
 
 export default router;
