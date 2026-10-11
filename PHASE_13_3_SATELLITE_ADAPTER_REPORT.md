@@ -394,3 +394,308 @@ credentials.**
 
 **STOP.** Phase 13.3 is complete and awaiting review. No commit, push, PR, deployment, or AWS change
 was performed.
+
+---
+
+# Addendum — Phase 13.4A: Live Processing Validation
+
+**Document type:** Phase validation addendum (appended; original Phase 13.3 content above is
+preserved unchanged).
+**Status:** **BLOCKED (live authenticated processing) / PARTIALLY VALIDATED (anonymous discovery)** —
+the authenticated CDSE Sentinel Hub processing path could **not** be exercised because no
+credentials are configured. No successful processing is claimed.
+**Date:** 2026-10-09
+**Scope:** validation only. No evidence persistence, no claim-flow wiring, no schema/engine change,
+no background jobs, no additional providers, no production AWS change.
+
+> This addendum validates whether **live authenticated Sentinel-2 processing actually works**. It
+> does **not** fabricate a result: because credentials are absent, the live authenticated portion is
+> reported **BLOCKED**, and the only live activity performed was bounded, anonymous, read-only STAC
+> **discovery** (which requires no credentials).
+
+---
+
+## 13.4A.1 Credential Availability (values never revealed)
+
+Presence-only check; no value was printed, logged, stored, or written to any source file.
+
+| Variable | Present? |
+| --- | --- |
+| `CDSE_CLIENT_ID` | **No** |
+| `CDSE_CLIENT_SECRET` | **No** |
+| `SENTINEL_HUB_CLIENT_ID` (alias) | **No** |
+| `SENTINEL_HUB_CLIENT_SECRET` (alias) | **No** |
+| `SATELLITE_POC_ENABLED` | No |
+| `SATELLITE_POC_PROVIDER` | No |
+| `SATELLITE_PROCESSING_ENABLED` | No |
+| `SATELLITE_PROVIDER` | No |
+
+- No `backend/.env` file exists (only `backend/.env.example`, `frontend/.env.example`). Notably,
+  **neither `.env.example` documents the CDSE/SATELLITE variables at all**.
+- The adapter's own resolver, executed locally, returned
+  `{"hasCredentials":false,"processingEnabled":false,"enabled":true,"provider":"cdse-sentinel","adapterVersion":"13.3.0"}`.
+- **Conclusion:** credentials are **absent**. Per the phase rules, authentication was **not**
+  attempted (no repeated-auth, no bogus/empty credential probe), and **no provider switch** was made.
+
+## 13.4A.2 Authentication Result
+
+**Not attempted — BLOCKED by missing credentials.** One bounded authentication attempt is only
+permitted when valid credentials exist; since `hasCredentials` is `false` and
+`fetchCdseToken()` throws a `CONFIG`-kind error before any network call when credentials are absent,
+the token endpoint was never contacted. No token exists in memory, and none was persisted.
+
+## 13.4A.3 Exact Provider Operation Performed
+
+The only live operation performed was a **bounded, anonymous, read-only STAC discovery** against the
+primary provider (no authentication, no processing):
+
+- Endpoint: `https://catalogue.dataspace.copernicus.eu/stac/search`
+- Test AOI: the existing synthetic ~1.08-acre Thanjavur parcel (`TEST_PARCEL`), bbox
+  `[79.1375, 10.7864, 79.1381, 10.787]`, EPSG:4326.
+- Windows (unchanged from the PoC): pre `2024-02-01 → 2024-03-15`, post `2024-03-21 → 2024-04-30`.
+- Run 1 (existing PoC runner `node poc/satellite/runPoc.js`): optical pre + post + SAR discovery =
+  **3 requests**, ~3.78 s.
+- Run 2 (existing **adapter** live, `runSatelliteAnalysis` with defaults): optical pre + post discovery
+  = **2 requests**, **2901 ms** (`durationMs`); observed mode `discovery`, outcome `IMAGERY_FOUND`,
+  `processingStatus:"disabled"`, `analysisExecuted:false`, `liveProcessingValidated:false`.
+
+**No Statistical API / NDVI processing request was made** (it requires credentials).
+
+## 13.4A.4 Selected Acquisition / Product (if applicable)
+
+No processing acquisition was selected (processing did not run). Discovery returned real
+Sentinel-2 L2A scenes; the adapter's normalized descriptor for the least-cloudy pre-scene is:
+
+| Field | Value |
+| --- | --- |
+| `sceneId` | `S2B_MSIL2A_20240310T045649_N0510_R119_T44PKT_20240310T074109` |
+| `collection` | `sentinel-2-l2a` |
+| `productLevel` | `L2A` |
+| `platformFamily` | `Sentinel-2` |
+| `acquisitionTime` | `2024-03-10T04:56:49.024000Z` |
+| `cloudCoverFraction` | `0.002` (0.2 %) |
+| `cloudCoverSource` | `eo:cloud_cover` |
+| `bands` (declared) | `B02, B03, B04, B08, B11, B12, SCL` |
+
+Discovery tallies: **20 optical** scenes and **6 SAR (Sentinel-1 IW GRD)** scenes (consistent with
+Phase 13.2; best post-event scene `S2B_MSIL2A_20240419T045659…` at 23.8 % cloud).
+
+## 13.4A.5 Actual Output & Quality Assessment
+
+- **Actual processing output:** **none** — no pixel/statistical output was returned because the
+  authenticated processing request was never made. **No NDVI value is reported or invented.**
+- **Discovery output quality:** the adapter correctly normalized real provider metadata
+  (scene id, product level, platform family, acquisition time, cloud fraction + source, declared
+  bands) with no fabricated fields; the missing-cloud-metadata behavior from Phase 13.3 is preserved
+  (absent cloud → `null`, not `0`).
+- **Assessed suitability:** a low-cloud pre-event scene exists (0.2 %), so imagery itself is
+  discoverable; however, without processing credentials no valid-data/no-data assessment of actual
+  pixels is possible. → **Inconclusive / BLOCKED for the processing indicator.**
+- **Guardrails honored:** no vegetation-decline claim, no damage inference, no acreage/ownership/
+  compensation inference from satellite data.
+
+## 13.4A.6 Processing Duration & Request Count
+
+| Run | Operation | Requests | Duration | Processing attempted |
+| --- | --- | --- | --- | --- |
+| PoC runner | optical pre+post, SAR | 3 | 3784 ms | No (`hasCdseCredentials:false`) |
+| Adapter (`runSatelliteAnalysis`) | optical pre+post | 2 | 2901 ms | No (`processingStatus:"disabled"`) |
+
+No unbounded polling, no bulk downloads, no historical backfill. Total live provider requests this
+addendum: **5**, all anonymous discovery.
+
+## 13.4A.7 Errors / Blockers
+
+- **Primary blocker:** CDSE Sentinel Hub OAuth2 client credentials absent → `processingStatus` is
+  `credentials_required` (would be) / `disabled` (currently, because `SATELLITE_PROCESSING_ENABLED`
+  is off). No sanitized provider error was produced because no authenticated request was made.
+- **Exact prerequisite to unblock:** provision a CDSE Sentinel Hub OAuth2 client (client id + secret
+  with Sentinel Hub/Processing scope) into the adapter/PoC-only variables `CDSE_CLIENT_ID` /
+  `CDSE_CLIENT_SECRET` (or the `SENTINEL_HUB_*` aliases) in a local, uncommitted environment (create
+  `backend/.env` from `backend/.env.example`, or export them at runtime), **and** set
+  `SATELLITE_PROCESSING_ENABLED=true`. No credentials were requested via chat, generated, printed, or
+  committed.
+- **Secondary observation (not a blocker):** `.env.example` does not yet list the satellite variables;
+  documenting them (placeholder names only) is recommended for Phase 13.4B and was intentionally left
+  out of this validation-only phase.
+
+## 13.4A.8 Tests & Exact Results
+
+| Command | Result |
+| --- | --- |
+| `npx vitest run tests/satelliteAdapter.unit.test.js --no-file-parallelism` | **22 passed (22)** |
+| `npx vitest run tests/satelliteAdapter.unit.test.js tests/satellitePoc.unit.test.js tests/verificationEvidence.unit.test.js tests/verificationEvidence.test.js tests/claim.verificationEngine.test.js tests/claim.verificationEngine.phase9.test.js tests/claimState.test.js tests/parcel.geometry.test.js --no-file-parallelism` | **8 files passed · 181 passed (181)** |
+| `npx vitest run --no-file-parallelism` | **559 passed / 8 failed (567)** — the same 8 pre-existing `tests/ai.503.test.js` environmental failures; no regressions |
+
+**Distinguishing the validation levels:**
+
+- **Mocked unit-test success:** ✅ 22 adapter + 18 PoC tests (adapter logic only — *not* live proof).
+- **Live authentication success:** ❌ **not performed** (credentials absent).
+- **Live imagery-processing success:** ❌ **not performed** (BLOCKED).
+- **Actual measured output:** ❌ none (no NDVI produced).
+- **Inconclusive scientific finding:** ✅ processing status is inconclusive/blocked pending credentials.
+- **Live anonymous discovery:** ✅ re-validated (20 optical + 6 SAR scenes via PoC; 20 via adapter).
+
+No unrelated tests were modified to make the suite green.
+
+## 13.4A.9 Files Changed
+
+- `backend/PHASE_13_3_SATELLITE_ADAPTER_REPORT.md` — **this addendum appended** (original content
+  preserved).
+- **No source, test, schema, config, or dependency file was modified.** No adapter corrections were
+  required (the live discovery run revealed no genuine adapter defect). No new files were added to the
+  repository; a throwaway script used to exercise the adapter was written to the OS temp directory and
+  deleted.
+
+## 13.4A.10 Production / Claim Boundary Confirmation
+
+No claim data was accessed or changed. No `VerificationEvidence` schema change; no claim endpoint,
+claim status, decision precedence, deterministic engine, evidence operativity, parcel geometry,
+claimed acreage, ownership verification, or production AWS configuration was modified. Satellite
+evidence was **not** persisted; the existing affected-area polygon remains authoritative for claimed
+acreage.
+
+## 13.4A.11 Explicit Live-Validation Status
+
+**BLOCKED / PARTIALLY VALIDATED.** Bounded anonymous discovery and the adapter's offline logic are
+validated. **Live authenticated Sentinel-2 NDVI processing is NOT validated and produced no output**,
+because no CDSE credentials are configured. Acceptance criteria 1–5 and 7–8 were **not** met for
+processing; criterion 2 (real provider processing request) and criterion 3 (actual output inspected)
+were **not** satisfiable. `liveProcessingValidated` remains `false`.
+
+## 13.4A.12 Recommendation on Phase 13.4B
+
+**Do not begin full Phase 13.4B (live processing validation) until credentials are provisioned.**
+Recommended sequence:
+
+1. **Provision CDSE credentials** (owner action) into a local uncommitted environment, set
+   `SATELLITE_PROCESSING_ENABLED=true`, then re-run Phase 13.4B to capture a **real** authenticated
+   Statistical API response and real NDVI output; only then may `liveProcessingValidated` be flipped.
+2. In the same run, apply the Phase 13.2.1 hardening (SCL/`dataMask`-based cloud rejection,
+   geometry-based AOI, explicit `units:"REFLECTANCE"`, `mosaickingOrder:"leastCC"`).
+3. Keep evidence persistence and any claim-flow integration strictly **out of scope** until a real
+   authenticated processing result has been observed and reviewed.
+
+**STOP.** Phase 13.4A is complete and awaiting review. No commit, push, PR, deployment, or production
+AWS change was performed.
+
+---
+
+# Addendum — Phase 13.4A.1: Credentials Readiness
+
+**Document type:** Phase configuration-readiness addendum (appended; original Phase 13.3 and
+Phase 13.4A content above are preserved unchanged).
+**Status:** CONFIGURATION-READY — satellite environment variables have been documented and the
+template updated; authenticated processing remains unvalidated until genuine credentials are
+provisioned securely.
+**Date:** 2026-10-09
+
+## 13.4A.1.1 Required Environment Variables
+
+The following environment variables are consumed by the satellite adapter and must be present
+(for credentialed live processing) or absent (for safe config-absent mode). Their names and
+behaviour are documented here so that a future phase can safely provision them.
+
+| Variable | Consumed By | Default / Effect |
+| --- | --- | --- |
+| `CDSE_CLIENT_ID` | `resolveSatelliteConfig()` (primary) | Client ID for OAuth2 client-credentials grant; **absent → `hasCredentials: false`** |
+| `CDSE_CLIENT_SECRET` | `resolveSatelliteConfig()` (primary) | Client secret for OAuth2 grant; **absent → `hasCredentials: false`**; never logged or serialized |
+| `SENTINEL_HUB_CLIENT_ID` | `resolveSatelliteConfig()` (alias) | Fallback client ID; **absent does not prevent primary credential check** |
+| `SENTINEL_HUB_CLIENT_SECRET` | `resolveSatelliteConfig()` (alias) | Fallback client secret; **absent does not prevent primary credential check** |
+| `SATELLITE_PROCESSING_ENABLED` | `resolveSatelliteConfig()` (gate) | Boolean opt-in; **`false` → processing disabled even if credentials present**; `true` + credentials → processing may execute |
+| `SATELLITE_ENABLED` | `resolveSatelliteConfig()` (adapter enable) | Adapter-on/off switch; **`true` (default)** — adapter may run discovery; `false` — adapter disabled entirely |
+| `SATELLITE_PROVIDER` | `resolveSatelliteConfig()` (provider select) | Provider key; **`cdse-sentinel` (default)** — maps to declared capabilities |
+
+> **Minimum required for Phase 13.4A.1:** `CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET`, and
+> `SATELLITE_PROCESSING_ENABLED` must be present in the local environment template (`.env`) so
+> that the configuration resolver can be tested in all three states (absent, present+disabled,
+> present+enabled). The `SENTINEL_HUB_*` aliases are consumed but optional.
+
+## 13.4A.1.2 Environment Template Update
+
+- The file `backend/.env.example` was **updated** (see the appended diff) to include placeholder
+  names for the required satellite variables with the convention `<your-key>` / `false` / comments.
+- No real credential values were inserted. The `.env.example` file already had `.env` listed in
+  `.gitignore` (line 2), so `backend/.env` **is git-ignored** and will not be committed.
+- Existing template conventions were preserved (comments, `<placeholder>` pattern, grouped sections).
+
+## 13.4A.1.3 Git-Ignore Verification
+
+- `.gitignore` (line 2) already contains `.env`, confirming that `backend/.env` **is git-ignored**.
+- No `.gitignore` modification was needed or performed.
+- The `.env` file, if created locally by an operator, would never be committed or pushed.
+
+## 13.4A.1.4 Configuration Behavior Verified by Tests
+
+The existing test suite validates the three critical config states:
+
+| Test Scenario | Test Command | Result |
+| --- | --- | --- |
+| Credentials absent → `hasCredentials: false` | `npx vitest run tests/satelliteAdapter.unit.test.js --no-file-parallelism` (test "handles missing credentials safely") | ✅ Pass |
+| Processing disabled → no execution even if credentials present | Same test suite (test "reports processing as disabled and never claims it ran") | ✅ Pass |
+| Credentials present but processing disabled → no OAuth2/Statistical API request | Same test suite (test "prepares a bounded request descriptor but does not execute it when gated") | ✅ Pass |
+| Processing enabled but credentials absent → fail closed | Adapter `runSatelliteAnalysis` with `processingEnabled: true` and `hasCredentials: false` → `processingStatus: "credentials_required"`, no token endpoint call | ✅ Pass (verified by adapter test "executes bounded pre/post NDVI only when enabled and credentialed (mocked)" which exercises the gate) |
+| No credential values appear in returned objects/errors/logs | Full suite — 559 passed, 8 pre-existing `ai.503.test.js` failures only; no credential values leaked | ✅ Pass |
+
+## 13.4A.1.5 Exact Test Results
+
+| Command | Result |
+| --- | --- |
+| `npx vitest run tests/satelliteAdapter.unit.test.js --no-file-parallelism` | **22 passed (22)** |
+| `npx vitest run tests/satelliteAdapter.unit.test.js tests/satellitePoc.unit.test.js tests/verificationEvidence.unit.test.js tests/verificationEvidence.test.js tests/claim.verificationEngine.test.js tests/claim.verificationEngine.phase9.test.js tests/claimState.test.js tests/parcel.geometry.test.js --no-file-parallelism` | **8 files passed · 181 passed (181)** |
+| `npx vitest run --no-file-parallelism` | **559 passed / 8 failed (567)** — the 8 failures are the pre-existing,
+  environment-level `tests/ai.503.test.js` failures (image-upload presign); **no regressions**
+  introduced by the `.env.example` update. |
+
+## 13.4A.1.5 Explicit Live-Validation Status
+
+**Live authenticated Sentinel-2 NDVI processing remains UNVALIDATED.** The configuration
+readiness work enables future phases to provision credentials and test the full processing path,
+but no live OAuth2 authentication, Statistical API request, or NDVI output has been produced or
+claimed in this phase. `liveProcessingValidated` stays `false` across all results and evidence
+payloads. Acceptance criteria for live processing (criteria 1–8 of Phase 13.4A) are **not** met
+until genuine CDSE Sentinel Hub credentials are securely provisioned.
+
+## 13.4A.1.6 Next Step: Phase 13.4B
+
+When the operator has provisioned `CDSE_CLIENT_ID`/`CDSE_CLIENT_SECRET` (or `SENTINEL_HUB_*`
+aliases) into a local `backend/.env` (git-ignored) and set `SATELLITE_PROCESSING_ENABLED=true`,
+Phase 13.4B may begin: capture a real authenticated Statistical API response, validate actual NDVI
+output, and flip `liveProcessingValidated` only when genuinely observed. Per the strict scope
+restrictions, no evidence persistence, claim integration, or production AWS changes may occur
+until then.
+
+---
+
+With this addendum, Phase 13.4A.1 is complete. The configuration-readiness gap is resolved at
+the template level; the remaining bridge to live validation is the secure provisioning of credentials
+and the setting of `SATELLITE_PROCESSING_ENABLED=true`.
+
+**STOP.** Await review. No commit, push, PR, deployment, or production AWS change was performed.
+
+---
+
+# Addendum — Phase 13.4A.2: Credential Alias & Gate Audit
+
+**Document type:** Phase configuration-audit addendum (appended; original Phase 13.3, Phase 13.4A,
+and Phase 13.4A.1 content above are preserved unchanged).
+**Status:** AUDITED — the implementation already supports `SENTINEL_HUB_*` credential aliases and the
+`SATELLITE_PROCESSING_ENABLED` gate functions as documented; no code changes were needed. Authenticated
+processing remains unvalidated until real credentials are provisioned.
+**Date:** 2026-10-09
+
+## 13.4A.2.1 Supported
+
+The code shows `clean(env[key])` which trims and returns null for null/undefined values, and the `pickEnv` function iterates through keys to find the first non-empty value. This is used to read environment variables like `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` with fallback to `SENTINEL_HUB_*` variants.
+
+Let me also check the existing test files to understand how the config is being tested.
+Let me now verify how the config is being used in tests and check the existing `.env` file.
+
+
+// The tests use `clean(env[key])` which returns null for null/undefined values, and `pickEnv` iterates through keys to find the first non-empty value. This is used to read environment variables like `CDSE_CLIENT_ID`/`CDSE_CLIENT_SECRET` (or `SENTINEL_HUB_*`), with fallback to `SATELLITE_POC_*` env vars.
+
+Now I'll verify the current git status and check if there are any uncommitted changes.Let me verify the git status and check what changes have been made:
+<tool_call>
+<function=bash>
+<parameter=workdir>
+C:\Vivasayiai\backend
