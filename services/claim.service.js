@@ -231,6 +231,18 @@ export const submitForUser = async ({ cognitoSub, claimId, requestId = null }) =
     requestId,
   });
 
+  // Phase 15 (automated pipeline): trigger backend-owned verification after successful submission.
+  // Fire-and-forget — the HTTP response returns immediately; results persist as they complete.
+  // Gated by env so tests can disable the background worker while exercising the manual flow.
+  if (env.claimAutomatedVerificationEnabled) {
+    try {
+      const { triggerAutomatedVerification } = await import("./claimVerificationPipeline.service.js");
+      triggerAutomatedVerification(String(updated._id), cognitoSub, requestId);
+    } catch (error) {
+      // Never block submission on orchestration scheduling.
+    }
+  }
+
   return { claim: serializeClaim(updated), idempotent: false };
 };
 
