@@ -22,6 +22,10 @@ import {
   completeEvidence,
   deleteEvidence,
   getEvidenceUrl,
+  getClaimVerification,
+  examineClaimLandDocuments,
+  runClaimSatelliteVerification,
+  verifyClaimOfficialLandRecords,
 } from "../controllers/claim.controller.js";
 import { submitAppeal, getAppeal } from "../controllers/appeal.controller.js";
 import {
@@ -42,6 +46,10 @@ const router = express.Router();
 router.get("/", claimLimiter, listClaims);
 router.post("/", claimLimiter, validate(createClaimBody), createClaim);
 router.get("/:claimId", claimLimiter, validate(claimParams, "params"), getClaim);
+router.get("/:claimId/verification", claimLimiter, validate(claimParams, "params"), getClaimVerification);
+router.post("/:claimId/verification/land-documents", claimLimiter, validate(claimParams, "params"), examineClaimLandDocuments);
+router.post("/:claimId/verification/satellite", claimLimiter, validate(claimParams, "params"), runClaimSatelliteVerification);
+router.post("/:claimId/verification/official-land-record", claimLimiter, validate(claimParams, "params"), verifyClaimOfficialLandRecords);
 router.post("/:claimId/submit", claimLimiter, validate(claimParams, "params"), submitClaim);
 router.post("/:claimId/withdraw", claimLimiter, validate(claimParams, "params"), withdrawClaim);
 router.post("/:claimId/resubmit", claimLimiter, validate(claimParams, "params"), resubmitClaim);

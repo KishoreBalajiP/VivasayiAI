@@ -4,6 +4,10 @@ import ApiResponse from "../utils/ApiResponse.js";
 import * as claimService from "../services/claim.service.js";
 import * as claimEvidenceService from "../services/claimEvidence.service.js";
 import claimVerificationService from "../services/claimVerification.service.js";
+import * as verificationEvidenceService from "../services/verificationEvidence.service.js";
+import * as landDocumentExaminationService from "../services/landDocumentExamination.service.js";
+import * as officialLandRecordService from "../services/officialLandRecord.service.js";
+import * as satelliteVerificationService from "../services/satelliteVerification.service.js";
 
 // F-49 (ADR-019) — claim lifecycle + claim-scoped evidence (08_API_Documentation §10).
 // Identity always derives from the verified token (req.user.id = cognitoSub), never from the
@@ -120,6 +124,53 @@ const getEvidenceUrl = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Evidence url generated", result);
 });
 
+// Phase 15 — farmer-facing verification summary (owner-scoped).
+const getClaimVerification = asyncHandler(async (req, res) => {
+  const view = await verificationEvidenceService.getVerificationEvidenceView({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+  });
+  const claim = await claimService.getForUser(req.user.id, req.params.claimId);
+  return ApiResponse.success(res, "Verification summary fetched", {
+    verification: view,
+    claim,
+  });
+});
+
+const examineClaimLandDocuments = asyncHandler(async (req, res) => {
+  const result = await landDocumentExaminationService.examineOwnershipDocumentsForClaim({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+    requestId: req.requestId ?? null,
+  });
+  return ApiResponse.success(res, "Land documents examined", result);
+});
+
+const runClaimSatelliteVerification = asyncHandler(async (req, res) => {
+  const claim = await claimService.getForUser(req.user.id, req.params.claimId);
+  if (!claim) throw ApiError.notFound("Claim not found");
+  const eventTime = new Date(claim.eventDate).getTime();
+  const start = new Date(eventTime - 45 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const end = new Date(eventTime + 15 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const result = await satelliteVerificationService.runSatelliteVerificationForClaim({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+    claim,
+    startDate: start,
+    endDate: end,
+  });
+  return ApiResponse.success(res, "Satellite verification processed", result);
+});
+
+const verifyClaimOfficialLandRecords = asyncHandler(async (req, res) => {
+  const result = await officialLandRecordService.verifyOfficialLandRecordForClaim({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+    extracted: req.body?.extracted || null,
+  });
+  return ApiResponse.success(res, "Official land record verification processed", result);
+});
+
 export {
   createClaim,
   listClaims,
@@ -132,4 +183,8 @@ export {
   completeEvidence,
   deleteEvidence,
   getEvidenceUrl,
+  getClaimVerification,
+  examineClaimLandDocuments,
+  runClaimSatelliteVerification,
+  verifyClaimOfficialLandRecords,
 };

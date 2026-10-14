@@ -113,6 +113,7 @@ export const env = Object.freeze({
   sessionJwtSecret: process.env.SESSION_JWT_SECRET || undefined,
   accessTokenTtlMs: Number(process.env.ACCESS_TOKEN_TTL_MS) || 15 * 60 * 1000,
   refreshTokenTtlMs: Number(process.env.REFRESH_TOKEN_TTL_MS) || 30 * 24 * 60 * 60 * 1000,
+  claimAutomatedVerificationEnabled: (process.env.CLAIM_AUTOMATED_VERIFICATION_ENABLED || "true").toLowerCase() === "true",
   mongoUri: process.env.MONGO_URI,
   cognitoClientId: process.env.COGNITO_CLIENT_ID,
   cognitoClientSecret: process.env.COGNITO_CLIENT_SECRET,
