@@ -408,7 +408,8 @@ describe("13.3 Adapter — honest processing status", () => {
     expect(descriptor.prepared).toBe(true);
     expect(descriptor.executed).toBe(false);
     expect(descriptor.indicator).toBe("NDVI");
-    expect(descriptor.bands).toEqual({ red: "B04", nir: "B08", mask: "dataMask" });
+    // SCL is read so cloud, shadow and cirrus pixels are excluded from the statistics.
+    expect(descriptor.bands).toEqual({ red: "B04", nir: "B08", scl: "SCL", mask: "dataMask" });
     expect(descriptor.formula).toMatch(/B08 - B04/);
     expect(descriptor.bounded.singleRequestPerWindow).toBe(true);
     expect(descriptor.requestShape.input.data[0].type).toBe(S2);
@@ -548,5 +549,76 @@ describe("13.3 Adapter — PoC remains intact", () => {
     });
     expect(pocResult.outcome).toBe(pocSatellite.POC_OUTCOMES.IMAGERY_FOUND);
     expect(pocResult.evidencePayload.source).toBe("SATELLITE");
+  });
+});
+
+// --- Phase C: masked, polygon-bounded pre/post analysis -------------------------------------
+
+const maskedStats = (mean, sampleCount, noDataCount) => ({
+  status: 200,
+  data: [{ outputs: { ndvi: { bands: { B0: { stats: { mean, sampleCount, noDataCount } } } } } }],
+});
+
+describe("Phase C — pre/post NDVI with cloud masking", () => {
+  const enabled = () => baseConfig({ processingEnabled: true, hasCredentials: true, clientId: "a", clientSecret: "b" });
+  const prepostArgs = (config, transport) => runArgs(config, transport, { preWindow: PRE, postWindow: POST, window: undefined });
+  const search = () => windowAwareSearch([feature("S2-pre", "2024-02-10T05:00:00Z", 5)], [feature("S2-post", "2024-04-10T05:00:00Z", 3)]);
+  const statsBodies = (calls) => calls.filter((call) => call.url === STATS_URL).map((call) => call.body);
+
+  it("PC-1: the Statistical API request is bounded by the claim polygon with a degree resolution", async () => {
+    const calls = [];
+    const transport = makeTransport({ calls, onSearch: search(), onStats: () => maskedStats(0.7, 100, 5) });
+    await runSatelliteAnalysis(prepostArgs(enabled(), transport));
+    const bodies = statsBodies(calls);
+    expect(bodies).toHaveLength(2);
+    for (const body of bodies) {
+      expect(body.input.bounds.geometry.type).toBe("Polygon");
+      expect(body.aggregation.resx).toBeLessThan(0.001);
+      expect(body.aggregation.evalscript).toContain("SCL");
+    }
+  });
+
+  it("PC-2: one OAuth token serves both windows", async () => {
+    const calls = [];
+    const transport = makeTransport({ calls, onSearch: search(), onStats: () => maskedStats(0.7, 100, 5) });
+    await runSatelliteAnalysis(prepostArgs(enabled(), transport));
+    expect(calls.filter((call) => call.url === TOKEN_URL)).toHaveLength(1);
+  });
+
+  it("PC-3: a clear drop is interpreted as SUPPORTS_LOSS and persisted on the evidence result", async () => {
+    let n = 0;
+    const transport = makeTransport({ onSearch: search(), onStats: () => (++n === 1 ? maskedStats(0.75, 200, 10) : maskedStats(0.35, 200, 20)) });
+    const result = await runSatelliteAnalysis(prepostArgs(enabled(), transport));
+    expect(result.outcome).toBe(SATELLITE_OUTCOMES.ANALYSIS_COMPLETE);
+    expect(result.analysis.analysisOutcome).toBe("SUPPORTS_LOSS");
+    expect(result.analysis.method).toBe("per-pixel-mean-scl-masked");
+    const stored = result.evidence.result;
+    expect(stored.analysisOutcome).toBe("SUPPORTS_LOSS");
+    expect(stored.deltaNdvi).toBeCloseTo(-0.4, 4);
+    expect(stored.before.validPixelFraction).toBeCloseTo(0.95, 4);
+    expect(stored.evalscriptHash).toMatch(/^[0-9a-f]{12}$/);
+    expect(JSON.stringify(result.evidence)).not.toContain("tok-abc");
+  });
+
+  it("PC-4: a mostly-masked post window is INCONCLUSIVE even though the NDVI fell", async () => {
+    let n = 0;
+    const transport = makeTransport({ onSearch: search(), onStats: () => (++n === 1 ? maskedStats(0.75, 200, 10) : maskedStats(0.1, 200, 170)) });
+    const result = await runSatelliteAnalysis(prepostArgs(enabled(), transport));
+    expect(result.analysis.analysisOutcome).toBe("INCONCLUSIVE");
+    expect(result.analysis.interpretationReasons).toContain("post_event_too_few_valid_pixels");
+  });
+
+  it("PC-5: when every pixel is masked the run is inconclusive, never a zero NDVI", async () => {
+    const transport = makeTransport({ onSearch: search(), onStats: () => maskedStats(0, 100, 100) });
+    const result = await runSatelliteAnalysis(prepostArgs(enabled(), transport));
+    expect(result.outcome).toBe(SATELLITE_OUTCOMES.INCONCLUSIVE);
+    expect(result.analysis).toBeNull();
+  });
+
+  it("PC-6: a single window can never support or refute a loss", async () => {
+    const transport = makeTransport({ onSearch: () => searchResponse([feature("S2-a", "2024-02-10T05:00:00Z", 5)]), onStats: () => maskedStats(0.5, 100, 0) });
+    const result = await runSatelliteAnalysis(runArgs(enabled(), transport));
+    expect(result.analysis.analysisOutcome).toBe("INCONCLUSIVE");
+    expect(result.analysis.deltaNdvi).toBeNull();
   });
 });

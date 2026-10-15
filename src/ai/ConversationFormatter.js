@@ -10,7 +10,11 @@ import AIConfig from "./AIConfig.js";
 const roleLabel = (sender) => (sender === "user" ? "User" : "Assistant");
 
 export const formatHistory = (messages, opts = {}) => {
-  const list = Array.isArray(messages) && messages.length > 0 ? messages : [];
+  // Client-authored assistant/system messages are not evidence of what the assistant said, so they
+  // are never replayed as prior turns.
+  const list = (Array.isArray(messages) ? messages : []).filter(
+    (message) => !(message && message.origin === "client" && message.sender !== "user")
+  );
   const windowSize = Number(opts.window) || AIConfig.chatHistoryWindow;
 
   // Trim oldest first, preserve order.
@@ -28,11 +32,9 @@ export const formatHistory = (messages, opts = {}) => {
   let estimate = () =>
     trimmed.reduce((n, m) => n + (m?.text?.length || 0) + 20, 0);
 
+  // Drop the oldest message one at a time until the history fits (a single message is always kept).
   while (trimmed.length > 1 && estimate() > maxChars) {
-    // Remove oldest (first user/assistant turn pair when possible).
-    trimmed = trimmed.slice(trimmed.length - windowSize, trimmed.length);
-    // Fallback: drop one message at a time from the front.
-    if (estimate() > maxChars) trimmed = trimmed.slice(1);
+    trimmed = trimmed.slice(1);
   }
 
   return trimmed

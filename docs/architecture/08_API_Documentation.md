@@ -1,5 +1,7 @@
 # 08 — API Documentation
 
+> **October 2026 update:** this document predates several endpoints and fields (upload presign, claims verification, appeals, admin, review cases, component statuses, chat `parcelId`/`sources`/`meta`). The current changes are listed in [FRONTEND_CONTRACT_2026-10.md](FRONTEND_CONTRACT_2026-10.md); the route tables in the repository README and the code in `routes/` are authoritative until this document is rewritten.
+
 > **Metadata**
 > - **Title:** 08 — API Documentation
 > - **Version:** 1.0

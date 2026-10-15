@@ -21,6 +21,9 @@ const COGNITO_ISSUER_PATTERN =
   /^https:\/\/cognito-idp\.([a-z0-9-]+)\.amazonaws\.com\/([A-Za-z0-9_-]+)\/?$/;
 
 const JWKS_TTL_MS = 60 * 60 * 1000; // cache signing keys, rotating hourly at most
+// An app trusts one pool, so a handful of entries is plenty; the bound stops a stream of tokens that
+// name many different issuers from growing memory without limit.
+const MAX_CACHED_ISSUERS = 8;
 const FETCH_TIMEOUT_MS = 5000;
 
 // issuer -> { keys: Map<kid, jwk>, fetchedAt: number }
@@ -45,6 +48,7 @@ const _setFetcher = (fn) => {
 
 // Test seam — clears the in-memory JWKS cache.
 const _clearCache = () => cache.clear();
+const cacheSize = () => cache.size;
 
 const getJwks = async (issuer) => {
   const now = Date.now();
@@ -57,6 +61,7 @@ const getJwks = async (issuer) => {
       if (k && k.kid && k.kty === "RSA" && k.n && k.e) keys.set(k.kid, k);
     }
     const entry = { keys, fetchedAt: now };
+    if (!cache.has(issuer) && cache.size >= MAX_CACHED_ISSUERS) cache.delete(cache.keys().next().value);
     cache.set(issuer, entry);
     return entry;
   } catch (error) {
@@ -86,4 +91,4 @@ const getKey = async (issuer, kid) => {
   }
 };
 
-export { isCognitoIssuer, jwksUrl, getKey, _setFetcher, _clearCache };
+export { isCognitoIssuer, jwksUrl, getKey, _setFetcher, _clearCache, cacheSize };

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import mongoose from "mongoose";
 import ApiError from "../utils/ApiError.js";
 import ClaimEvidence from "../models/ClaimEvidence.js";
@@ -116,6 +117,12 @@ export const recordVerificationEvidence = async ({
   result = null,
   idempotencyKey = null,
   requestId = null,
+  // ADR-020 history fields (all optional; see recordEvidenceRun).
+  component = null,
+  kind = "evidence",
+  inputFingerprint = null,
+  attempt = 1,
+  supersedes = null,
 } = {}) => {
   assertValidClaimId(claimId);
   assertValidCognitoSub(cognitoSub);
@@ -163,6 +170,11 @@ export const recordVerificationEvidence = async ({
       metadata: built.metadata,
       result: built.result,
       idempotencyKey: key,
+      component,
+      kind,
+      inputFingerprint,
+      attempt,
+      supersedes,
     });
   } catch (error) {
     if (error?.code === 11000 && key) {
@@ -190,6 +202,55 @@ export const recordVerificationEvidence = async ({
   });
 
   return { evidence: serialize(created), idempotent: false };
+};
+
+// ADR-020 — append-only evidence history. `recordVerificationEvidence` with a fixed key (for example
+// `satellite_<claimId>`) froze the FIRST result forever: enabling processing later, a longer
+// post-event window or a retry after a provider outage could never replace it. This records a new
+// row whenever the INPUTS change, and treats the newest row per (claim, component) as current.
+//   - same inputs, previous run succeeded or was inconclusive  → returns that row (idempotent);
+//   - same inputs, previous run was UNAVAILABLE (transient)    → a new attempt (only if allowed);
+//   - different inputs                                         → a new row superseding the old one.
+// No "current" flag exists, so there is nothing to keep consistent between rows.
+export const recordEvidenceRun = async ({
+  claimId,
+  cognitoSub,
+  component,
+  keyPrefix,
+  inputFingerprint,
+  retryUnavailable = true,
+  ...rest
+} = {}) => {
+  assertValidClaimId(claimId);
+  assertValidCognitoSub(cognitoSub);
+  if (!inputFingerprint || typeof inputFingerprint !== "string") {
+    throw ApiError.badRequest("inputFingerprint is required");
+  }
+  if (!keyPrefix || !/^[A-Za-z0-9]{2,12}$/.test(keyPrefix)) {
+    throw ApiError.badRequest("keyPrefix must be 2-12 alphanumeric characters");
+  }
+  const claim = await findOwned(cognitoSub, claimId);
+  if (!claim) throw ApiError.notFound("Claim not found");
+
+  const latest = await VerificationEvidence.findOne({ claimId: claim._id, component }).sort({ createdAt: -1 });
+  const sameInputs = Boolean(latest) && latest.inputFingerprint === inputFingerprint;
+  if (sameInputs && !(retryUnavailable && latest.status === "UNAVAILABLE")) {
+    return { evidence: serialize(latest), idempotent: true, superseded: false };
+  }
+
+  const attempt = sameInputs ? (latest.attempt || 1) + 1 : 1;
+  const digest = createHash("sha1").update(`${inputFingerprint}:${attempt}`).digest("hex").slice(0, 16);
+  const result = await recordVerificationEvidence({
+    ...rest,
+    claimId,
+    cognitoSub,
+    component,
+    inputFingerprint,
+    attempt,
+    supersedes: latest ? latest._id : null,
+    idempotencyKey: `${keyPrefix}_${String(claim._id)}_${digest}`,
+  });
+  return { ...result, superseded: Boolean(latest) && !result.idempotent };
 };
 
 // Change an evidence row's status (the only allowed mutation). Ownership flows through the
@@ -319,6 +380,7 @@ export const claimHasVerificationEvidence = async (claimId) => {
 
 export default {
   recordVerificationEvidence,
+  recordEvidenceRun,
   updateVerificationEvidenceStatus,
   listVerificationEvidenceForClaim,
   getVerificationEvidenceView,

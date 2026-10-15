@@ -69,6 +69,15 @@ export const OWNERSHIP_FOUNDATION_VERSION = "1";
 // per-claim idempotency key makes re-registering the same upload a safe no-op.
 export const OWNERSHIP_IDEMPOTENCY_PREFIX = "owndoc_";
 
+// The OWNERSHIP source is shared by three kinds of rows: claimant-attached DOCUMENTS (keyed
+// `owndoc_`), automated manual-review cases (`rv_`) and official land-record check results
+// (`officialland_`). Only documents are things a farmer attached and an examiner can open, so
+// farmer-facing lists, signed document URLs and document examination use this filter. Admins still
+// see every row.
+export const OWNERSHIP_DOCUMENT_FILTER = {
+  idempotencyKey: { $regex: `^${OWNERSHIP_IDEMPOTENCY_PREFIX}` },
+};
+
 export const OWNERSHIP_UPLOAD_ID_PATTERN = /^img_[0-9a-fA-F-]{36}$/;
 
 export const OWNERSHIP_REVIEW_REASON_MIN = 10;

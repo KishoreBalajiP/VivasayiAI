@@ -9,6 +9,7 @@ import { model, performRAG } from "./chat.service.js";
 import { getObject } from "./s3.service.js";
 import { analyzeImage } from "./vision.service.js";
 import { assembleContextAndRender } from "./context.service.js";
+import { INTENTS } from "../src/ai/Intent.js";
 import { getByUser as getFarmProfile } from "./farmProfile.service.js";
 import { getForUser, deriveTitle } from "./chatSession.service.js";
 import { buildImageDiagnosisPrompt } from "../src/ai/PromptBuilder.js";
@@ -130,8 +131,10 @@ const generateImageResponse = async ({
       district,
       cognitoSub,
       userMessage: textInput || "image diagnosis",
+      // A photo turn is a crop-health question whatever the caption says (or omits).
+      intent: INTENTS.DISEASE_DIAGNOSIS,
     });
-    const rag = await performRAG(textInput || momentImageCaption(), chatHistory);
+    const rag = await performRAG(textInput || momentImageCaption());
     const hasRag = !!rag.context;
 
     // 6. Stage-2 reasoning (mock seam for tests, otherwise one Gemini call).

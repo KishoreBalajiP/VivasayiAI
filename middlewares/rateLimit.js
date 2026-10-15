@@ -33,6 +33,18 @@ const claimLimiter = rateLimit({
   keyGenerator: chatKeyGenerator,
 });
 
+// Read endpoints (GET /claims, /claims/:id, /verification, /appeal) get a separate, much larger
+// bucket: the frontend polls them, and sharing the strict write budget locked farmers out of
+// creating or submitting claims after a handful of page views.
+const claimReadLimiter = rateLimit({
+  windowMs: env.claimReadRateLimitWindowMs,
+  limit: env.claimReadRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: handleLimitExceeded,
+  keyGenerator: chatKeyGenerator,
+});
+
 const evidenceLimiter = rateLimit({
   windowMs: env.evidenceRateLimitWindowMs,
   limit: env.evidenceRateLimitMax,
@@ -99,6 +111,7 @@ export {
   sessionMutationLimiter,
   uploadLimiter,
   claimLimiter,
+  claimReadLimiter,
   evidenceLimiter,
   adminLimiter,
 };

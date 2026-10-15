@@ -1,0 +1,106 @@
+{
+  "environment": {
+    "date": "2026-10-16",
+    "node": "v26.7.0",
+    "platform": "darwin-arm64",
+    "commit": "522d212",
+    "branch": "feat/verification-hardening-2026-10",
+    "dirty": true
+  },
+  "name": "names",
+  "description": "Tamil/Latin name comparison used when a land document is compared with the claimant.",
+  "groundTruth": "AUTHOR-ASSIGNED labels on a hand-built set; not expert annotations and not real land-record data",
+  "n": 60,
+  "accuracy": {
+    "k": 60,
+    "n": 60,
+    "value": 1,
+    "ci95": {
+      "low": 0.9398,
+      "high": 1
+    }
+  },
+  "perClass": {
+    "match": {
+      "k": 37,
+      "n": 37,
+      "value": 1,
+      "ci95": {
+        "low": 0.9059,
+        "high": 1
+      }
+    },
+    "partial": {
+      "k": 8,
+      "n": 8,
+      "value": 1,
+      "ci95": {
+        "low": 0.6756,
+        "high": 1
+      }
+    },
+    "mismatch": {
+      "k": 15,
+      "n": 15,
+      "value": 1,
+      "ci95": {
+        "low": 0.7961,
+        "high": 1
+      }
+    }
+  },
+  "confusionMatrix": {
+    "match": {
+      "match": 37,
+      "partial": 0,
+      "mismatch": 0,
+      "unusable": 0
+    },
+    "partial": {
+      "match": 0,
+      "partial": 8,
+      "mismatch": 0,
+      "unusable": 0
+    },
+    "mismatch": {
+      "match": 0,
+      "partial": 0,
+      "mismatch": 15,
+      "unusable": 0
+    },
+    "unusable": {
+      "match": 0,
+      "partial": 0,
+      "mismatch": 0,
+      "unusable": 0
+    }
+  },
+  "matchCalledMismatch": {
+    "k": 0,
+    "n": 37,
+    "value": 0,
+    "ci95": {
+      "low": 0,
+      "high": 0.0941
+    }
+  },
+  "mismatchCalledMatch": {
+    "k": 0,
+    "n": 15,
+    "value": 0,
+    "ci95": {
+      "low": 0,
+      "high": 0.2039
+    }
+  },
+  "failures": [],
+  "tuningHistory": [
+    "Before tuning, on this same set: 55 of 60 correct. All 5 errors were true matches called mismatches, caused by glide letters (Tamil சாமி is 'samy' but Latin spellings write 'swamy'; Tamil ய appears as 'ian' in 'Subramanian').",
+    "The matcher was then changed to drop the glides w and y from the skeleton. The score after the change is therefore OPTIMISTIC: the rule was chosen after seeing these failures. A held-out set that was not used for tuning is needed for an unbiased estimate."
+  ],
+  "limitations": [
+    "Labels were assigned by the author, so agreement with them is not agreement with an independent judge.",
+    "Common given names only; surnames, caste/title suffixes, village prefixes and OCR errors are not represented.",
+    "Names on real documents are read by a vision model first, so extraction errors compound with matching errors; this isolates the matching step."
+  ]
+}

@@ -5,17 +5,24 @@ import { CloudClient } from "chromadb";
 import { Document } from "@langchain/core/documents";
 import logger from "../utils/logger.js";
 import { env, validateEnv, INGEST_REQUIRED } from "../config/env.js";
+import AIConfig from "../src/ai/AIConfig.js";
+import { shouldIngestKey, csvToText, chunkId } from "./ingestHelpers.js";
 
-validateEnv(INGEST_REQUIRED);
+// Run only when executed directly (`npm run ingest`), never on import.
+const isMain = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+if (isMain) validateEnv(INGEST_REQUIRED);
+
+const MAX_ROWS_PER_FILE = Number(process.env.RAG_MAX_ROWS_PER_FILE) || 100;
+const INCLUDE_PREFIX = process.env.RAG_INGEST_PREFIX || "";
 
 // ---------- AWS S3 Setup ----------
-const s3 = new S3Client({
+const s3 = isMain ? new S3Client({
   region: env.awsRegion || "us-east-1",
   credentials: {
     accessKeyId: env.awsAccessKeyId,
     secretAccessKey: env.awsSecretAccessKey,
   },
-});
+}) : null;
 
 // Function to list *all* objects in the S3 bucket (even >1000)
 async function listAllObjects(bucketName) {
@@ -41,35 +48,19 @@ async function listAllObjects(bucketName) {
   return keys.filter(Boolean);
 }
 
-// Function to load CSV content from S3
+// Load one CSV from S3 as a single text document.
 async function loadCSVFromS3(bucket, key) {
   try {
-    const response = await s3.send(new GetObjectCommand({
-      Bucket: bucket,
-      Key: key,
-    }));
-    
+    const response = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
     const csvContent = await response.Body.transformToString();
-    
-    // Simple CSV parsing - convert to text format
-    const lines = csvContent.split('\n');
-    const headers = lines[0];
-    const rows = lines.slice(1).filter(row => row.trim());
-    
-    let content = `File: ${key}\nHeaders: ${headers}\n\nData:\n`;
-    rows.forEach((row, index) => {
-      if (row.trim() && index < 100) { // Limit to first 100 rows
-        content += `Row ${index + 1}: ${row}\n`;
-      }
-    });
-    
+    const { text, rowCount, usedRows, truncated } = csvToText({ key, csv: csvContent, maxRows: MAX_ROWS_PER_FILE });
+    if (!text) return null;
+    if (truncated) {
+      logger.warn({ key, rowCount, usedRows }, "CSV truncated to RAG_MAX_ROWS_PER_FILE; remaining rows are not ingested");
+    }
     return new Document({
-      pageContent: content,
-      metadata: {
-        source: `s3://${bucket}/${key}`,
-        type: 'csv',
-        rows: rows.length
-      }
+      pageContent: text,
+      metadata: { source: `s3://${bucket}/${key}`, type: "csv", rows: rowCount },
     });
   } catch (error) {
     logger.error({ key, err: error }, "Error loading S3 object");
@@ -80,12 +71,16 @@ async function loadCSVFromS3(bucket, key) {
 // ---------- Main ingestion ----------
 async function ingestAllFromS3() {
   logger.info({ bucket: env.s3Bucket }, "Listing all files from S3 bucket");
-  const keys = await listAllObjects(env.s3Bucket);
-  logger.info({ count: keys.length }, "Found S3 files");
+  const allKeys = await listAllObjects(env.s3Bucket);
+  // Only knowledge CSVs: never farmer uploads, land documents or claim evidence (see shouldIngestKey).
+  const keys = allKeys.filter((key) => shouldIngestKey(key, { uploadPrefix: env.uploadStoragePrefix, includePrefix: INCLUDE_PREFIX }));
+  logger.info({ listed: allKeys.length, ingesting: keys.length }, "Found S3 files");
 
   const embeddings = new CohereEmbeddings({ 
     apiKey: env.cohereApiKey,
-    model: "embed-english-v3.0"
+    // The same model the chat side queries with: a different one here produces vectors the
+    // query side cannot compare against.
+    model: AIConfig.embeddingModel,
   });
   const textSplitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
@@ -151,14 +146,15 @@ async function ingestAllFromS3() {
           chunk_index: i,
           filename: key
         });
-        ids.push(`${key}_chunk_${i}_${Date.now()}`);
+        ids.push(chunkId({ key, index: i, text: chunk.pageContent }));
       }
 
       // Get embeddings from Cohere
       const embeddingResults = await embeddings.embedDocuments(documents);
 
       // Add to ChromaDB collection
-      await collection.add({
+      // upsert: re-running on an unchanged file replaces identical ids instead of duplicating chunks.
+      await collection.upsert({
         ids: ids,
         embeddings: embeddingResults,
         metadatas: metadatas,
@@ -174,8 +170,9 @@ async function ingestAllFromS3() {
   logger.info("All S3 files ingested successfully");
 }
 
-// Run the ingestion
-ingestAllFromS3().catch((err) => {
-  logger.error({ err }, "Fatal ingestion error");
-  process.exit(1);
-});
+if (isMain) {
+  ingestAllFromS3().catch((err) => {
+    logger.error({ err }, "Fatal ingestion error");
+    process.exit(1);
+  });
+}

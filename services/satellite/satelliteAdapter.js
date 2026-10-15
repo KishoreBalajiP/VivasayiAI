@@ -16,6 +16,9 @@
 
 import crypto from "node:crypto";
 
+import { resolvePolicy } from "../../config/verificationPolicy.js";
+import { interpretNdviChange, EVALSCRIPT_HASH } from "./ndviStatistics.js";
+
 import {
   validateAoi,
   validateDateRange,
@@ -249,6 +252,19 @@ export const toVerificationEvidence = ({
     quality: qualityFor(outcome),
     analyzed,
     reason: notes.length ? notes[0] : null,
+    // Persisted so the claim decision can be explained and the run reproduced: what was compared,
+    // by which method, and how the change was interpreted. Never proof of cause.
+    ...(analyzed && analysis
+      ? {
+          analysisOutcome: analysis.analysisOutcome || null,
+          deltaNdvi: Number.isFinite(analysis.deltaNdvi) ? analysis.deltaNdvi : null,
+          method: analysis.method || null,
+          evalscriptHash: analysis.evalscriptHash || null,
+          before: analysis.before || null,
+          after: analysis.after || null,
+          thresholds: analysis.thresholds || null,
+        }
+      : {}),
   };
 
   return buildVerificationEvidence({
@@ -571,12 +587,13 @@ export const runSatelliteAnalysis = async ({
     processing.status = SATELLITE_PROCESSING_STATUS.CREDENTIALS_REQUIRED;
     notes.push("Imagery discovered; live processing requires configured CDSE credentials.");
   } else {
-    processing.descriptor = provider.prepareProcessing({ aoi: aoiMeta, window: windowCheck.postWindow || windowCheck.windows[0] });
+    processing.descriptor = provider.prepareProcessing({ aoi: aoiMeta, window: windowCheck.postWindow || windowCheck.windows[0], geometry: aoi });
     try {
       const requests = await executeProcessing({
         provider,
         config,
         aoi: aoiMeta,
+        geometry: aoi,
         windowCheck,
       });
       if (!requests.ok) {
@@ -642,37 +659,57 @@ export const runSatelliteAnalysis = async ({
   });
 };
 
-// Execute the prepared processing for a single window or a pre/post pair. Always bounded.
-const executeProcessing = async ({ provider, config, aoi, windowCheck }) => {
+// Execute the prepared processing for a single window or a pre/post pair. Always bounded. One OAuth
+// token is fetched and reused for both windows.
+const executeProcessing = async ({ provider, config, aoi, geometry, windowCheck }) => {
+  const thresholds = resolvePolicy().satellite;
+  const side = (result) => ({
+    ndvi: result.ndvi,
+    validPixelFraction: result.validPixelFraction,
+    sampleCount: result.sampleCount ?? null,
+    intervals: result.intervals,
+  });
+  const methodOf = (result) => result.method || "per-pixel-mean-scl-masked";
+
+  const token = await provider.fetchToken();
   if (windowCheck.mode === "prepost") {
-    const before = await provider.executeProcessing({ aoi, window: windowCheck.preWindow });
-    const after = await provider.executeProcessing({ aoi, window: windowCheck.postWindow });
+    const before = await provider.executeProcessing({ aoi, geometry, window: windowCheck.preWindow, token });
+    const after = await provider.executeProcessing({ aoi, geometry, window: windowCheck.postWindow, token });
     if (!before.ok || !after.ok) {
       return { ok: false, reason: !before.ok ? before.reason : after.reason };
     }
+    const interpretation = interpretNdviChange({ before: side(before), after: side(after), thresholds });
     return {
       ok: true,
       analysis: {
         analyzed: true,
         indicator: "NDVI",
-        method: "ratio-of-band-means",
-        before: { ndvi: before.ndvi, validPixelFraction: before.validPixelFraction, intervals: before.intervals },
-        after: { ndvi: after.ndvi, validPixelFraction: after.validPixelFraction, intervals: after.intervals },
+        method: methodOf(after),
+        evalscriptHash: EVALSCRIPT_HASH,
+        before: side(before),
+        after: side(after),
         deltaNdvi: ndviDelta(before.ndvi, after.ndvi),
+        analysisOutcome: interpretation.outcome,
+        interpretationReasons: interpretation.reasons,
+        thresholds: { minValidPixelFraction: thresholds.minValidPixelFraction, ndviDropSupport: thresholds.ndviDropSupport },
       },
     };
   }
-  const single = await provider.executeProcessing({ aoi, window: windowCheck.windows[0] });
+  const single = await provider.executeProcessing({ aoi, geometry, window: windowCheck.windows[0], token });
   if (!single.ok) return { ok: false, reason: single.reason };
   return {
     ok: true,
     analysis: {
       analyzed: true,
       indicator: "NDVI",
-      method: "ratio-of-band-means",
+      method: methodOf(single),
+      evalscriptHash: EVALSCRIPT_HASH,
       before: null,
-      after: { ndvi: single.ndvi, validPixelFraction: single.validPixelFraction, intervals: single.intervals },
+      after: side(single),
       deltaNdvi: null,
+      // A single window has nothing to compare against, so it can never support or refute a loss.
+      analysisOutcome: "INCONCLUSIVE",
+      interpretationReasons: ["no_pre_event_window"],
     },
   };
 };

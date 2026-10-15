@@ -8,7 +8,8 @@ WORKDIR /var/task
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm install --production --legacy-peer-deps
+# `npm ci` installs exactly what package-lock.json pins (npm install may drift from it).
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # Copy all project files
 COPY . .

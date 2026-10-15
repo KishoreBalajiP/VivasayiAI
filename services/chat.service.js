@@ -16,7 +16,8 @@ import {
 import { selectTemplate } from "../src/ai/PromptTemplates.js";
 import { cleanupResponse } from "../src/ai/ResponseCleanup.js";
 import AIConfig from "../src/ai/AIConfig.js";
-import { assembleContextAndRender } from "./context.service.js";
+import { assembleContext, renderContextBlock } from "./context.service.js";
+import { INTENTS } from "../src/ai/Intent.js";
 
 validateEnv(CHAT_REQUIRED);
 
@@ -56,6 +57,9 @@ const ensureCollection = async () => {
         return collection;
       } catch (error) {
         logger.error({ err: error }, "Failed to connect to ChromaDB collection");
+        // Forget the failed attempt: caching the rejected promise would disable RAG for the whole
+        // life of this Lambda container after a single transient failure.
+        collectionPromise = null;
         throw new Error("ChromaDB collection not found. Please run ingestion first.");
       }
     })();
@@ -63,34 +67,68 @@ const ensureCollection = async () => {
   return collectionPromise;
 };
 
-// RAG function using ChromaDB with chat context
-async function performRAG(userMessage, chatHistory = []) {
+// RAG function using ChromaDB. Retrieval is query-only (the chat history is not used for it).
+// Returns the joined text plus WHICH documents it came from, so the answer can be attributed. Only a
+// file name is exposed, never the bucket or the object path.
+async function performRAG(userMessage) {
   try {
     const coll = await ensureCollection();
     const messageEmbedding = await embeddings.embedQuery(userMessage);
     const results = await coll.query({
       queryEmbeddings: [messageEmbedding],
       nResults: AIConfig.ragTopK,
+      include: ["documents", "metadatas"],
     });
 
-    let context = "";
-    if (results.documents && results.documents[0] && results.documents[0].length > 0) {
-      context = results.documents[0].join("\n\n");
-    }
+    const documents = results.documents && results.documents[0] ? results.documents[0] : [];
+    const metadatas = results.metadatas && results.metadatas[0] ? results.metadatas[0] : [];
+    const context = documents.length > 0 ? documents.join("\n\n") : "";
 
-    return {
-      context: context || null,
-      sourceCount: results.documents?.[0]?.length || 0,
-    };
+    const seen = new Set();
+    const sources = [];
+    metadatas.forEach((meta) => {
+      const filename = meta && (meta.filename || (meta.source ? String(meta.source).split("/").pop() : null));
+      if (filename && !seen.has(filename)) {
+        seen.add(filename);
+        sources.push({ filename: String(filename).slice(0, 120) });
+      }
+    });
+
+    return { context: context || null, sourceCount: documents.length, sources };
   } catch (error) {
     logger.error({ err: error }, "RAG retrieval failed");
-    return { context: null, sourceCount: 0 };
+    return { context: null, sourceCount: 0, sources: [] };
   }
 }
 
+// Reply language: an explicit request setting wins, then the farmer's profile, then the script of the
+// message itself (Tamil script means a Tamil reply). Anything else lets the model mirror the message.
+const TAMIL_SCRIPT = /[\u0B80-\u0BFF]/;
+export const resolveReplyLanguage = ({ requested, profileLanguage, message }) => {
+  if (requested === "ta" || requested === "en") return requested;
+  if (TAMIL_SCRIPT.test(message || "")) return "ta";
+  if (profileLanguage === "ta" || profileLanguage === "en") return profileLanguage;
+  return undefined;
+};
+
+// Token usage as reported by the provider. LangChain puts it on `llmOutput.tokenUsage`; some
+// providers put it on the generation message. The previous code read neither and logged zeros.
+const readTokenUsage = (result) => {
+  const usage =
+    (result && result.llmOutput && (result.llmOutput.tokenUsage || result.llmOutput.estimatedTokenUsage)) ||
+    (result && result.generations && result.generations[0] && result.generations[0][0] && result.generations[0][0].message && result.generations[0][0].message.usage_metadata) ||
+    (result && (result.usageMetadata || result.usage)) ||
+    {};
+  return {
+    input: Number(usage.promptTokens ?? usage.input_tokens ?? usage.inputTokens ?? 0),
+    output: Number(usage.completionTokens ?? usage.output_tokens ?? usage.outputTokens ?? 0),
+    total: Number(usage.totalTokens ?? usage.total_tokens ?? 0),
+  };
+};
+
 // E1-S5 (D-35): ownership derives from the authenticated caller's cognitoSub (req.user.id); the
 // client never supplies an ownership email. userEmail is retained server-side as a display key.
-const generateResponse = async ({ message, chatId, cognitoSub, email, district }) => {
+const generateResponse = async ({ message, chatId, cognitoSub, email, district, parcelId = null, language: requestedLanguage }) => {
   const conversationId = chatId || `new-${cognitoSub || "anon"}`;
   const template = selectTemplate(message);
   const startedAt = Date.now();
@@ -109,14 +147,25 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
       }
     }
 
-    // Context Engine slice (E2-S3/E2-S4): assemble weather + soil + farm profile + crop into a
-    // labelled Context block. The farm profile is auto-loaded for the caller (D-14, E2-S4) and
-    // its district/crops drive resolution; missing domains degrade to "unknown" (ADR-014). Never throws.
-    const renderedContext = await assembleContextAndRender({ district, cognitoSub, userMessage: message });
+    // Context Engine: classify the intent, then load ONLY the sources it needs and resolve the
+    // farmer's district / parcel / crop from their own records. Never throws (ADR-014).
+    const contextStart = Date.now();
+    const snapshot = await assembleContext({ district, cognitoSub, userMessage: message, parcelId });
+    const renderedContext = renderContextBlock(snapshot);
+    const contextMs = Date.now() - contextStart;
 
-    // Perform RAG with chat context
-    const rag = await performRAG(message, chatHistory);
+    // Retrieval for knowledge-style questions; greetings and claim questions have nothing to retrieve.
+    const ragStart = Date.now();
+    const skipRag = snapshot.intent === INTENTS.GREETING || snapshot.intent === INTENTS.CLAIM_STATUS;
+    const rag = skipRag ? { context: null, sourceCount: 0, sources: [] } : await performRAG(message);
+    const ragMs = Date.now() - ragStart;
     const hasRag = !!rag.context;
+
+    const language = resolveReplyLanguage({
+      requested: requestedLanguage,
+      profileLanguage: snapshot.farmProfile && snapshot.farmProfile.language,
+      message,
+    });
 
     // Build the prompt via the single, modular PromptBuilder (no manual concatenation).
     const messages = hasRag
@@ -126,8 +175,9 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
           context: rag.context,
           template,
           assembledContext: renderedContext,
+          language,
         })
-      : buildFallbackPrompt({ userMessage: message, history: chatHistory, assembledContext: renderedContext });
+      : buildFallbackPrompt({ userMessage: message, history: chatHistory, assembledContext: renderedContext, language });
 
     const lmMessages = messages.map((m) =>
       m.role === "system" ? new SystemMessage(m.content) : new HumanMessage(m.content)
@@ -165,21 +215,19 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
     // Clean up the model output (dedupe headings, normalize bullets, collapse blanks).
     response = cleanupResponse(response);
 
-    const usage = result.usageMetadata || result.usage || {};
-    const tokens = {
-      input: Number(usage.input_tokens ?? usage.promptTokens ?? 0),
-      output: Number(usage.output_tokens ?? usage.completionTokens ?? 0),
-      total: Number(usage.total_tokens ?? usage.totalTokens ?? 0),
-    };
+    const tokens = readTokenUsage(result);
 
     logger.info(
       {
         conversationId,
         provider: AIConfig.provider,
         model: AIConfig.model,
-        template,
+        intent: snapshot.intent,
         latency,
-        district: district || null,
+        contextMs,
+        ragMs,
+        loaded: snapshot.loaded,
+        followUp: snapshot.sufficiency.followUp ? snapshot.sufficiency.followUp.slot : null,
         ...tokens,
         hasRag,
         sourceCount: rag.sourceCount,
@@ -222,7 +270,19 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
       hasContext: hasRag,
       hasChatHistory: chatHistory.length > 0,
       sourceCount: rag.sourceCount,
+      // Which documents the answer was grounded in (file names only). Empty when nothing was retrieved.
+      sources: rag.sources || [],
       chatHistoryCount: chatHistory.length,
+      // Instrumentation for evaluation: what the assistant understood and loaded, and how long each stage took.
+      meta: {
+        intent: snapshot.intent,
+        sufficient: snapshot.sufficiency.sufficient,
+        followUpSlot: snapshot.sufficiency.followUp ? snapshot.sufficiency.followUp.slot : null,
+        loaded: snapshot.loaded,
+        language: language || null,
+        latencyMs: { context: contextMs, rag: ragMs, model: latency, total: Date.now() - startedAt },
+        tokens,
+      },
       timestamp: new Date().toISOString(),
       session: chatSession
     };
@@ -235,4 +295,11 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district }
   }
 };
 
-export { generateResponse, model, performRAG };
+// Test seam: forget the cached Chroma connection (module state) so tests start clean.
+const _resetCollectionCache = () => {
+  collectionPromise = null;
+  collectionReady = false;
+  collection = undefined;
+};
+
+export { generateResponse, model, performRAG, _resetCollectionCache };

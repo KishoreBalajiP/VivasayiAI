@@ -2,7 +2,10 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   name: String,
-  email: { type: String, unique: true },
+  // Sparse so identities whose token carries no email never collide on a missing value. Existing
+  // deployments keep the old non-sparse `email_1` index until it is dropped and rebuilt (see
+  // scripts/migrations); until then a SECOND email-less identity still fails to be created.
+  email: { type: String, unique: true, sparse: true },
   // E1-S3: stable, immutable, non-spoofable Cognito sub (07_Database_Design §6). Sparse unique so
   // legacy users without a sub don't collide; email stays for display only.
   cognitoSub: { type: String, unique: true, sparse: true },

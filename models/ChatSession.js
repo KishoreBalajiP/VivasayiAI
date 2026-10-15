@@ -13,6 +13,11 @@ const messageSchema = new mongoose.Schema({
   // vision metadata).
   imageId: { type: String, default: undefined },
   timestamp: { type: Date, default: Date.now },
+  // Set on messages a CLIENT wrote through POST /chatsessions/:id/message. Messages produced by the
+  // server (POST /chat) carry no origin. Client-authored non-user messages are never replayed to the
+  // model as earlier assistant or system turns (see ConversationFormatter), so a caller cannot plant
+  // fake assistant output in their own prompt history.
+  origin: { type: String, enum: ["client"], default: undefined },
 }, { _id: false });
 
 const chatSessionSchema = new mongoose.Schema({

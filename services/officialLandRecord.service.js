@@ -1,5 +1,8 @@
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
+import VerificationEvidence from "../models/VerificationEvidence.js";
+import { buildVerificationEvidence } from "../utils/verificationEvidence.js";
+import { findOwned } from "./claim.service.js";
 
 // Official land-record verification provider abstraction (Phase 15 Phase 3).
 //
@@ -192,18 +195,32 @@ export const queryOfficialLandRecord = async ({ state, district, taluk, village,
 };
 
 export const verifyOfficialLandRecordForClaim = async ({ claimId, cognitoSub, evidenceId = null, extracted = null } = {}) => {
-  // Load context. If no OWNERSHIP evidence exists, still allow claim-level query with supplied extracted data.
-  const { default: claimService } = await import("./claim.service.js");
-  const claim = await claimService.findOwned ? await claimService.findOwned(cognitoSub, claimId) : null;
-  // findOwned is synchronous Mongoose; call directly:
-  const claimDoc = await (async () => {
-    if (claim) return claim;
-    const LossClaim = (await import("../models/LossClaim.js")).default;
-    return LossClaim.findOne({ _id: claimId, cognitoSub });
-  })();
+  const claimDoc = await findOwned(cognitoSub, claimId);
   if (!claimDoc) throw ApiError.notFound("Claim not found");
 
-  const ext = extracted || {};
+  // The identifiers sent to the official provider must come from the stored AI examination of a
+  // document the claimant attached, never from a request body: a caller-chosen payload would let a
+  // claimant pick the values the "official" check runs against. `extracted` is therefore only an
+  // internal argument (the automated pipeline passes the stored examination it just read).
+  let ext = extracted;
+  let sourceEvidenceId = evidenceId;
+  if (!ext) {
+    const row = await VerificationEvidence.findOne({
+      claimId: claimDoc._id,
+      source: "OWNERSHIP",
+      "result.aiLandDocumentExamination.extracted": { $type: "object" },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+    ext = row?.result?.aiLandDocumentExamination?.extracted ?? null;
+    sourceEvidenceId = sourceEvidenceId || (row ? String(row._id) : null);
+  }
+  if (!ext) {
+    throw ApiError.conflict(
+      "No examined ownership document is available. Attach a land document and run land-document examination first."
+    );
+  }
+
   const result = await queryOfficialLandRecord({
     state: ext.state,
     district: ext.district,
@@ -216,7 +233,6 @@ export const verifyOfficialLandRecordForClaim = async ({ claimId, cognitoSub, ev
   });
 
   // Persist an OWNERSHIP-source verification row representing the official check.
-  const { VerificationEvidence } = await import("../models/VerificationEvidence.js");
   const idempotencyKey = `officialland_${String(claimId)}`;
   let existing = await VerificationEvidence.findOne({ claimId: claimDoc._id, idempotencyKey });
   const payloadResult = {
@@ -229,7 +245,6 @@ export const verifyOfficialLandRecordForClaim = async ({ claimId, cognitoSub, ev
 
   if (!existing) {
     try {
-      const { buildVerificationEvidence } = await import("../utils/verificationEvidence.js");
       const built = buildVerificationEvidence({
         source: "OWNERSHIP",
         status: result.status === "matched" ? "AVAILABLE" : result.status === "mismatch" ? "INCONSISTENT" : "UNAVAILABLE",
@@ -239,7 +254,7 @@ export const verifyOfficialLandRecordForClaim = async ({ claimId, cognitoSub, ev
         providerVersion: "phase15-official-landrecord-v1",
         evidenceVersion: idempotencyKey,
         evaluationVersion: "phase15-official-landrecord-v1",
-        reference: evidenceId || null,
+        reference: sourceEvidenceId || null,
         metadata: { checkType: "official_land_record", claimId: String(claimId) },
         result: payloadResult,
       });
