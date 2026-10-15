@@ -45,7 +45,14 @@ const adminActionSchema = new mongoose.Schema(
 );
 
 // Replay protection: one admin action per idempotencyKey per claim.
-adminActionSchema.index({ claimId: 1, idempotencyKey: 1 }, { unique: true, sparse: true });
+// Partial (string keys only), NOT sparse: claimId is always present so a sparse compound index
+// still indexed every row with `idempotencyKey: null`, making the second keyless action on a claim
+// collide with the first. Existing deployments must drop the old `claimId_1_idempotencyKey_1`
+// index so this definition can be built (see scripts/migrations).
+adminActionSchema.index(
+  { claimId: 1, idempotencyKey: 1 },
+  { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } }
+);
 adminActionSchema.index({ claimId: 1, createdAt: 1 });
 
 // Append-only guards (ClaimAudit §9 same discipline).

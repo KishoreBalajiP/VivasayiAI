@@ -96,7 +96,23 @@ export const sqMetersToAcres = (sqMeters) => sqMeters / SQ_METERS_PER_ACRE;
 // precision for stored calculatedAreaAcres (ADR-019 P4 / 07_Database_Design §5).
 export const roundAcres = (acres) => Math.round(acres * 10000) / 10000;
 
+// A position must be a finite [longitude, latitude] inside the valid WGS84 ranges. The API schema
+// checks this too, but the validator is shared (models, services, jobs), so it must not depend on
+// every caller going through that schema first.
+export const positionIsInRange = (position) =>
+  Array.isArray(position) &&
+  position.length >= 2 &&
+  Number.isFinite(position[0]) &&
+  Number.isFinite(position[1]) &&
+  position[0] >= -180 &&
+  position[0] <= 180 &&
+  position[1] >= -90 &&
+  position[1] <= 90;
+
 export const inspectPolygonRing = (ring) => {
+  if (Array.isArray(ring) && !ring.every(positionIsInRange)) {
+    return { ok: false, reason: "coordinates must be finite [longitude, latitude] within -180..180 and -90..90" };
+  }
   if (!ringIsClosed(ring)) {
     return { ok: false, reason: "polygon ring must be closed (first and last coordinates must match)" };
   }

@@ -14,6 +14,7 @@ export const weatherConfig = Object.freeze({
   fetchTimeoutMs: Number(env.weatherFetchTimeoutMs) || WEATHER_FETCH_TIMEOUT_MS,
   staleAfterMs: Number(env.weatherStaleAfterMs) || WEATHER_STALE_AFTER_MS,
   openMeteoBase: env.openMeteoBase || "https://api.open-meteo.com/v1",
+  archiveBase: env.openMeteoArchiveBase || "https://archive-api.open-meteo.com/v1",
   geocodingBase: env.openMeteoGeocodingBase || "https://geocoding-api.open-meteo.com/v1",
   userAgent: "vivasayi-backend-weather/1.0",
 });

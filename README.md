@@ -1,163 +1,172 @@
 # Vivasayi AI
 
-**Tamil-first AI Agriculture Decision Platform for Tamil Nadu's farmers.**
+**Tamil-first AI agriculture assistant and crop-loss claim verification backend for Tamil Nadu's farmers.**
 
-> **Status:** `[EXISTING]` — conversational assistant prototype. The Decision Platform pillars
-> (Context Engine, Model Adapter, Farm Memory, context-fused image diagnosis) are **planned or future**,
-> not yet implemented. Nothing below is presented as shipped unless it carries an `[EXISTING]` label.
+Vivasayi AI began as a bilingual (Tamil and English) retrieval-augmented chatbot. It now has two parts:
 
-Vivasayi AI is a bilingual (Tamil + English) AI agriculture assistant. The product vision — see
-[PRODUCT_PRINCIPLES.md](docs/product/PRODUCT_PRINCIPLES.md) — is a **Decision Platform, not a chatbot**:
-every interaction should end in a decision-support outcome (recommendation, diagnosis, plan, alert, or
-sourced answer). Today the product is a working **RAG-powered conversational assistant** over a Tamil Nadu
-agricultural knowledge base. The platform pillars that complete the vision are planned:
+1. **A farmer-aware advisory chat.** It looks up what it can about the authenticated farmer (profile, parcels, recent claims, weather) and asks a follow-up question only when a detail it genuinely needs is missing.
+2. **A crop-loss claim pipeline.** A farmer files a claim against a registered parcel. Photographs, land documents, parcel geometry, overlap checks, satellite and weather evidence are each reduced to an explicit per-component outcome. A **deterministic rule engine, never a language model, decides.**
 
-- **Context Engine** — `[PLANNED]` auto-assembles farm profile, GPS, weather, soil, season, crop history,
-  advisories, and knowledge before the AI answers (zero-question context).
-- **Model Adapter** — `[PLANNED]` provider-agnostic AI layer (Gemini is the current provider, not the only one).
-- **Farm Memory** — `[FUTURE]` long-term memory of the farm across sessions, seasons, and channels.
-- **AI diagnosis pipeline** — `[PLANNED]` image + context fusion for structured crop diagnoses.
+> **Read this before relying on it.** The system has not been validated on real claims, documents or satellite
+> imagery, and no authorised Tamil Nadu land-record API is available. Several parts are built and tested but not
+> run live (see [What is and is not verified](#what-is-and-is-not-verified)). Do not use it to make real
+> compensation decisions.
 
-> **This repository is the Product Repository.** It contains the backend API and is the single source of
-> truth for all product, business, AI, architecture, API, database, roadmap, engineering standards, and
-> planning documentation (`docs/`).
-
----
+The product vision is a *Decision Platform, not a chatbot*; see [docs/product/PRODUCT_PRINCIPLES.md](docs/product/PRODUCT_PRINCIPLES.md).
+The frontend lives in a separate repository (`tn-farming-assistant-frontend`: React, TypeScript, Vite).
 
 ## Quick links
 
-- **Product constitution:** [docs/product/PRODUCT_PRINCIPLES.md](docs/product/PRODUCT_PRINCIPLES.md)
-- **Documentation hub:** [docs/README.md](docs/README.md)
-- **AI Product Principles:** [docs/product/AI_Product_Principles.md](docs/product/AI_Product_Principles.md)
-- **Product vision:** [docs/product/01_Product_Vision.md](docs/product/01_Product_Vision.md)
-- **System architecture:** [docs/architecture/06_System_Architecture.md](docs/architecture/06_System_Architecture.md)
-- **API reference:** [docs/architecture/08_API_Documentation.md](docs/architecture/08_API_Documentation.md)
-- **Backlog & roadmap:** [docs/planning/17_Backlog.md](docs/planning/17_Backlog.md) · [docs/product/05_Product_Roadmap.md](docs/product/05_Product_Roadmap.md)
-- **Startup plan:** [docs/business/16_Startup_Plan.md](docs/business/16_Startup_Plan.md)
+- Documentation hub: [docs/README.md](docs/README.md)
+- System architecture: [docs/architecture/06_System_Architecture.md](docs/architecture/06_System_Architecture.md)
+- API reference: [docs/architecture/08_API_Documentation.md](docs/architecture/08_API_Documentation.md)
+- Decisions (ADR-020 and ADR-021 describe the verification design): [docs/decisions/18_DECISIONS.md](docs/decisions/18_DECISIONS.md)
+- Frontend contract for the latest backend changes: [docs/architecture/FRONTEND_CONTRACT_2026-10.md](docs/architecture/FRONTEND_CONTRACT_2026-10.md)
+- Test baseline and fix log: [docs/engineering/BASELINE_2026-10.md](docs/engineering/BASELINE_2026-10.md)
+- Research and evaluation: [docs/research/](docs/research/) (start with [evaluation/README.md](docs/research/evaluation/README.md))
 
----
+## How it works
 
-## What's inside
+### Request path
+
+`index.js` wraps the Express 5 app (`app.js`) for AWS Lambda with `serverless-http`. Middleware order: security headers, CORS allow-list, request logging with a validated correlation id, JSON body (1 MB). `/auth` is public; everything else sits behind `requireAuth`, which verifies a backend-issued HS256 session token. `/admin` additionally requires the `admin` role, which comes from the verified Cognito identity at login, never from a request body.
+
+Controllers are thin, services hold the logic, Mongoose models hold the data. Every resource is scoped by the caller's stable Cognito `sub`; another user's resource returns not-found.
+
+### Chat
+
+For each message the assistant (`services/context.service.js`, `src/ai/`):
+
+1. classifies the intent and loads **only** the context that intent needs;
+2. resolves district, parcel and crop from the farmer's own records, tagging each item `verified`, `user_provided`, `third_party`, `inferred`, `missing` or `stale`;
+3. retrieves knowledge from ChromaDB (Cohere embeddings) and fences it in the prompt as data, returning the source file names;
+4. asks one follow-up only if a required detail is unresolved, otherwise answers directly;
+5. replies in the requested language, the message's script, or the profile language.
+
+Weather comes from Open-Meteo using the stored district coordinates. **There is no soil data source**: the assistant is told to recommend a soil test rather than guess.
+
+### Claim verification
+
+```
+submit -> job queue -> evidence steps -> evidence rows -> component resolver -> rule engine + policy gate -> decision
+                                                                                         \-> held (stays "submitted")
+```
+
+- **Evidence** is stored append-only per component (photographs, claimant rights, land documents, geometry, satellite, weather, overlap, manual review). Each resolves to `verified`, `failed`, `unverified`, `unavailable`, `inconclusive`, `pending` or `requires_review`. A provider failure is `unavailable`; missing evidence is `unverified`; `failed` needs a positive contradicting finding.
+- **The frozen rule engine** (`services/claimVerificationEngine.service.js`) checks the claim window, event type, area allowance, containment in the parcel, duplicate or partial overlap with the farmer's own claims, remaining eligible area and the photograph assessment. Outcomes use the existing claim states; none was added.
+- **A versioned policy** (`config/verificationPolicy.js`) decides which components are required. Default `v1-legacy` reproduces the historical decisions. `v2-components` additionally requires claimant-rights evidence and sends overlap with another farmer, or an AI "no damage" reading, to a person instead of rejecting. Select it with `CLAIM_VERIFICATION_POLICY`; it needs product-owner sign-off first (ADR-020).
+- **Every decision** records the policy id and hash, the component outcomes and references to the evidence rows used.
+- **Work runs from a durable job queue** in MongoDB (ADR-021), because Lambda freezes after the response. Steps run on `POST /claims/:id/verify`, on a status read, or from the optional scheduled `worker` handler in `index.js`.
+- **Satellite**: pre- and post-event NDVI over the claim polygon from the Copernicus Data Space Statistical API with cloud masking. **Built and tested against fixtures; never run live.** NDVI change is supporting evidence and never proof of cause.
+- **Land records**: a provider-neutral adapter (`LAND_RECORD_PROVIDER_URL`). Without an authorised provider it returns `unavailable`, never a match.
+
+### Main routes
+
+| Area | Routes |
+|---|---|
+| Auth | `POST /auth/google` |
+| Chat | `POST /chat`; `GET/POST/DELETE /chatsessions...` |
+| Profile and parcels | `GET/POST/DELETE /profile`; `/profile/parcels...` |
+| Uploads | `POST /upload/presign`, `/upload/:id/complete`, `GET /upload/:id/view` |
+| Claims | `POST/GET /claims`, `/claims/:id`, `submit`, `withdraw`, `resubmit`, `verify`, `verification`, `evidence/...`, `ownership...`, `appeal` |
+| Admin | `GET /admin/claims`, `/admin/claims/:id`, `override`, `ownership/.../review`, `review-cases/.../decision`, `dashboard`, `investigation` |
+
+## Getting started
+
+Prerequisites: Node.js 20 or newer (the production image uses Node 24), MongoDB, and keys for Gemini, Cohere and ChromaDB to run chat for real.
+
+```bash
+npm ci --legacy-peer-deps      # the langchain packages declare conflicting peers; the Dockerfile uses the same flag
+cp .env.example .env           # then fill in real values; never commit .env
+npm run dev                    # serves http://localhost:8000 outside Lambda
+curl http://localhost:8000/health
+```
+
+Outside Lambda the server listens on `PORT`; on Lambda (`AWS_LAMBDA_FUNCTION_NAME` set) it only exports the handlers.
+
+Other commands:
+
+| Command | Purpose |
+|---|---|
+| `npm test` | Run the test suite (uses an in-memory MongoDB, downloaded on first run) |
+| `npm run eval -- --date=YYYY-MM-DD` | Regenerate the synthetic benchmark results in `docs/research/evaluation/results/` |
+| `npm run ingest` | Ingest knowledge CSVs from S3 into ChromaDB (only `.csv` files outside the upload prefix) |
+| `npm run seed:districts` | Seed the district reference data |
+| `node scripts/migrations/2026-10-verification-components.js --dry-run` | Preview the data migration for the verification changes |
+
+**Before deploying the verification changes**, run the migration without `--dry-run`: two index definitions changed and MongoDB will not alter an existing index on its own (see [BASELINE_2026-10.md](docs/engineering/BASELINE_2026-10.md)).
+
+## What is and is not verified
+
+Four kinds of evidence, kept separate on purpose:
+
+| Kind | Status |
+|---|---|
+| **1. Tests** | 899 tests in 54 files pass (`npm test`): unit, integration against an in-memory MongoDB, and 15 adversarial claim scenarios. They show the code behaves as specified and does not regress. They do **not** show scientific accuracy. |
+| **2. Synthetic benchmarks** | Run and reproducible (`npm run eval`). Ground truth is analytic, the design rule, a written specification, or author-assigned labels. See below. |
+| **3. Live-provider validation** | **Not done.** No Gemini, Cohere, Chroma, S3, Atlas or Copernicus call has been made from this repository's evaluation. |
+| **4. Real-world experiments** | **Not done.** No real claims, documents or imagery; no annotators; no authorised official records. |
+
+### Synthetic benchmark results
+
+Generated by `npm run eval` at commit 522d212 plus uncommitted changes, Node 26. Full numbers, ground-truth definitions and limitations: [docs/research/evaluation/results/SUMMARY.md](docs/research/evaluation/results/SUMMARY.md).
+
+| Benchmark | Result | Reading |
+|---|---|---|
+| Geometry vs analytic truth | Containment, overlap flag and invalid-geometry detection: precision and recall 1.0 (n=300, 300, 190) | The implementation matches exact geometry. This says nothing about real cadastral boundaries. |
+| Area | Server acres are about **0.63% larger** than an ellipsoidal reference, in every case | Systematic: the formula uses the equatorial radius. Not changed, because stored areas would stop being comparable; needs a product decision. |
+| Chat follow-ups (55 cases, specification-scored) | Unnecessary questions: previous rule 36 of 44, new logic 0 of 44. Needed questions missed: 3 of 11 vs 0 of 11. Crop silently assumed when ambiguous: 6 of 6 vs 0 of 6 | The specification and the new logic share an author; the baseline is a reimplementation of the old rule. |
+| Evidence fusion (192 scenarios) | Invalid approvals: photograph-only policy 10 of 190, component gate 0 of 190. Satellite and weather changed no decision in 1,536 comparisons | The label is the design rule the gate implements: this shows enforcement, not accuracy. Only 2 scenarios are truly approvable. |
+| Name matching (60 pairs) | 60 of 60 | **Optimistic**: 55 of 60 before a rule change made after seeing the errors on the same set. |
+| NDVI thresholds (simulation) | No false support at no change; a 0.15 drop detected about half the time, a 0.30 drop almost always; mostly-masked pixels give "inconclusive" | Simulated only. Paddy flooding and normal senescence are not modelled. |
+
+### Pending
+
+- Answer relevance and groundedness of the live assistant (needs a Gemini key and expert raters).
+- Land-document field extraction accuracy (needs labelled documents; the scorer is `scripts/eval/docExtraction.score.js`).
+- Live Sentinel-2 acquisition, cloud rate and agreement with independently labelled damage (needs Copernicus credentials and field-verified events).
+- Duplicate and ownership-mismatch detection on real cadastral data (needs authorised access).
+- A user study of the unnecessary-question experience.
+
+### Known limits
+
+- No authorised Tamil Nadu land-record API; official records are never reported as matched.
+- The required-document policy per claimant relationship (owner, tenant, heir and so on) is provisional and has not been reviewed by anyone with legal or insurer authority.
+- An intermittent test failure that appeared in full-suite runs was traced to test requests reaching another local program on a shared port. The shared test server now avoids that port range; 25 consecutive full runs passed afterwards.
+- Rate limits are in-memory per Lambda container, not global.
+- Frontend work is not in this repository; see the frontend contract.
+
+## Tech stack
+
+- **Runtime:** Node.js (ESM), Express 5, AWS Lambda via `serverless-http`
+- **Data:** MongoDB (Mongoose 8)
+- **AI:** Google Gemini (chat, vision, document reading), Cohere embeddings, ChromaDB; the model output is evidence, never the decision
+- **Geo:** Turf for overlap; Copernicus Data Space (Sentinel-2) for satellite; Open-Meteo for weather
+- **Auth:** AWS Cognito (OAuth2 code flow, Google federation) exchanged for backend session tokens
+- **CI/CD:** GitHub Actions: tests, then Docker to ECR to Lambda with an immutable commit-SHA tag
+
+## Repository layout
 
 | Path | Contents |
 |---|---|
-| `index.js` | Express 5 app, wrapped with `serverless-http` for AWS Lambda |
-| `config/` | MongoDB connection (`db.js`); vector store config (planned) |
-| `controllers/` | HTTP layer — auth, chat (RAG + context), legacy test CRUD |
-| `models/` | Mongoose schemas — User, ChatSession, Query, Context |
-| `routes/` | `/auth`, `/chat`, `/chatsessions`, `/test` (legacy) |
-| `rag/` | Knowledge ingestion: S3 CSVs → embeddings → ChromaDB |
-| `utils/` | Prompt, error/response helpers, async handler |
-| `docs/` | Full product & engineering documentation |
-| `.github/workflows/` | CI/CD — Docker → ECR → Lambda |
-| `Dockerfile` | AWS Lambda Node 24 base image |
-
-### Tech stack
-
-- **Runtime:** Node.js (ESM), Express 5
-- **Persistence:** MongoDB Atlas (Mongoose 8)
-- **AI:** Google Gemini 2.5 Flash (LLM) · Cohere `embed-english-v3.0` (embeddings) · ChromaDB Cloud (vector store)
-- **Auth:** AWS Cognito (OAuth2, Google federation)
-- **Infra:** AWS Lambda via `serverless-http`, Docker/ECR, GitHub Actions
-- **Data source:** Agricultural CSV datasets in AWS S3
-
-Frontend lives in the separate repository **`tn-farming-assistant-frontend`** (React 18 + TypeScript + Vite + Tailwind CSS).
-
----
-
-## Product status
-
-### `[EXISTING]` — Working today
-- Bilingual (Tamil/English) RAG chat grounded in the TN knowledge base, with conversation memory (last 6 messages).
-- Chat session create / list / fetch / delete / clear (MongoDB persistence).
-- Google sign-in via AWS Cognito (OAuth2 code flow).
-- Voice-to-text input (browser Web Speech API).
-- Weather widget on the login screen (Open-Meteo, nearest of 38 TN districts).
-- Language selection (English/Tamil) persisted locally.
-- Backend deployed to AWS Lambda via Docker → ECR (GitHub Actions).
-
-### Present in the UI but **not** wired end-to-end
-- Image capture/preview — the file is **not** transmitted to the backend (AI diagnosis pipeline is `[PLANNED]`).
-- Audio playback affordance — no text-to-speech is implemented.
-
-### `[PLANNED]` — Phase 1 (next milestone)
-- Verified authentication & authorization (today's token is decoded without verification — see Security notice).
-- Context Engine first slice: backend-assembled weather/location/soil/farm-profile context injected into AI prompts.
-- Model Adapter: provider-agnostic AI layer (Gemini configurable, others drop-in).
-- AI diagnosis pipeline: image + context fusion → structured diagnosis.
-- Farm profile onboarding.
-- Streaming responses (SSE).
-- Automated tests + AI evaluation harness.
-- Monitoring & cost analytics.
-
-### `[FUTURE]` — Roadmap only
-- Farm Memory (long-term farm intelligence), WhatsApp bot, Tamil TTS, alerts, personal crop plans.
-- Marketplace (dealer directory, leads), premium subscriptions, recordkeeping.
-- Enterprise/B2B/government, multi-state expansion.
-
-See [docs/product/04_Feature_List.md](docs/product/04_Feature_List.md) for the full, statused inventory and
-[AI Product Principles](docs/product/AI_Product_Principles.md) for the binding rules.
-
----
-
-## Getting started (local development)
-
-### Prerequisites
-- Node.js 20+
-- MongoDB (local or Atlas connection string)
-- API keys: Gemini (`GOOGLE_API_KEY`), Cohere (`COHERE_API_KEY`), ChromaDB Cloud (`CHROMA_*`) — required for chat; AWS keys + `S3_BUCKET` for ingestion
-
-### Setup
-
-```bash
-npm install
-# create .env (see docs/engineering/14_Deployment.md) — .env.example is planned, not yet committed
-npm run dev            # http://localhost:8000
-```
-
-Health check:
-
-```bash
-curl http://localhost:8000
-# => { "message": "Backend is Live!" }
-```
-
-Full local-dev and deployment guide: [docs/engineering/14_Deployment.md](docs/engineering/14_Deployment.md)
-
-> ⚠️ **Security notice:** authentication and authorization are being hardened in Phase 1.
-> The backend currently decodes Cognito tokens without signature verification and trusts a
-> client-supplied `userEmail`; `/test/*` routes expose data. See
-> [docs/engineering/15_Security.md](docs/engineering/15_Security.md) for the current posture and
-> remediation plan. **Do not onboard real users until Phase 1 completes.**
-
----
-
-## Repository roadmap
-
-| Phase | Focus | Status |
-|---|---|---|
-| 0 | Documentation & product foundation | In progress |
-| 1 | Trusted core MVP (security, context, diagnosis, quality) | Planned |
-| 2 | Farmer intelligence (WhatsApp, profiles, alerts, TTS) | Future |
-| 3 | Marketplace (dealer directory, leads) | Future |
-| 4 | AI automation & Pro (subscriptions, expert loop, records) | Future |
-| 5 | Enterprise & ecosystem (B2B, govt, multi-state) | Future |
-
-Full detail: [docs/product/05_Product_Roadmap.md](docs/product/05_Product_Roadmap.md)
-
----
+| `app.js`, `index.js` | Express app; Lambda handlers (`handler`, `worker`) |
+| `config/` | Environment, verification policy, claimant-evidence policy, districts, weather |
+| `routes/`, `controllers/` | HTTP layer |
+| `services/` | Business logic: chat, context, claims, verification engine and components, job queue, satellite, documents, admin |
+| `src/ai/` | Prompts, intent classification, context sufficiency |
+| `models/` | Mongoose schemas |
+| `rag/` | Knowledge ingestion |
+| `scripts/` | Seeding, migrations, evaluation harness (`scripts/eval/`) |
+| `tests/` | Test suite |
+| `docs/` | Product, architecture, engineering, decisions and research documentation |
 
 ## Contributing
 
-This project is a startup product in an early phase. Contributions and questions are welcome.
-
-1. Read the docs hub ([docs/README.md](docs/README.md)) and Technical Guidelines ([docs/engineering/12_Technical_Guidelines.md](docs/engineering/12_Technical_Guidelines.md)).
-2. Branch from `main`: `feat/…`, `fix/…`, `chore/…`, `docs/…`.
-3. Open a PR (CI runs lint/typecheck/tests; AI evaluation gates Phase 1+).
-4. Reference backlog IDs and ADRs in the description.
-
----
+1. Read the docs hub ([docs/README.md](docs/README.md)) and the technical guidelines ([docs/engineering/12_Technical_Guidelines.md](docs/engineering/12_Technical_Guidelines.md)).
+2. Branch from `develop`: `feat/...`, `fix/...`, `docs/...`.
+3. Open a PR. CI runs the test suite; a deploy happens only on a push to `main` after the tests pass.
+4. Reference ADRs and backlog IDs in the description.
 
 ## License
 
-ISC (see `package.json`). Commercialization strategy is defined in [docs/business/16_Startup_Plan.md](docs/business/16_Startup_Plan.md).
+ISC (see `package.json`). Commercialization strategy: [docs/business/16_Startup_Plan.md](docs/business/16_Startup_Plan.md).

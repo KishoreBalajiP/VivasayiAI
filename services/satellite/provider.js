@@ -24,14 +24,13 @@
 //   until a real authenticated provider response is observed (see the Phase 13.3 report).
 
 import {
-  buildStatisticalRequest,
   createHttpClient,
   fetchCdseToken,
-  fetchNdviStatistics,
   normalizeScene,
   MAX_SCENES_HARD_CAP,
 } from "../../poc/satellite/satellitePoc.js";
 
+import { buildNdviStatisticalRequest, parseNdviStatisticalResponse, EVALSCRIPT_HASH } from "./ndviStatistics.js";
 import { SatelliteAdapterError, SATELLITE_ERROR_KINDS } from "./errors.js";
 import { SATELLITE_PROVIDERS, SATELLITE_ADAPTER_VERSION } from "./config.js";
 
@@ -71,7 +70,7 @@ export const PROVIDER_CAPABILITIES = Object.freeze({
       collection: DEFAULT_OPTICAL_COLLECTION,
       indicator: "NDVI",
       formula: "NDVI = (B08 - B04) / (B08 + B04)",
-      bands: Object.freeze({ red: "B04", nir: "B08", mask: "dataMask" }),
+      bands: Object.freeze({ red: "B04", nir: "B08", scl: "SCL", mask: "dataMask" }),
       units: "reflectance [0,1] (Sentinel Hub evalscript default; no /10000 rescale)",
       resolutionM: 10,
     }),
@@ -208,17 +207,19 @@ export const discoverImagery = async ({ config, http, aoi, windows, collection, 
 // Build a BOUNDED, documented Sentinel-2 NDVI processing request descriptor. This PREPARES the
 // request shape (reusing the PoC's review-verified Statistical API builder) but does NOT execute
 // it. `executed` is always false here — execution is a separate, explicitly gated step.
-export const prepareProcessingRequest = ({ config, aoi, window }) => {
+export const prepareProcessingRequest = ({ config, aoi, window, geometry = null }) => {
   const caps = getProviderCapabilities(config.provider);
   const processing = caps?.processing || null;
   if (!processing) {
     throw new SatelliteAdapterError("Provider does not declare a processing capability", SATELLITE_ERROR_KINDS.UNSUPPORTED);
   }
-  const requestShape = buildStatisticalRequest({
+  const requestShape = buildNdviStatisticalRequest({
+    geometry: geometry || null,
     bbox: aoi.bbox,
     start: window.start,
     end: window.end,
-    resolution: processing.resolutionM,
+    maxCloudCoverage: Math.round((config.cloudMaxFraction ?? 0.3) * 100),
+    resolutionM: processing.resolutionM,
   });
   return {
     prepared: true,
@@ -232,6 +233,7 @@ export const prepareProcessingRequest = ({ config, aoi, window }) => {
     crs: "EPSG:4326",
     window: { start: window.start, end: window.end },
     resolutionM: processing.resolutionM,
+    evalscriptHash: EVALSCRIPT_HASH,
     requestShape,
     bounded: {
       singleRequestPerWindow: true,
@@ -243,26 +245,31 @@ export const prepareProcessingRequest = ({ config, aoi, window }) => {
 
 // Execute a bounded NDVI statistics request. Callers MUST have verified that processing is both
 // enabled and credentialed before invoking this. Returns the parsed aggregate statistics.
-export const executeNdviProcessing = async ({ config, http, aoi, window }) => {
-  const { accessToken, expiresInSeconds } = await fetchCdseToken({ config, http });
-  const stats = await fetchNdviStatistics({
-    config,
-    http,
-    accessToken,
+export const executeNdviProcessing = async ({ config, http, aoi, window, geometry = null, token = null }) => {
+  const { accessToken, expiresInSeconds } = token || (await fetchCdseToken({ config, http }));
+  const body = buildNdviStatisticalRequest({
+    geometry,
     bbox: aoi.bbox,
     start: window.start,
     end: window.end,
+    maxCloudCoverage: Math.round((config.cloudMaxFraction ?? 0.3) * 100),
   });
-  if (!stats?.ok) {
-    return { executed: true, ok: false, reason: stats?.reason || "no valid statistics" };
+  const response = await http.post(config.statisticsUrl, body, {
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+  });
+  const stats = parseNdviStatisticalResponse(response);
+  if (!stats.ok) {
+    return { executed: true, ok: false, reason: stats.reason || "no valid statistics", validPixelFraction: stats.validPixelFraction ?? null };
   }
   return {
     executed: true,
     ok: true,
+    method: stats.method,
     intervals: stats.intervals,
-    redMean: stats.redMean,
-    nirMean: stats.nirMean,
+    redMean: stats.redMean ?? null,
+    nirMean: stats.nirMean ?? null,
     validPixelFraction: stats.validPixelFraction,
+    sampleCount: stats.sampleCount ?? null,
     ndvi: stats.ndvi,
     tokenExpiresInSeconds: Number.isFinite(expiresInSeconds) ? expiresInSeconds : null,
   };
@@ -292,8 +299,9 @@ export const createSatelliteProvider = ({ config, transport } = {}) => {
     requestCount: () => http.stats.count,
     discover: ({ aoi, windows, collection, correlationId }) =>
       discoverImagery({ config, http, aoi, windows, collection, correlationId }),
-    prepareProcessing: ({ aoi, window }) => prepareProcessingRequest({ config, aoi, window }),
-    executeProcessing: ({ aoi, window }) => executeNdviProcessing({ config, http, aoi, window }),
+    prepareProcessing: ({ aoi, window, geometry }) => prepareProcessingRequest({ config, aoi, window, geometry }),
+    executeProcessing: ({ aoi, window, geometry, token }) => executeNdviProcessing({ config, http, aoi, window, geometry, token }),
+    fetchToken: () => fetchCdseToken({ config, http }),
   };
 };
 

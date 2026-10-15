@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { COMPONENTS } from "../config/verificationPolicy.js";
 import {
   EVIDENCE_SOURCES,
   EVIDENCE_STATUSES,
@@ -50,11 +51,21 @@ const verificationEvidenceSchema = new mongoose.Schema(
     result: { type: Object, default: null },
     // Optional owner-supplied idempotency key; uniqueness is CLAIM-scoped (compound sparse index).
     idempotencyKey: { type: String, default: null },
+    // ADR-020 (additive). The verification component this row speaks to, and whether it is evidence
+    // or an automated manual-review case. `inputFingerprint` identifies what the run was computed
+    // from; `attempt` counts retries of the SAME inputs; `supersedes` points at the row this run
+    // replaced as "current". Rows are append-only: the newest row per (claim, component) is current.
+    component: { type: String, enum: COMPONENTS, default: null },
+    kind: { type: String, enum: ["evidence", "review_case"], default: "evidence" },
+    inputFingerprint: { type: String, default: null },
+    attempt: { type: Number, default: 1 },
+    supersedes: { type: mongoose.Schema.Types.ObjectId, default: null },
   },
   { timestamps: true }
 );
 
 verificationEvidenceSchema.index({ claimId: 1, source: 1, createdAt: -1 });
+verificationEvidenceSchema.index({ claimId: 1, component: 1, createdAt: -1 });
 // Idempotency is CLAIM-scoped and only applies when a key is supplied. A partial index (string
 // type) is used instead of sparse because rows without a key store the field as `null`, which a
 // sparse index would still consider present (and collide on).

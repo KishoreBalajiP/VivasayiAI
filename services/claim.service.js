@@ -38,6 +38,7 @@ export const serializeClaim = (claim, assessment = null) => {
     eventDate: doc.eventDate,
     claimedGeometry: doc.claimedGeometry,
     claimedAreaAcres: doc.claimedAreaAcres,
+    claimantRelationship: doc.claimantRelationship ?? null,
     evidence: (doc.evidence || []).map((entry) =>
       entry && typeof entry === "object" && entry.uploadId
         ? toEvidencePojo(entry)
@@ -72,6 +73,17 @@ const serializeAssessment = (assessment) => ({
   decidedAt: assessment.decidedAt,
   decidedBy: assessment.decidedBy,
   adminNote: assessment.adminNote,
+  // ADR-020 (additive): which parts of the claim are resolved, and whether a decision is on hold.
+  // `held` means a required component is unresolved: there is no decision yet and the claim is still
+  // `submitted`. Decisions made before policies existed report policyId "legacy" and no components.
+  held: Boolean(!assessment.state && assessment.verification && assessment.verification.status === "held"),
+  pendingComponents:
+    assessment.hold && Array.isArray(assessment.hold.blocking)
+      ? assessment.hold.blocking.map((item) => ({ component: item.component, outcome: item.outcome, action: item.action }))
+      : [],
+  components: assessment.components || null,
+  policyId: assessment.policy && assessment.policy.id ? assessment.policy.id : "legacy",
+  policyHash: assessment.policy && assessment.policy.hash ? assessment.policy.hash : null,
 });
 
 // Shared by the evidence service for ownership-scoped claim lookups.
@@ -104,6 +116,7 @@ export const createForUser = async ({
   eventDate,
   geometry,
   idempotencyKey,
+  claimantRelationship = null,
   requestId = null,
 }) => {
   const profile = await FarmProfile.findOne({ cognitoSub });
@@ -145,6 +158,7 @@ export const createForUser = async ({
       evidence: [],
       state: "draft",
       idempotencyKey: key,
+      claimantRelationship,
     });
   } catch (error) {
     // Race-safe idempotency: a concurrent identical create wins the unique index; the loser

@@ -25,8 +25,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import sharp from "sharp";
-import request from "supertest";
-import { authHeader } from "./helpers.js";
+import { api, authHeader } from "./helpers.js";
 import { signAccessToken } from "../utils/token.js";
 import { putObject } from "../services/s3.service.js";
 
@@ -36,7 +35,9 @@ const { mockGenerate } = vi.hoisted(() => {
   // "mock" so the existing test suites stay deterministic, but the AI-503 regression suite
   // must exercise the real code path through the bounded timeout wrapper.
   process.env.IMAGE_AI_MODE = "live";
-  process.env.IMAGE_STORAGE_MODE = "live";
+  // Storage stays on the global "mock" seam: this suite is about the AI timeout path, whose
+  // boundary is mocked at model.generate. Forcing live S3 made the suite need real AWS
+  // credentials (it failed on any machine without them) without exercising anything extra.
   return { mockGenerate: vi.fn() };
 });
 
@@ -230,14 +231,14 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     const token = signAccessToken({ cognitoSub, email: "farmer@example.com" });
     const auth = { Authorization: `Bearer ${token}` };
 
-    const profile = await request(app)
+    const profile = await api()
       .post("/profile")
       .set(auth)
       .send({ district: "Thanjavur", crops: ["Paddy"], acres: 2.5 });
     expect(profile.status).toBe(200);
 
     const parcel = (
-      await request(app)
+      await api()
         .post("/profile/parcels")
         .set(auth)
         .send({ name: "North Field", crop: "Paddy", geometry: squareGeometry(0.009) })
@@ -245,7 +246,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     expect(parcel).toBeTruthy();
 
     const claim = (
-      await request(app)
+      await api()
         .post("/claims")
         .set(auth)
         .send({
@@ -258,14 +259,14 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     ).body.data.claim;
     expect(claim).toBeTruthy();
 
-    const submit = await request(app).post(`/claims/${claim.id}/submit`).set(auth);
+    const submit = await api().post(`/claims/${claim.id}/submit`).set(auth);
     expect(submit.status).toBe(200);
 
     return { cognitoSub, token, auth, parcel, claim };
   };
 
   const presignPutComplete = async (auth, claimId) => {
-    const presign = await request(app)
+    const presign = await api()
       .post(`/claims/${claimId}/evidence/presign`)
       .set(auth)
       .send({ contentType: "image/png", size: imageBuffer.length, filename: "photo.png" });
@@ -277,7 +278,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     expect(evidence).toBeTruthy();
     await putObject({ key: evidence.s3Key, buffer: imageBuffer, mediaType: "image/png" });
 
-    const complete = await request(app)
+    const complete = await api()
       .post(`/claims/${claimId}/evidence/${uploadId}/complete`)
       .set(auth);
     expect(complete.status).toBe(200);
@@ -290,7 +291,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     feedVisionAnswer();
 
     const beforeCalls = mockGenerate.mock.calls.length;
-    const res = await request(app)
+    const res = await api()
       .post(`/claims/${seeded.claim.id}/verify`)
       .set(seeded.auth);
 
@@ -306,7 +307,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     feedHungVisionAnswer();
 
     const start = Date.now();
-    const res = await request(app)
+    const res = await api()
       .post(`/claims/${seeded.claim.id}/verify`)
       .set(seeded.auth);
     const elapsed = Date.now() - start;
@@ -326,7 +327,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     await presignPutComplete(seeded.auth, seeded.claim.id);
     feedFailedVisionAnswer();
 
-    const res = await request(app)
+    const res = await api()
       .post(`/claims/${seeded.claim.id}/verify`)
       .set(seeded.auth);
     expect(res.status).toBe(500);
@@ -363,7 +364,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     });
 
     const beforeCalls = mockGenerate.mock.calls.length;
-    const res = await request(app)
+    const res = await api()
       .post(`/claims/${seeded.claim.id}/verify`)
       .set(seeded.auth);
     expect(res.status).toBe(200);
@@ -378,7 +379,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     feedVisionAnswer();
 
     const before = mockGenerate.mock.calls.length;
-    const res = await request(app)
+    const res = await api()
       .post(`/claims/${seeded.claim.id}/verify`)
       .set(seeded.auth);
     expect(res.status).toBe(200);
@@ -392,7 +393,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     await presignPutComplete(seeded.auth, seeded.claim.id);
     feedVisionAnswer();
 
-    const first = await request(app)
+    const first = await api()
       .post(`/claims/${seeded.claim.id}/verify`)
       .set(seeded.auth);
     expect(first.status).toBe(200);
@@ -401,7 +402,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     // A second /verify on a decided claim must return the persisted decision without
     // spawning an extra AI call (no auto-trigger for already-decided claims).
     const before = mockGenerate.mock.calls.length;
-    const second = await request(app)
+    const second = await api()
       .post(`/claims/${seeded.claim.id}/verify`)
       .set(seeded.auth);
     expect(second.status).toBe(200);
@@ -420,14 +421,14 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
 
     const token = signAccessToken({ cognitoSub: "acc-chat-b7", email: "farmer@example.com" });
     const auth = { Authorization: `Bearer ${token}` };
-    const profile = await request(app)
+    const profile = await api()
       .post("/profile")
       .set(auth)
       .send({ district: "Thanjavur", crops: ["Paddy"], acres: 2.5 });
     expect(profile.status).toBe(200);
 
     // Reuse the same image buffer as an uploaded chat image via presigned path.
-    const presign = await request(app)
+    const presign = await api()
       .post("/upload/presign")
       .set(auth)
       .send({ contentType: "image/png", size: imageBuffer.length, filename: "leaf.png" });
@@ -438,7 +439,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     const imageRecord = await ImageRecord.findOne({ uploadId });
     await putObject({ key: imageRecord.s3Key, buffer: imageBuffer, mediaType: "image/png" });
 
-    const complete = await request(app)
+    const complete = await api()
       .post(`/upload/${uploadId}/complete`)
       .set(auth);
     expect(complete.status).toBe(200);
@@ -450,7 +451,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     expect([null, undefined]).toContain(after.vision);
 
     // Trigger the image turn; the AI must fail gracefully (sanitized 5xx, image still stored).
-    const res = await request(app)
+    const res = await api()
       .post("/chat")
       .set(auth)
       .send({ message: "diagnose this crop", language: "en", uploadId });
@@ -463,7 +464,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
     expect(stillThere.uploadId).toBe(uploadId);
     // The image is still retrievable through the authorized GET endpoint (the S3 object was
     // never deleted, only the analysis was marked failed).
-    const view = await request(app).get(`/upload/${uploadId}/view`).set(auth);
+    const view = await api().get(`/upload/${uploadId}/view`).set(auth);
     expect(view.status).toBe(200);
     expect(view.body.data.uploadId).toBe(uploadId);
   });
@@ -499,7 +500,7 @@ describe("AI 503 root-cause regression: /verify auto-triggers assessment", () =>
       mockGenerate.mockImplementationOnce(() => new Promise(() => {}));
 
       const start = Date.now();
-      const res = await request(app)
+      const res = await api()
         .post(`/claims/${seeded.claim.id}/verify`)
         .set(seeded.auth);
       const elapsed = Date.now() - start;

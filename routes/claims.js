@@ -1,6 +1,6 @@
 import express from "express";
 import validate from "../middlewares/validate.js";
-import { claimLimiter, evidenceLimiter } from "../middlewares/rateLimit.js";
+import { claimLimiter, claimReadLimiter, evidenceLimiter } from "../middlewares/rateLimit.js";
 import {
   claimParams,
   claimEvidenceParams,
@@ -43,10 +43,10 @@ import {
 const router = express.Router();
 
 // Claim lifecycle
-router.get("/", claimLimiter, listClaims);
+router.get("/", claimReadLimiter, listClaims);
 router.post("/", claimLimiter, validate(createClaimBody), createClaim);
-router.get("/:claimId", claimLimiter, validate(claimParams, "params"), getClaim);
-router.get("/:claimId/verification", claimLimiter, validate(claimParams, "params"), getClaimVerification);
+router.get("/:claimId", claimReadLimiter, validate(claimParams, "params"), getClaim);
+router.get("/:claimId/verification", claimReadLimiter, validate(claimParams, "params"), getClaimVerification);
 router.post("/:claimId/verification/land-documents", claimLimiter, validate(claimParams, "params"), examineClaimLandDocuments);
 router.post("/:claimId/verification/satellite", claimLimiter, validate(claimParams, "params"), runClaimSatelliteVerification);
 router.post("/:claimId/verification/official-land-record", claimLimiter, validate(claimParams, "params"), verifyClaimOfficialLandRecords);
@@ -62,7 +62,7 @@ router.post("/:claimId/verify", claimLimiter, validate(claimParams, "params"), v
 // Phase 10 (E9-S10) — farmer appeal of an eligible engine decision (08 §10.9). Idempotent: an
 // active appeal returns as-is. Claim ownership still flows through claim.service lookups.
 router.post("/:claimId/appeal", claimLimiter, validate(claimParams, "params"), validate(appealBody), submitAppeal);
-router.get("/:claimId/appeal", claimLimiter, validate(claimParams, "params"), getAppeal);
+router.get("/:claimId/appeal", claimReadLimiter, validate(claimParams, "params"), getAppeal);
 
 // Claim evidence (reuses the existing presigned S3 pipeline)
 router.post(

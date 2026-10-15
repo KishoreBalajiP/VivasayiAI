@@ -1,6 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import * as ownershipService from "../services/ownershipEvidence.service.js";
+import * as manualReviewService from "../services/manualReview.service.js";
 
 // Phase 12 (E12) — Land Ownership evidence endpoints (08_API_Documentation §10.13).
 //
@@ -70,10 +71,52 @@ const adminReviewOwnershipEvidence = asyncHandler(async (req, res) => {
   );
 });
 
+// ADR-020 — automated review cases (opened by the verification pipeline) are listed and resolved
+// here. Admin-only: the route sits behind requireRole("admin"), and the role is also checked in the
+// service. A decision is a review outcome (never VERIFIED), recorded as an AdminAction + audit row.
+const adminListReviewCases = asyncHandler(async (req, res) => {
+  const rows = await manualReviewService.listReviewCases({
+    claimId: req.params.claimId,
+    reviewerRole: req.user.role ?? null,
+  });
+  const cases = rows.map((row) => ({
+    id: String(row._id),
+    claimId: String(row.claimId),
+    status: row.status,
+    reasons: row.result?.reviewReasons ?? [],
+    component: row.metadata?.component ?? null,
+    createdAt: row.createdAt,
+    resolvedAt: row.result?.resolvedAt ?? null,
+    history: (row.result?.reviewHistory ?? []).map((entry) => ({
+      decision: entry.decision,
+      decidedAt: entry.decidedAt,
+    })),
+  }));
+  return ApiResponse.success(res, "Review cases fetched", { cases });
+});
+
+const adminDecideReviewCase = asyncHandler(async (req, res) => {
+  const updated = await manualReviewService.recordReviewDecision({
+    claimId: req.params.claimId,
+    evidenceId: req.params.evidenceId,
+    actorSub: req.user.id,
+    actorRole: req.user.role ?? null,
+    actorEmail: req.user.email ?? null,
+    decision: req.body.decision,
+    reason: req.body.reason,
+    requestId: req.requestId ?? null,
+  });
+  return ApiResponse.success(res, "Review case resolved", {
+    case: { id: String(updated._id), claimId: String(updated.claimId), status: updated.status },
+  });
+});
+
 export {
   submitOwnershipEvidence,
   listOwnershipEvidence,
   getOwnershipDocumentUrl,
   adminListOwnershipEvidence,
   adminReviewOwnershipEvidence,
+  adminListReviewCases,
+  adminDecideReviewCase,
 };

@@ -6,6 +6,8 @@ import ImageRecord from "../models/ImageRecord.js";
 import VerificationEvidence from "../models/VerificationEvidence.js";
 import ClaimAudit from "../models/ClaimAudit.js";
 import AdminAction from "../models/AdminAction.js";
+import { env } from "../config/env.js";
+import { requestReevaluation } from "./verificationWorker.service.js";
 import ApiError from "../utils/ApiError.js";
 import { findOwned } from "./claim.service.js";
 import { createImageViewUrl } from "./uploadPresign.service.js";
@@ -16,6 +18,7 @@ import {
 import {
   DEFAULT_OWNERSHIP_DOCUMENT_CATEGORY,
   DEFAULT_OWNERSHIP_VERIFICATION_METHOD,
+  OWNERSHIP_DOCUMENT_FILTER,
   OWNERSHIP_FOUNDATION_VERSION,
   OWNERSHIP_INITIAL_STATUS,
   OWNERSHIP_REVIEW_STATUSES,
@@ -226,6 +229,7 @@ export const listOwnershipEvidenceForClaim = async ({ claimId, cognitoSub } = {}
   const rows = await VerificationEvidence.find({
     claimId: claim._id,
     source: OWNERSHIP_SOURCE,
+    ...OWNERSHIP_DOCUMENT_FILTER,
   }).sort({ createdAt: 1 });
 
   return {
@@ -249,6 +253,7 @@ export const getOwnershipEvidenceDocumentUrl = async ({ claimId, evidenceId, cog
     _id: evidenceId,
     claimId: claim._id,
     source: OWNERSHIP_SOURCE,
+    ...OWNERSHIP_DOCUMENT_FILTER,
   });
   if (!row) throw ApiError.notFound("Ownership evidence not found");
 
@@ -420,6 +425,11 @@ export const reviewOwnershipEvidence = async ({
     },
     requestId,
   });
+
+  // A reviewed document can unblock a held claim: ask for a fresh decision.
+  if (env.claimAutomatedVerificationEnabled) {
+    await requestReevaluation({ claimId: claim._id, cognitoSub: claim.cognitoSub });
+  }
 
   return { evidence: serializeOwnershipRow(updated), idempotent: false };
 };

@@ -1,20 +1,53 @@
-name: Deploy Lambda via ECR
+name: Test and Deploy Lambda via ECR
 
 on:
   push:
     branches:
-      - main  # deploy on push to main
+      - main  # deploy on push to main (after tests pass)
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # --legacy-peer-deps matches the Dockerfile: the langchain packages declare conflicting peers.
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      # mongodb-memory-server downloads a mongod binary on first run; cache it between runs.
+      - name: Cache mongod binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongod-${{ runner.os }}-8.2.6
+
+      - name: Run tests
+        run: npx vitest run
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -24,18 +57,21 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # The immutable commit-SHA tag is what Lambda runs, so a deploy can be rolled back by pointing
+      # the function at an earlier SHA. `latest` is still pushed for anything that references it.
       - name: Build, Tag, and Push Docker image
         env:
           ECR_REGISTRY: 390403879095.dkr.ecr.ap-south-1.amazonaws.com
           ECR_REPOSITORY: vivasayiai-lambda
-          IMAGE_TAG: latest
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Update Lambda to use new ECR image
         run: |
           aws lambda update-function-code \
             --function-name tnFarmingAssistant \
-            --image-uri 390403879095.dkr.ecr.ap-south-1.amazonaws.com/vivasayiai-lambda:latest \
+            --image-uri 390403879095.dkr.ecr.ap-south-1.amazonaws.com/vivasayiai-lambda:${{ github.sha }} \
             --region ap-south-1

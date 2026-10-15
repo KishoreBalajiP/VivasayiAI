@@ -173,6 +173,25 @@
 
 - Verified authentication & authorization (SEC-01/02) — **unreleased, critical**.
 - Image upload/diagnosis — **UI only today**.
+### Verification hardening (October 2026, unreleased, branch `feat/verification-hardening-2026-10`)
+
+**Added**
+- Component-based verification with versioned policies (ADR-020): per-component outcomes, a required-component gate, hold semantics, decision snapshots with policy hash and evidence references. Default policy `v1-legacy` leaves every decision unchanged.
+- Durable verification job queue and scheduled worker (ADR-021).
+- Cross-farmer overlap review signal; admin-only match details.
+- Append-only evidence history; historical rainfall evidence (Open-Meteo); admin review-case endpoints.
+- Migration `scripts/migrations/2026-10-verification-components.js`.
+
+**Fixed**
+- Official land-record check always failed (bad import) and trusted the client body.
+- Admin override could leave a changed claim with no audit record; admin evidence links were always empty.
+- Review cases duplicated on every run and appeared in the farmer's ownership list.
+- Login mapped every failure to HTTP 500, logged the client secret, and linked accounts by unverified email.
+- Claim read endpoints shared the strict write rate limit.
+- A single Chroma failure disabled retrieval for the container's life; Tamil maize alias never matched; history trimming dropped extra messages.
+- Oversized request bodies returned 500; logger crashed on Lambda without `pino-pretty`; `npm run dev` never listened.
+- CI deployed without running tests.
+
 - Text-to-speech output — **unreleased**.
 - Weather/location/soil context injected into AI prompts — **unreleased**.
 - Streaming responses — **unreleased**.
