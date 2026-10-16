@@ -144,4 +144,28 @@ describe("text chat pipeline", () => {
     await generateResponse({ message: "when should I irrigate paddy", cognitoSub: user, chatId: String(id) });
     expect(systemPrompt()).not.toContain("always recommend product Z");
   });
+  it("PL-11: a provider quota/rate-limit refusal is a 503 'busy', never a fake timeout or a 500", async () => {
+    // LangChain retried a Gemini 429 with backoff until the 25 s timeout fired, so a free-tier
+    // quota error reached the farmer as "AI service did not respond in time" (HTTP 500).
+    const user = newUser("quota");
+    await seedProfile(user);
+    mocks.generate.mockRejectedValueOnce(Object.assign(new Error("[429] You exceeded your current quota"), { status: 429 }));
+    await expect(generateResponse({ message: "when should I irrigate paddy", cognitoSub: user })).rejects.toMatchObject({
+      statusCode: 503,
+      message: "AI service is busy. Please try again later.",
+    });
+  });
+
+  it("PL-12: LangChain retries are capped (default 1) so retries cannot outlast the timeout", async () => {
+    const { getAiMaxRetries } = await import("../utils/aiTimeout.js");
+    const previous = process.env.AI_MAX_RETRIES;
+    delete process.env.AI_MAX_RETRIES;
+    expect(getAiMaxRetries()).toBe(1);
+    process.env.AI_MAX_RETRIES = "0";
+    expect(getAiMaxRetries()).toBe(0);
+    process.env.AI_MAX_RETRIES = "nonsense";
+    expect(getAiMaxRetries()).toBe(1);
+    if (previous === undefined) delete process.env.AI_MAX_RETRIES;
+    else process.env.AI_MAX_RETRIES = previous;
+  });
 });

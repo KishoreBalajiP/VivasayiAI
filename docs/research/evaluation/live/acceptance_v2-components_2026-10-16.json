@@ -1,0 +1,238 @@
+{
+  "runDate": "2026-10-16T10:14:10.410Z",
+  "policy": "v2-components",
+  "environment": "local Express app, mongodb-memory-server, mock image storage, mock image AI, mock land records; live Gemini/Cohere/Chroma(read)/Open-Meteo/Copernicus where configured",
+  "passed": 25,
+  "total": 27,
+  "steps": [
+    {
+      "name": "no token is refused",
+      "pass": true,
+      "status": 401,
+      "ms": 28
+    },
+    {
+      "name": "create farm profile",
+      "pass": true,
+      "status": 200,
+      "ms": 21
+    },
+    {
+      "name": "draw a parcel",
+      "pass": true,
+      "status": 200,
+      "ms": 10,
+      "areaAcres": 6.768
+    },
+    {
+      "name": "list parcels",
+      "pass": true,
+      "status": 200,
+      "ms": 2,
+      "count": 1
+    },
+    {
+      "name": "weather for the profile district (live Open-Meteo)",
+      "pass": true,
+      "status": 200,
+      "ms": 1394
+    },
+    {
+      "name": "chat in English about the selected parcel (live Gemini + RAG)",
+      "pass": false,
+      "status": 503,
+      "ms": 3980,
+      "message": "AI service is busy. Please try again later.",
+      "replyChars": 0,
+      "sources": null,
+      "intent": null
+    },
+    {
+      "name": "chat in Tamil (live Gemini + RAG)",
+      "pass": false,
+      "status": 503,
+      "ms": 2803,
+      "message": "AI service is busy. Please try again later.",
+      "replyChars": 0,
+      "sources": null,
+      "intent": null
+    },
+    {
+      "name": "create a claim with claimant relationship",
+      "pass": true,
+      "status": 200,
+      "ms": 20,
+      "state": "draft",
+      "claimedAreaAcres": 6.768,
+      "relationship": "owner"
+    },
+    {
+      "name": "replaying the same idempotency key returns the same claim",
+      "pass": true,
+      "status": 200,
+      "ms": 5,
+      "sameId": true
+    },
+    {
+      "name": "attach damage photo 1 (presign → PUT → complete)",
+      "pass": true,
+      "status": 200,
+      "ms": 14
+    },
+    {
+      "name": "attach damage photo 2 (presign → PUT → complete)",
+      "pass": true,
+      "status": 200,
+      "ms": 8
+    },
+    {
+      "name": "submit the claim",
+      "pass": true,
+      "status": 200,
+      "ms": 3,
+      "state": "submitted"
+    },
+    {
+      "name": "request verification",
+      "pass": true,
+      "status": 200,
+      "ms": 24,
+      "claimState": "more_evidence_required",
+      "outcome": "more_evidence_required",
+      "held": false,
+      "pendingComponents": [],
+      "components": {
+        "parcel_identity": "verified",
+        "claimant_rights": "unverified",
+        "land_documents": "unverified",
+        "geometry": "verified",
+        "crop": "inconclusive",
+        "satellite": "unverified",
+        "photos": "verified",
+        "weather": "unverified",
+        "overlap": "verified",
+        "manual_review": "unverified"
+      },
+      "policyId": "v2-components"
+    },
+    {
+      "name": "read verification status",
+      "pass": true,
+      "status": 200,
+      "ms": 11,
+      "keys": [
+        "verification",
+        "claim"
+      ]
+    },
+    {
+      "name": "attach a land document (upload presign → PUT → complete → ownership)",
+      "pass": true,
+      "status": 200,
+      "ms": 3
+    },
+    {
+      "name": "list land documents",
+      "pass": true,
+      "status": 200,
+      "ms": 2,
+      "total": 1
+    },
+    {
+      "name": "resubmit after adding documents",
+      "pass": true,
+      "status": 200,
+      "ms": 3,
+      "state": "submitted"
+    },
+    {
+      "name": "re-request verification after adding documents",
+      "pass": true,
+      "status": 200,
+      "ms": 1840,
+      "claimState": "submitted",
+      "outcome": null,
+      "held": true,
+      "pendingComponents": [
+        {
+          "component": "claimant_rights",
+          "outcome": "pending",
+          "action": "hold"
+        }
+      ],
+      "components": {
+        "parcel_identity": "verified",
+        "claimant_rights": "pending",
+        "land_documents": "pending",
+        "geometry": "verified",
+        "crop": "inconclusive",
+        "satellite": "inconclusive",
+        "photos": "verified",
+        "weather": "verified",
+        "overlap": "verified",
+        "manual_review": "unverified"
+      },
+      "policyId": "v2-components"
+    },
+    {
+      "name": "read the claim with its assessment",
+      "pass": true,
+      "status": 200,
+      "ms": 4,
+      "state": "submitted",
+      "assessmentState": null
+    },
+    {
+      "name": "read appeal status",
+      "pass": true,
+      "status": 200,
+      "ms": 2,
+      "appeal": null
+    },
+    {
+      "name": "another farmer cannot read the claim",
+      "pass": true,
+      "status": 404,
+      "ms": 1
+    },
+    {
+      "name": "another farmer cannot read its verification",
+      "pass": true,
+      "status": 404,
+      "ms": 2
+    },
+    {
+      "name": "another farmer cannot list its documents",
+      "pass": true,
+      "status": 404,
+      "ms": 1
+    },
+    {
+      "name": "a client cannot choose the verification result",
+      "pass": true,
+      "status": 200,
+      "ms": 8,
+      "approvedAreaAcres": null
+    },
+    {
+      "name": "create a second claim",
+      "pass": true,
+      "status": 200,
+      "ms": 4
+    },
+    {
+      "name": "withdraw the second claim",
+      "pass": true,
+      "status": 200,
+      "ms": 2,
+      "state": "withdrawn"
+    },
+    {
+      "name": "list claims",
+      "pass": true,
+      "status": 200,
+      "ms": 3,
+      "count": 2
+    }
+  ]
+}

@@ -67,8 +67,18 @@ const weightedMean = (items) => {
 // Accepts the masked per-pixel shape (`outputs.ndvi.bands.B0.stats` with sampleCount/noDataCount) and,
 // for compatibility, the legacy band-means shape (`outputs.default.bands.B0..B2`). The legacy shape
 // carries no cloud masking and is labelled as such.
+// The HTTP client returns the response BODY under `response.data`, and the body itself is
+// `{ data: [...intervals], status }`. Fixtures written by hand used `{ data: [...] }` directly, which is
+// why the original parser passed its tests but never parsed a live response. Both shapes are accepted.
+const intervalsOf = (response) => {
+  if (!response) return [];
+  if (Array.isArray(response.data)) return response.data;
+  if (response.data && Array.isArray(response.data.data)) return response.data.data;
+  return [];
+};
+
 export const parseNdviStatisticalResponse = (response) => {
-  const data = Array.isArray(response && response.data) ? response.data : [];
+  const data = intervalsOf(response);
   const masked = [];
   const legacy = [];
   for (const entry of data) {
@@ -76,7 +86,10 @@ export const parseNdviStatisticalResponse = (response) => {
     if (stats && Number.isFinite(stats.mean)) {
       const sampleCount = Number(stats.sampleCount) || 0;
       const noDataCount = Number(stats.noDataCount) || 0;
-      masked.push({ value: stats.mean, weight: Math.max(sampleCount - noDataCount, 0), sampleCount, noDataCount });
+      masked.push({
+        value: stats.mean, weight: Math.max(sampleCount - noDataCount, 0), sampleCount, noDataCount,
+        date: entry.interval && entry.interval.from ? String(entry.interval.from).slice(0, 10) : null,
+      });
       continue;
     }
     const bands = entry && ((entry.outputs && entry.outputs.default && entry.outputs.default.bands) || entry.bands);
@@ -95,6 +108,13 @@ export const parseNdviStatisticalResponse = (response) => {
       ok: true,
       method: NDVI_METHOD,
       intervals: masked.length,
+      // Each acquisition day separately, for transparency: a window mean can hide a crop that grew or was
+      // harvested within the window.
+      series: masked.map((item) => ({
+        date: item.date,
+        ndvi: Math.round(item.value * 10000) / 10000,
+        validPixelFraction: item.sampleCount > 0 ? Math.round(((item.sampleCount - item.noDataCount) / item.sampleCount) * 10000) / 10000 : null,
+      })),
       ndvi,
       sampleCount,
       noDataCount,

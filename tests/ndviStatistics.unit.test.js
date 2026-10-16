@@ -95,3 +95,20 @@ describe("NDVI change interpretation", () => {
     expect(interpretNdviChange({ before: side(0.7, 0.9), after: side(0.56, 0.9), thresholds: TH }).outcome).toBe("NO_CHANGE");
   });
 });
+
+describe("real Statistical API response", () => {
+  it("NS-13: parses the body exactly as the live API returns it through the HTTP client (regression)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const body = JSON.parse(readFileSync(new URL("./fixtures/cdse_statistics_live_2024-01.json", import.meta.url), "utf8"));
+    // The HTTP client puts the BODY under `data`; the body has its own `data` array.
+    const parsed = parseNdviStatisticalResponse({ status: 200, data: body });
+    expect(parsed.ok).toBe(true);
+    expect(parsed.intervals).toBe(3);
+    expect(parsed.sampleCount).toBe(300);
+    expect(parsed.noDataCount).toBe(68);
+    // weights 32, 100, 100
+    expect(parsed.ndvi).toBeCloseTo((0.4222961841151118 * 32 + 0.6502360767126084 * 100 + 0.8394464182853698 * 100) / 232, 6);
+    expect(parsed.series.map((point) => point.date)).toEqual(["2024-01-15", "2024-01-25", "2024-01-30"]);
+    expect(parsed.series[0].validPixelFraction).toBe(0.32);
+  });
+});

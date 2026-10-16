@@ -167,8 +167,8 @@ export const serializeDecision = ({ claim, assessment, idempotent, inProgress, h
   idempotent,
   inProgress,
   claimState: claim.state,
-  outcome: assessment && assessment.state ? assessment.state : null,
-  decision: assessment && assessment.state ? assessment.state : null,
+  outcome: !held && assessment && assessment.state ? assessment.state : null,
+  decision: !held && assessment && assessment.state ? assessment.state : null,
   reason: assessment ? assessment.reason : null,
   rules: assessment ? assessment.rules : null,
   approvedGeometry: assessment ? assessment.approvedGeometry : null,
@@ -272,6 +272,14 @@ const persistHold = async ({ claim, assessment, evaluation, snapshot, fingerprin
     evidenceRefs: snapshot.evidenceRefs,
     hold,
     reason: evaluation.reason,
+    // A hold means "no decision yet". After a resubmission the assessment still carries the
+    // previous round's decision, which must not be shown as current. That decision stays on the
+    // append-only ClaimAudit trail.
+    state: null,
+    decidedAt: null,
+    approvedGeometry: null,
+    approvedAreaAcres: null,
+    verifiedAreaAcres: null,
     verification: {
       status: "held",
       version: evaluation.engineVersion,

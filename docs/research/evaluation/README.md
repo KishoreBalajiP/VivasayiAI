@@ -56,13 +56,22 @@ stub). Environment, commit and whether the working tree was dirty are recorded i
   contributions are claimant rights and cross-farmer overlap.
 - Satellite and weather evidence never change a decision (0 of 1,536 comparisons), by design.
 
+## Live feasibility study (16 October 2026)
+
+Read-only against production data stores. Full results and disclosures are in [live/LIVE_RESULTS_2026-10-16.md](live/LIVE_RESULTS_2026-10-16.md).
+
+- **Sentinel-2, 12 live runs:** 0 of 9 event squares supported loss, and 1 of 3 harvest-control squares gave a false "supports loss".
+- **Retrieval, 22 queries:** a relevant chunk for 2 of 13 answerable questions, and 0 of 27 chunks could answer advisory questions.
+- **Farmer journeys under both policies:** every step passes except live chat.
+- **Blocked:** live chat and document extraction (Gemini free-tier quota).
+
 ## What is pending, and what it needs
 
 | Pending experiment | Needs |
 |---|---|
-| Answer relevance, groundedness, citation correctness of the live assistant | Gemini API key; a rubric and at least two expert raters (see below) |
+| Answer relevance, groundedness, citation correctness of the live assistant | A **billed** Gemini key (free tier: 20 requests/day); script ready (`scripts/live/chatContext.live.js`); a rubric and at least two expert raters (see below) |
 | Land-document field extraction accuracy | 100+ document images (real with consent, or realistic), manually verified labels, Gemini key |
-| Real satellite acquisition success, cloud and no-data rates, damage agreement | Copernicus Data Space credentials; claims with independently established damage labels (field survey or insurer assessment) |
+| Satellite agreement with damage | Acquisition now works live (12 runs). Still needs parcels with independently established damage labels (field survey or insurer assessment) and crop-calendar-aware windows |
 | Duplicate-claim and ownership-mismatch detection on real data | Authorised access to official parcel records or a partner's anonymised claims |
 | Unnecessary-question experience | A small user study with farmers (consent, Tamil-language materials) |
 | Held-out evaluation of the name matcher | Names from real documents that were not used to tune the matcher |

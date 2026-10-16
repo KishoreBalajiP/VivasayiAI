@@ -1,5 +1,35 @@
 # Base paper selection
 
+## Second-pass decision (2026-10-16, after reading full texts)
+
+The full texts of Ursu 2025, Ravindran 2026 (AgroLLM) and Singh 2024 (Farmer.Chat) were read. Okeyo 2020 and Carter 2017 stayed abstract-only (403 and paywall). 26 sources were added. The original selection below is **kept, with three changes**.
+
+| Role | Decision | Change from first pass | Justification from full text |
+|---|---|---|---|
+| **Claim-side base paper (satellite operation)** | **Ursu et al. 2025** [ursu2025], confirmed | None, but its use is narrowed | It performs exactly Vivasayi AI's operation: pre/post Sentinel-2 dNDVI with fixed 0.10/0.20 thresholds, and it measures how the post-event date changes the answer (Table 4). It is a *method* baseline, **not an accuracy baseline**: the authors state "the lack of direct ground validation". It uses L1C with scene-level cloud selection where Vivasayi AI uses L2A with SCL pixel masking, and its abstract's Dolhasca areas contradict Table 4. Cite the table values. |
+| **Claim-side base paper (evidence fusion)** | **Chakraborty et al. 2021** [chakraborty2021], **new** | Added as co-base | An Indian, insurance-motivated, **deterministic decision matrix** fusing NDVI vigour strata with Sentinel-1 change into affected, marginal and normal classes, *with* a reported accuracy (OA 84.12%, kappa 0.74). It is the closest verified precedent for a rule-based evidence-fusion step. Abstract only, so its thresholds must be re-read in full before reproducing them. |
+| **Assistant-side base paper** | **Ravindran et al. 2026, AgroLLM** [ravindran2026], confirmed | Comparison sharpened | The closest agricultural RAG with a deterministic validation layer (DKPL). Full text shows it **falls back to the LLM's parametric knowledge when retrieval fails**. Vivasayi AI's context-sufficiency gate is designed to do the opposite (ask or abstain), with Joren et al. 2025 [joren2025] as the conceptual basis. The 504 questions come from the same textbooks as the corpus, and grading is lightly specified, so its 95.2% is not a comparable baseline number. |
+| Deployed comparator | Singh et al. 2024, Farmer.Chat [singh2024], kept | Demoted from "base" to "comparator" | A preprint, and its quality metrics are LLM-judged (RAGAS). It is useful for deployment-scale context and for its "out of context / out of content" failure taxonomy (66% / 23% of unanswered queries). |
+| Insurance-context anchor | **Ceballos et al. 2019 (PBI)** [ceballos2019] plus the **YES-TECH manual** [mncfc2023yestech] | **Replaces** Okeyo 2020 / Carter 2017 as the anchor | Both are India-specific and concern *claim verification evidence*. PBI is farmer smartphone photos (damage visible at 71% of affected sites vs at most 34% for index products). YES-TECH is the official 70/30 CCE/model blend at Insurance Unit level. Okeyo (an area-index trigger with no loss validation) and Carter (an economics review, abstract only) are kept as background citations only. |
+
+**Recommended 1-3 foundational papers for the write-up (revised):**
+
+1. **Ursu 2025 + Chakraborty 2021** as the claim-verification pair: one gives the method, the other gives the decision-matrix fusion with accuracy.
+2. **Ravindran 2026 (AgroLLM)**, contrasted with **Joren 2025** for the sufficiency gate.
+3. **Ceballos 2019** for the Indian claim-verification context.
+
+**Why not pick a single base paper:** none of the ~70 sources combines conversational advisory with claim adjudication. An IEEE reviewer will ask "what is the baseline?". The honest answer is one baseline per component, plus an internal ablation (the v1 photo-only policy vs the v2 fusion gate, already in `evaluation/results/fusion.json`).
+
+**Additional limitations Vivasayi AI could investigate, from the second pass:**
+
+- Single pre/post delta vs a time-integrated metric. Ha et al. 2022 [ha2022] found the 32-day AUC of NDVI correlated with field damage (r up to -0.90). This can be tested on the live case-study areas without labels, as a *sensitivity* analysis only.
+- Parcel size vs 10 m pixels. SICKLE [sani2024] plots average 0.38 acre (about 1,540 m², about 15 Sentinel-2 pixels), so valid-pixel counts after SCL masking should be reported for every case.
+- Cloud during the monsoon and cyclone season. Every Indian cyclone study found [chakraborty2021; bhatt2026] uses Sentinel-1 SAR. Vivasayi AI's optical-only path should be expected to return `inconclusive` often. In the 2026-10-16 live run, 3 of 12 areas returned `inconclusive` with "no valid statistics" in the post-event window. All 3 were in post-monsoon event windows (south Tamil Nadu floods, Cyclone Fengal) whose scene cloud fractions were mostly above 0.5. Masking is the likely cause, but the run did not record it per area.
+
+---
+
+*(First-pass text follows, unchanged.)*
+
 Evidence basis: all selections rest on abstracts or metadata retrieved 2026-10-16, not full text (see `literature_review.md`). Before committing to any as a formal baseline, the full text must be read.
 
 ## Statement

@@ -218,7 +218,7 @@ export const prepareProcessingRequest = ({ config, aoi, window, geometry = null 
     bbox: aoi.bbox,
     start: window.start,
     end: window.end,
-    maxCloudCoverage: Math.round((config.cloudMaxFraction ?? 0.3) * 100),
+    maxCloudCoverage: Math.round((config.processingSceneCloudMax ?? config.cloudMaxFraction ?? 0.3) * 100),
     resolutionM: processing.resolutionM,
   });
   return {
@@ -252,7 +252,7 @@ export const executeNdviProcessing = async ({ config, http, aoi, window, geometr
     bbox: aoi.bbox,
     start: window.start,
     end: window.end,
-    maxCloudCoverage: Math.round((config.cloudMaxFraction ?? 0.3) * 100),
+    maxCloudCoverage: Math.round((config.processingSceneCloudMax ?? config.cloudMaxFraction ?? 0.3) * 100),
   });
   const response = await http.post(config.statisticsUrl, body, {
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -270,6 +270,7 @@ export const executeNdviProcessing = async ({ config, http, aoi, window, geometr
     nirMean: stats.nirMean ?? null,
     validPixelFraction: stats.validPixelFraction,
     sampleCount: stats.sampleCount ?? null,
+    series: stats.series || [],
     ndvi: stats.ndvi,
     tokenExpiresInSeconds: Number.isFinite(expiresInSeconds) ? expiresInSeconds : null,
   };

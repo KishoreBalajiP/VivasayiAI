@@ -534,7 +534,7 @@ export const runSatelliteAnalysis = async ({
 
   const sorted = sortScenes(dedupeScenes(opticalScenes));
   const allCloudy =
-    sorted.every((scene) => !Number.isFinite(scene.cloudCoverFraction) || scene.cloudCoverFraction > config.cloudMaxFraction) &&
+    sorted.every((scene) => !Number.isFinite(scene.cloudCoverFraction) || scene.cloudCoverFraction > (config.processingSceneCloudMax ?? config.cloudMaxFraction)) &&
     sorted.some((scene) => Number.isFinite(scene.cloudCoverFraction));
 
   if (allCloudy) {
@@ -598,7 +598,7 @@ export const runSatelliteAnalysis = async ({
       });
       if (!requests.ok) {
         processing.status = SATELLITE_PROCESSING_STATUS.INCONCLUSIVE;
-        notes.push("Processing returned no usable statistics (inconclusive).");
+        notes.push(`Processing returned no usable statistics (${requests.reason || "inconclusive"}).`);
         return finish({
           outcome: SATELLITE_OUTCOMES.INCONCLUSIVE,
           mode: SATELLITE_MODES.DISCOVERY,
@@ -668,6 +668,7 @@ const executeProcessing = async ({ provider, config, aoi, geometry, windowCheck 
     validPixelFraction: result.validPixelFraction,
     sampleCount: result.sampleCount ?? null,
     intervals: result.intervals,
+    series: result.series || [],
   });
   const methodOf = (result) => result.method || "per-pixel-mean-scl-masked";
 
@@ -676,7 +677,8 @@ const executeProcessing = async ({ provider, config, aoi, geometry, windowCheck 
     const before = await provider.executeProcessing({ aoi, geometry, window: windowCheck.preWindow, token });
     const after = await provider.executeProcessing({ aoi, geometry, window: windowCheck.postWindow, token });
     if (!before.ok || !after.ok) {
-      return { ok: false, reason: !before.ok ? before.reason : after.reason };
+      const which = !before.ok && !after.ok ? "pre- and post-event" : !before.ok ? "pre-event" : "post-event";
+      return { ok: false, reason: `${which} window: ${(!before.ok ? before.reason : after.reason) || "no usable statistics"}` };
     }
     const interpretation = interpretNdviChange({ before: side(before), after: side(after), thresholds });
     return {

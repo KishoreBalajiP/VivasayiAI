@@ -4,7 +4,7 @@ import { CohereEmbeddings } from "@langchain/cohere";
 import { CloudClient } from "chromadb";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
-import { withAiTimeout, AiTimeoutError } from "../utils/aiTimeout.js";
+import { withAiTimeout, AiTimeoutError, isProviderLimitError, getAiMaxRetries } from "../utils/aiTimeout.js";
 import ChatSession from "../models/ChatSession.js";
 import { env, validateEnv, CHAT_REQUIRED } from "../config/env.js";
 import { deriveTitle, getForUser } from "./chatSession.service.js";
@@ -25,6 +25,7 @@ const model = new ChatGoogleGenerativeAI({
   apiKey: env.googleApiKey,
   model: AIConfig.model,
   maxOutputTokens: AIConfig.maxOutputTokens,
+  maxRetries: getAiMaxRetries(),
 });
 
 // Use Cohere embeddings (same as ingestion) - 1024 dimensions
@@ -197,6 +198,10 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district, 
         );
         return null;
       }
+      if (isProviderLimitError(err)) {
+        logger.warn({ conversationId, status: err.status, latencyMs: Date.now() - modelStart }, "chat.text_generate_provider_limit");
+        throw ApiError.serviceUnavailable("AI service is busy. Please try again later.");
+      }
       throw err;
     });
     const latency = Date.now() - modelStart;
@@ -287,6 +292,7 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district, 
       session: chatSession
     };
   } catch (error) {
+    if (error instanceof ApiError && error.statusCode === 503) throw error;
     logger.error(
       { conversationId, template, err: error, durationMs: Date.now() - startedAt },
       "AI Model Error"

@@ -95,4 +95,22 @@ describe("claim rate limits — reads and writes are separate buckets", () => {
     expect(response.headers["ratelimit-limit"] ?? response.headers["ratelimit"]).toBeTruthy();
     expect(String(response.headers["ratelimit-limit"] ?? response.headers["ratelimit"])).toContain("4");
   });
+
+  it("RL-6: evidence and ownership signed-URL reads use the read bucket, not the upload budget", async () => {
+    const user = newUser("evidence-url");
+    const parcelId = await seedParcel(user);
+    const created = await createClaim(user, parcelId, "idem-rl-6-aaaa");
+    const claimId = created.body.data.claim.id;
+    const paths = [
+      `/claims/${claimId}/evidence/img_00000000-0000-4000-8000-000000000000/url`,
+      `/claims/${claimId}/ownership`,
+      `/claims/${claimId}/ownership/0123456789abcdef01234567/url`,
+    ];
+    for (const path of paths) {
+      const response = await api().get(path).set(authHeader(user));
+      const header = String(response.headers["ratelimit-limit"] ?? response.headers["ratelimit"] ?? "");
+      expect(header).toContain("4"); // the read limit configured for this file
+    }
+  });
+
 });
