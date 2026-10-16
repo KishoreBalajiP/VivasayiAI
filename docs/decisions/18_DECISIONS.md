@@ -320,6 +320,48 @@ Phase 6 exposes the frozen E9-S5 engine through **one thin public endpoint** `PO
 - **Lifecycle/invariants preserved:** state machine untouched (`submitted → processing` remains the only inbound to `processing`); terminal claims (`verified | rejected | out_of_limit | duplicate_area | more_evidence_required | withdrawn`) can never be re-processed; idempotent decision reuse; atomic CAS under concurrency (one decision, one audit pair); retryable gate failures stay retryable (never a silent rejection); `partially_verified` and `duplicate_area` remain never-emitted (overlap unchecked, E9-S6); no compensation/admin/fraud/frontend/weather added.
 - **Tests:** new `tests/claim.verify.api.test.js` — 40 API scenarios (P6-01..P6-40: authorization, request validation + client-tampering guardrails, lifecycle incl. frozen never-emitted outcomes, idempotency, concurrency/CAS, persistence, audit, security). Full suite: **285 tests, all passing** (245 + 40). Docs updated: 08 (§10), 15 (§5), 17, and this changelog.
 
+## ADR-020 — Component-based claim verification and policy versioning
+
+**Status:** implemented and tested; **proposed by engineering, not yet approved by the product owner.** The default policy `v1-legacy` reproduces every historical decision exactly, so nothing changes until `CLAIM_VERIFICATION_POLICY=v2-components` is set.
+
+**Context.** The deterministic engine (ADR-019) decided from the claim, the AI photograph assessment and the claimant's own spatial facts. Ownership documents, satellite imagery and weather were stored but could never affect a decision, and a claim could reach `verified` while an ownership review was still pending. Providers that failed (land records, satellite) and missing evidence were also indistinguishable from negative findings.
+
+**Decision.**
+- Every claim is described by ten **components**: parcel identity, claimant rights, land documents, geometry, crop, satellite, photos, weather, overlap and manual review. Each resolves to one of seven outcomes: `verified`, `failed`, `unverified`, `unavailable`, `inconclusive`, `pending`, `requires_review`. A provider failure is `unavailable`, missing evidence is `unverified`, and `failed` requires a positive finding that contradicts the claim.
+- A **policy** (`config/verificationPolicy.js`) lists which components are required and how they are handled. Each decision stores the policy id and a content hash (which includes the environment rule knobs), the component outcomes, and snapshots of the evidence rows it used (id, status, last update, version).
+- A **gate** runs after the frozen rules and can only make an approval more cautious. A required component that is `unverified` or `failed` asks the farmer for more evidence. One that is `pending`, `requires_review`, `unavailable` or `inconclusive` **holds** the claim.
+- **No new claim states.** A held claim stays `submitted`, so no lock is held and the farmer can still withdraw. Its reason is recorded on the assessment, and the audit row is written only when the situation changes.
+- The gate never produces a rejection. A failed required component maps to `more_evidence_required`. Rejection stays with the frozen rules and the admin override.
+- AI-derived evidence (photographs, document reading) is never authoritative, and AI alone can never verify claimant rights. Under `v2-components` a confident AI "no damage" reading holds the claim for a reviewer instead of rejecting it.
+- Overlap with **another farmer's** claim is a review signal only: it holds the claim, is never labelled a duplicate, and the other claim's identity is recorded only in the admin audit trail.
+- Evidence is **append-only**: a new row is recorded when its inputs change, and a transient provider failure is retried as a new attempt. The newest row per claim and component is current.
+
+**Consequences.** Satellite and weather stay optional, because satellite pre/post analysis is not yet live-validated. Claims decided before this ADR report `policyId: "legacy"` and no components. Requires the data migration `scripts/migrations/2026-10-verification-components.js`.
+
+**Amends ADR-019.**
+- **P3 (weather):** historical rainfall around the event is now retrieved (Open-Meteo), as supporting evidence only. It never rejects a claim, and any threshold would need its own ADR.
+- **P5 / overlap:** overlap with other farmers' claims is detected and goes to review.
+- **P9 (no OCR or scan parsing):** AI reading of land documents was introduced in Phase 15 without an ADR. It is accepted here only as advisory, non-authoritative evidence.
+- **Phase 11 annex (OWNERSHIP and SATELLITE were non-operative):** they can now influence an outcome, but only through the gate, and only under a policy that requires them.
+
+## ADR-021 — Verification execution on AWS Lambda
+
+**Status:** implemented and tested; the scheduled worker is optional and needs an EventBridge rule that is not part of this repository.
+
+**Context.** Automated verification ran in a fire-and-forget promise after the HTTP response. Lambda freezes the container once the response is sent, so the work could silently never finish, and its "already running" guard was per-process memory. Running everything inside the request does not fit either: one AI assessment can take 25 s against API Gateway's 29 s limit.
+
+**Decision.** Work is stored as durable job rows in MongoDB (`models/VerificationJob.js`). Submit only enqueues. Steps run when someone drains the queue: the verify call (bounded by `CLAIM_VERIFICATION_REQUEST_BUDGET_MS`, default 22 s), a status read (`CLAIM_VERIFICATION_DRAIN_ON_READ`, one step per read), or the scheduled `worker` handler.
+- At most one **active** job per claim and step, enforced by a unique partial index.
+- A job is claimed with one atomic update. A job whose lease expired (frozen or killed container) is claimed again.
+- A step with less time budget left than it needs is put back untouched rather than half-run.
+- Failures are retried with backoff. A job that exhausts its attempts opens a **manual review case** and never produces a decision.
+- The engine step waits until the claim's other steps have finished.
+- A claim held longer than `maxHoldHours` is escalated to a review case. It is never decided automatically.
+- A resolved ownership review or review case queues a fresh engine run.
+
+**Trade-offs.** A status `GET` has a side effect (it advances one step). It is owner-checked, rate-limited by its own bucket, and can be switched off. SQS or EventBridge can feed the same rows later without changing the data model.
+
+
 - New decisions: create a new ADR entry, update this file, and link it from affected docs.
 - Reversals: mark the old ADR `SUPERSEDED` and cite the new ADR.
 - Reference ADRs in commits/PRs that implement them (e.g., `security: verified JWT (ADR-013)`).

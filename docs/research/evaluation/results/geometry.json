@@ -1,0 +1,243 @@
+{
+  "environment": {
+    "date": "2026-10-16",
+    "node": "v26.7.0",
+    "platform": "darwin-arm64",
+    "commit": "522d212",
+    "branch": "feat/verification-hardening-2026-10",
+    "dirty": true
+  },
+  "name": "geometry",
+  "seed": 20261016,
+  "description": "Geometry validation, containment, overlap area and the cross-farmer review flag against analytic rectangle ground truth, placed at random positions across Tamil Nadu.",
+  "groundTruth": "analytic (rectangle arithmetic in a local metre frame); independent of the code under test",
+  "parameters": {
+    "toleranceMeters": 1,
+    "crossFarmerThresholds": {
+      "minOverlapAcres": 0.05,
+      "minShare": 0.1
+    }
+  },
+  "area": {
+    "n": 200,
+    "relativeError": {
+      "n": 200,
+      "mean": 0.006255,
+      "min": 0.00600133884230874,
+      "max": 0.0064725145499571046,
+      "p50": 0.0062734435666362345,
+      "p95": 0.006457957950411996
+    },
+    "note": "server acres vs an ellipsoidal metres-per-degree reference; the server uses a spherical-earth area formula, so a small systematic difference is expected"
+  },
+  "containment": {
+    "positiveClass": "claim outside the parcel",
+    "undecided": 0,
+    "scores": {
+      "tp": 120,
+      "fp": 0,
+      "tn": 180,
+      "fn": 0,
+      "n": 300,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1,
+      "falsePositiveRate": 0,
+      "falseNegativeRate": 0,
+      "accuracy": 1
+    },
+    "correctByKind": {
+      "inside": {
+        "k": 145,
+        "n": 145,
+        "value": 1,
+        "ci95": {
+          "low": 0.9742,
+          "high": 1
+        }
+      },
+      "outside": {
+        "k": 70,
+        "n": 70,
+        "value": 1,
+        "ci95": {
+          "low": 0.948,
+          "high": 1
+        }
+      },
+      "overhang": {
+        "k": 85,
+        "n": 85,
+        "value": 1,
+        "ci95": {
+          "low": 0.9568,
+          "high": 1
+        }
+      }
+    }
+  },
+  "overlap": {
+    "flagScores": {
+      "tp": 149,
+      "fp": 0,
+      "tn": 151,
+      "fn": 0,
+      "n": 300,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1,
+      "falsePositiveRate": 0,
+      "falseNegativeRate": 0,
+      "accuracy": 1
+    },
+    "correctByKind": {
+      "disjoint": {
+        "k": 45,
+        "n": 45,
+        "value": 1,
+        "ci95": {
+          "low": 0.9213,
+          "high": 1
+        }
+      },
+      "touching": {
+        "k": 34,
+        "n": 34,
+        "value": 1,
+        "ci95": {
+          "low": 0.8985,
+          "high": 1
+        }
+      },
+      "sliver": {
+        "k": 46,
+        "n": 46,
+        "value": 1,
+        "ci95": {
+          "low": 0.9229,
+          "high": 1
+        }
+      },
+      "partial": {
+        "k": 97,
+        "n": 97,
+        "value": 1,
+        "ci95": {
+          "low": 0.9619,
+          "high": 1
+        }
+      },
+      "contained": {
+        "k": 33,
+        "n": 33,
+        "value": 1,
+        "ci95": {
+          "low": 0.8957,
+          "high": 1
+        }
+      },
+      "identical": {
+        "k": 45,
+        "n": 45,
+        "value": 1,
+        "ci95": {
+          "low": 0.9213,
+          "high": 1
+        }
+      }
+    },
+    "areaRelativeError": {
+      "n": 221,
+      "mean": 0.004033,
+      "min": 0.0010319712743960096,
+      "max": 0.006969109962775783,
+      "p50": 0.004027605879754778,
+      "p95": 0.0044787168400709275
+    }
+  },
+  "invalidGeometry": {
+    "detection": {
+      "tp": 90,
+      "fp": 0,
+      "tn": 100,
+      "fn": 0,
+      "n": 190,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1,
+      "falsePositiveRate": 0,
+      "falseNegativeRate": 0,
+      "accuracy": 1
+    },
+    "detectedByKind": {
+      "bowtie": {
+        "k": 15,
+        "n": 15,
+        "value": 1,
+        "ci95": {
+          "low": 0.7961,
+          "high": 1
+        }
+      },
+      "unclosed": {
+        "k": 15,
+        "n": 15,
+        "value": 1,
+        "ci95": {
+          "low": 0.7961,
+          "high": 1
+        }
+      },
+      "twoPoints": {
+        "k": 15,
+        "n": 15,
+        "value": 1,
+        "ci95": {
+          "low": 0.7961,
+          "high": 1
+        }
+      },
+      "outOfRange": {
+        "k": 15,
+        "n": 15,
+        "value": 1,
+        "ci95": {
+          "low": 0.7961,
+          "high": 1
+        }
+      },
+      "notPolygon": {
+        "k": 15,
+        "n": 15,
+        "value": 1,
+        "ci95": {
+          "low": 0.7961,
+          "high": 1
+        }
+      },
+      "zeroArea": {
+        "k": 15,
+        "n": 15,
+        "value": 1,
+        "ci95": {
+          "low": 0.7961,
+          "high": 1
+        }
+      }
+    },
+    "validRejected": {
+      "k": 0,
+      "n": 100,
+      "value": 0,
+      "ci95": {
+        "low": 0,
+        "high": 0.037
+      }
+    }
+  },
+  "limitations": [
+    "Axis-aligned rectangles only; real parcels are irregular.",
+    "Ground truth is analytic, not surveyed cadastral data, so this says nothing about agreement with official boundaries.",
+    "Thresholds are provisional policy values, not calibrated."
+  ]
+}

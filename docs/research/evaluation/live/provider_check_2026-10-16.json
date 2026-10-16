@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-16",
+  "checks": {
+    "mongodb": {
+      "ok": true,
+      "latencyMs": 1911,
+      "database": "<named>",
+      "collections": {
+        "messages": 71,
+        "districts": 37,
+        "claimassessments": 1,
+        "contexts": 1,
+        "adminactions": 0,
+        "todos": 0,
+        "mails": 38,
+        "imagerecords": 28,
+        "telemetries": 1,
+        "chatsessions": 24,
+        "farmprofiles": 7,
+        "weathercaches": 0,
+        "lossclaims": 1,
+        "claimaudits": 10,
+        "appeals": 0,
+        "queries": 1,
+        "claimevidences": 1,
+        "tasks": 15,
+        "users": 15
+      }
+    },
+    "s3": {
+      "ok": true,
+      "latencyMs": 1397,
+      "keysListed": 20,
+      "truncated": true,
+      "topLevelPrefixes": [
+        "<root file>"
+      ]
+    },
+    "cohere": {
+      "ok": true,
+      "latencyMs": 1429,
+      "model": "embed-english-v3.0",
+      "dimension": 1024
+    },
+    "chroma": {
+      "ok": true,
+      "latencyMs": 4486,
+      "collection": "farming-documents",
+      "chunks": 450,
+      "topResultFiles": [
+        "production_of_rice_in_2017_18.csv",
+        "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+        "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv"
+      ]
+    },
+    "gemini": {
+      "ok": true,
+      "latencyMs": 1195,
+      "model": "gemini-2.5-flash",
+      "replied": "OK",
+      "tokens": {}
+    },
+    "copernicus": {
+      "ok": true,
+      "latencyMs": 3089,
+      "processingEnabled": true,
+      "hasCredentials": true,
+      "tokenStatus": 200,
+      "tokenOk": true,
+      "tokenExpiresIn": 1800,
+      "stacStatus": 200,
+      "scenesFound": 14
+    }
+  }
+}

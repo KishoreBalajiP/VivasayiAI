@@ -2,6 +2,7 @@ import axios from "axios";
 import logger from "../utils/logger.js";
 import ApiError from "../utils/ApiError.js";
 import WeatherCache from "../models/WeatherCache.js";
+import District from "../models/District.js";
 import weatherConfig from "../config/weather.js";
 import { env } from "../config/env.js";
 
@@ -26,12 +27,27 @@ const http = axios.create({
   headers: { "User-Agent": weatherConfig.userAgent },
 });
 
-// Resolve a district name to { latitude, longitude, resolvedName } via Open-Meteo geocoding.
-// Returns null (→ "unknown") if the district is not found or lookup fails.
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Resolve a district name to { latitude, longitude, resolvedName }. The district reference data
+// (`districts`, seeded from the authoritative list) already holds coordinates, so it is consulted
+// first: free-text global geocoding can resolve a name like "Salem" to a place outside India. Only a
+// name the reference data does not know falls back to geocoding, restricted to India. Returns null
+// (→ "unknown") when neither resolves.
 const resolveDistrict = async (district) => {
   try {
+    const name = String(district || "").trim();
+    if (!name) return null;
+    const local = await District.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, "i") }).lean().exec();
+    if (local && Number.isFinite(local.lat) && Number.isFinite(local.lon)) {
+      return { latitude: local.lat, longitude: local.lon, resolvedName: local.name };
+    }
+  } catch (error) {
+    logger.warn({ district, err: error }, "weather district reference lookup failed");
+  }
+  try {
     const { data } = await http.get(`${weatherConfig.geocodingBase}/search`, {
-      params: { name: district, count: 1, language: "en", format: "json" },
+      params: { name: district, count: 1, language: "en", format: "json", countryCode: "IN" },
     });
     const hit = data?.results?.[0];
     if (!hit) return null;
@@ -51,7 +67,7 @@ const fetchFromProvider = async ({ latitude, longitude }) => {
       current: "temperature_2m,wind_speed_10m,weather_code,is_day",
       daily: "temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum",
       timezone: "Asia/Kolkata",
-      forecast_days: 1,
+      forecast_days: 3,
     },
   });
 
@@ -122,7 +138,7 @@ const buildResponse = (record) => {
 // Cache-first weather resolution (D-16/D-17/D-18). Never throws on provider failure.
 export const getWeather = async (district) => {
   const startedAt = Date.now();
-  const key = (district || "").toLowerCase();
+  const key = (district || "").toLowerCase().trim();
 
   // 1) Cache hit (fresh preferred, stale honored per D-18 hybrid).
   try {

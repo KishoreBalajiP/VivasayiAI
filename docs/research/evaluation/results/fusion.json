@@ -1,0 +1,305 @@
+{
+  "environment": {
+    "date": "2026-10-16",
+    "node": "v26.7.0",
+    "platform": "darwin-arm64",
+    "commit": "522d212",
+    "branch": "feat/verification-hardening-2026-10",
+    "dirty": true
+  },
+  "name": "fusion",
+  "description": "Full-factorial scenario benchmark of the deterministic engine: photographs-only (legacy policy) versus component fusion, with one-component-removed ablations.",
+  "groundTruth": "the design rule (approve only when inside the parcel, not a duplicate, no unresolved cross-farmer overlap, supportive photographs, acceptable claimant-rights evidence); AUTHOR-DEFINED and identical to what the gate implements",
+  "scenarioFactors": {
+    "geometry": 2,
+    "duplicate": 2,
+    "crossFarmerOverlap": 2,
+    "photos": [
+      "supportive",
+      "no_damage",
+      "uncertain",
+      "none"
+    ],
+    "claimantRights": [
+      "none",
+      "owner_pending",
+      "owner_accepted",
+      "owner_inconsistent",
+      "tenant_wrong_docs",
+      "tenant_right_docs"
+    ],
+    "total": 192
+  },
+  "policies": {
+    "photo-only (v1-legacy)": {
+      "scenarios": 192,
+      "invalidApprovalRate": {
+        "k": 10,
+        "n": 190,
+        "value": 0.0526,
+        "ci95": {
+          "low": 0.0288,
+          "high": 0.0942
+        }
+      },
+      "wrongfulNonApprovalRate": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "adverseOnAiAlone": {
+        "k": 2,
+        "n": 2,
+        "value": 1,
+        "ci95": {
+          "low": 0.3424,
+          "high": 1
+        }
+      },
+      "heldForReview": 0,
+      "invalidApprovalsByCause": {
+        "outside": 0,
+        "duplicate": 0,
+        "cross": 6,
+        "photos": 0,
+        "rights": 8
+      }
+    },
+    "full fusion (v2-components)": {
+      "scenarios": 192,
+      "invalidApprovalRate": {
+        "k": 0,
+        "n": 190,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0198
+        }
+      },
+      "wrongfulNonApprovalRate": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "adverseOnAiAlone": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "heldForReview": 40,
+      "invalidApprovalsByCause": {
+        "outside": 0,
+        "duplicate": 0,
+        "cross": 0,
+        "photos": 0,
+        "rights": 0
+      }
+    },
+    "v2 without claimant_rights": {
+      "scenarios": 192,
+      "invalidApprovalRate": {
+        "k": 4,
+        "n": 190,
+        "value": 0.0211,
+        "ci95": {
+          "low": 0.0082,
+          "high": 0.0529
+        }
+      },
+      "wrongfulNonApprovalRate": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "adverseOnAiAlone": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "heldForReview": 42,
+      "invalidApprovalsByCause": {
+        "outside": 0,
+        "duplicate": 0,
+        "cross": 0,
+        "photos": 0,
+        "rights": 4
+      }
+    },
+    "v2 without overlap": {
+      "scenarios": 192,
+      "invalidApprovalRate": {
+        "k": 2,
+        "n": 190,
+        "value": 0.0105,
+        "ci95": {
+          "low": 0.0029,
+          "high": 0.0376
+        }
+      },
+      "wrongfulNonApprovalRate": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "adverseOnAiAlone": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "heldForReview": 38,
+      "invalidApprovalsByCause": {
+        "outside": 0,
+        "duplicate": 0,
+        "cross": 2,
+        "photos": 0,
+        "rights": 0
+      }
+    },
+    "v2 without photos": {
+      "scenarios": 192,
+      "invalidApprovalRate": {
+        "k": 0,
+        "n": 190,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0198
+        }
+      },
+      "wrongfulNonApprovalRate": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "adverseOnAiAlone": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "heldForReview": 40,
+      "invalidApprovalsByCause": {
+        "outside": 0,
+        "duplicate": 0,
+        "cross": 0,
+        "photos": 0,
+        "rights": 0
+      }
+    },
+    "v2 without geometry": {
+      "scenarios": 192,
+      "invalidApprovalRate": {
+        "k": 0,
+        "n": 190,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0198
+        }
+      },
+      "wrongfulNonApprovalRate": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "adverseOnAiAlone": {
+        "k": 0,
+        "n": 2,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.6576
+        }
+      },
+      "heldForReview": 40,
+      "invalidApprovalsByCause": {
+        "outside": 0,
+        "duplicate": 0,
+        "cross": 0,
+        "photos": 0,
+        "rights": 0
+      }
+    }
+  },
+  "supportingEvidenceChangedOutcome": {
+    "photo-only (v1-legacy)": {
+      "k": 0,
+      "n": 1536,
+      "value": 0,
+      "ci95": {
+        "low": 0,
+        "high": 0.0025
+      }
+    },
+    "full fusion (v2-components)": {
+      "k": 0,
+      "n": 1536,
+      "value": 0,
+      "ci95": {
+        "low": 0,
+        "high": 0.0025
+      }
+    }
+  },
+  "components": [
+    "parcel_identity",
+    "claimant_rights",
+    "land_documents",
+    "geometry",
+    "crop",
+    "satellite",
+    "photos",
+    "weather",
+    "overlap",
+    "manual_review"
+  ],
+  "reading": [
+    "Photo-only approves claims with no, pending or inconsistent ownership evidence; the gate does not.",
+    "Each ablation re-opens exactly the invalid approvals its component prevents (see invalidApprovalsByCause).",
+    "Satellite and weather outcomes never change a decision, by design: they are optional supporting evidence."
+  ],
+  "limitations": [
+    "The label is the design rule, so this shows rule enforcement and component contribution, not real-world accuracy.",
+    "Scenarios are a synthetic full factorial; real claims are correlated and far messier.",
+    "Evidence states are idealised (a document is cleanly pending, accepted or inconsistent)."
+  ]
+}

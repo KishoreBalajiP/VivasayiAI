@@ -1,5 +1,6 @@
 import { env } from "../config/env.js";
 import { CLAIM_EVENT_TYPES } from "../models/LossClaim.js";
+import { COMPONENTS as COMPONENT_NAMES } from "../config/verificationPolicy.js";
 
 // E9-S5 (ADR-019) — Deterministic Claim Verification Engine (07_Database_Design §8, 06 §9).
 // E9-S9 (Phase 9) — Real Overclaim-Prevention Engine: the spatial/eligibility inputs below make the
@@ -59,7 +60,7 @@ const round4 = (value) => Math.round(value * 10000) / 10000;
 
 const uniqueNonEmpty = (values) => Array.from(new Set(values.filter(Boolean)));
 
-const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
+export const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
   const aggregate = assessment && assessment.aiAggregate ? assessment.aiAggregate : null;
   const imageCount = aggregate && typeof aggregate.imageCount === "number" ? aggregate.imageCount : 0;
   const images = assessment && Array.isArray(assessment.aiImageAssessments)
@@ -70,12 +71,13 @@ const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
     .filter(Boolean);
 
   if (!evidenceCount || evidenceCount <= 0) {
-    return { passed: false, decision: "more_evidence_required", reason: "No stored evidence to assess" };
+    return { passed: false, decision: "more_evidence_required", code: "no_evidence", reason: "No stored evidence to assess" };
   }
   if (!assessment || assessment.status !== "completed" || !aggregate || imageCount <= 0) {
     return {
       passed: false,
       decision: "more_evidence_required",
+      code: "assessment_unavailable",
       reason: "AI assessment is not available for the submitted evidence",
     };
   }
@@ -90,6 +92,7 @@ const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
     return {
       passed: false,
       decision: "rejected",
+      code: "no_damage_confident",
       reason: "AI detected no crop damage in the submitted evidence",
     };
   }
@@ -99,20 +102,21 @@ const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
     return {
       passed: false,
       decision: "more_evidence_required",
+      code: "damage_unconfirmed",
       reason: "AI could not confirm crop damage from the submitted evidence",
     };
   }
   if (aggregate.uncertain === true) {
-    return { passed: false, decision: "more_evidence_required", reason: "AI is uncertain about the submitted evidence" };
+    return { passed: false, decision: "more_evidence_required", code: "uncertain", reason: "AI is uncertain about the submitted evidence" };
   }
   if (!ACCEPTABLE_CONFIDENCE.has(aggregate.confidence)) {
-    return { passed: false, decision: "more_evidence_required", reason: "AI confidence is too low to support verification" };
+    return { passed: false, decision: "more_evidence_required", code: "low_confidence", reason: "AI confidence is too low to support verification" };
   }
   if (Array.isArray(aggregate.inconsistencies) && aggregate.inconsistencies.length > 0) {
-    return { passed: false, decision: "more_evidence_required", reason: "Conflicting AI observations prevent verification" };
+    return { passed: false, decision: "more_evidence_required", code: "inconsistent", reason: "Conflicting AI observations prevent verification" };
   }
   if (qualities.length === 0 || !qualities.some((quality) => ACCEPTABLE_QUALITY.has(quality))) {
-    return { passed: false, decision: "more_evidence_required", reason: "Evidence image quality is too poor for verification" };
+    return { passed: false, decision: "more_evidence_required", code: "poor_quality", reason: "Evidence image quality is too poor for verification" };
   }
   // Damage-type consistency: both sides come from the SAME frozen vocabulary, so a mismatch is
   // authoritative — EXCEPT when the farmer declared `other` (nothing to compare against).
@@ -124,11 +128,73 @@ const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
     return {
       passed: false,
       decision: "more_evidence_required",
+      code: "type_mismatch",
       reason: "Reported damage type does not match the claimed event type",
     };
   }
 
-  return { passed: true, decision: "verified", reason: "AI observations confirm crop damage consistent with the claim" };
+  return { passed: true, decision: "verified", code: "ok", reason: "AI observations confirm crop damage consistent with the claim" };
+};
+
+// ADR-020 — required-component gate. Pure. Runs AFTER the frozen rules above have produced a
+// candidate outcome, and can only make an APPROVAL (verified / partially_verified) more cautious.
+// It can never approve anything the frozen rules rejected, and it never produces a rejection:
+//   - a required component that is `unverified` or `failed` asks the farmer for more evidence;
+//   - a required component that is pending / requires_review / unavailable / inconclusive HOLDS the
+//     claim (disposition "hold", outcome null) until a person or a provider resolves it.
+// With the AI "no damage" policy set to `review`, a confident no-damage reading holds the claim for
+// a reviewer instead of rejecting it: a language model alone must not cause an adverse decision.
+export const applyComponentGate = ({ candidate, ai = null, components = null, policy = null }) => {
+  const decide = (outcome, reason, gate = null) => ({ disposition: "decide", outcome, reason, gate });
+  if (!policy || !components) return decide(candidate.outcome, candidate.reason, null);
+
+  const policyRef = { policyId: policy.id, policyHash: policy.hash };
+  if (!policy.gateEnabled) return decide(candidate.outcome, candidate.reason, { ...policyRef, applied: false, blocking: [] });
+
+  if (candidate.outcome === "rejected" && ai && ai.code === "no_damage_confident" && policy.aiNoDamage === "review") {
+    const blocking = [{ component: "photos", outcome: "requires_review", action: "hold", reasonCode: "ai_no_damage_needs_review" }];
+    return {
+      disposition: "hold",
+      outcome: null,
+      reason: "AI found no damage in the photographs; a reviewer must confirm before any adverse decision",
+      gate: { ...policyRef, applied: true, blocking },
+    };
+  }
+
+  if (candidate.outcome !== "verified" && candidate.outcome !== "partially_verified") {
+    return decide(candidate.outcome, candidate.reason, { ...policyRef, applied: true, blocking: [] });
+  }
+
+  const blocking = [];
+  for (const name of COMPONENT_NAMES) {
+    const entry = components[name];
+    if (!entry || !entry.required || entry.outcome === "verified") continue;
+    const onFailed = (policy.components[name] && policy.components[name].onFailed) || "more_evidence_required";
+    const action =
+      entry.outcome === "unverified"
+        ? "more_evidence_required"
+        : entry.outcome === "failed"
+          ? onFailed
+          : "hold";
+    blocking.push({ component: name, outcome: entry.outcome, action, reasonCodes: entry.reasonCodes || [] });
+  }
+
+  if (blocking.length === 0) return decide(candidate.outcome, candidate.reason, { ...policyRef, applied: true, blocking });
+
+  const needsFarmer = blocking.filter((item) => item.action === "more_evidence_required");
+  if (needsFarmer.length > 0) {
+    return decide(
+      "more_evidence_required",
+      `Required evidence is missing or inconsistent: ${needsFarmer.map((item) => item.component).join(", ")}`,
+      { ...policyRef, applied: true, blocking }
+    );
+  }
+  return {
+    disposition: "hold",
+    outcome: null,
+    reason: `Awaiting review or verification of: ${blocking.map((item) => item.component).join(", ")}`,
+    gate: { ...policyRef, applied: true, blocking },
+  };
 };
 
 // E9-S5 (ADR-019 P4/P5/P3) + E9-S9 (Phase 9 overclaim prevention): pure deterministic evaluation.
@@ -157,6 +223,8 @@ export const evaluateClaimVerification = ({
   weatherCorrelation,
   evidenceCount,
   now,
+  components = null,
+  policy = null,
 }) => {
   const timestamp = now instanceof Date ? now.getTime() : Number(now) || Date.now();
   const claimedAreaAcres = Number(claim && claim.claimedAreaAcres) || 0;
@@ -166,11 +234,16 @@ export const evaluateClaimVerification = ({
     eligibleContext && typeof eligibleContext.remainingEligibleAcres === "number"
       ? round4(eligibleContext.remainingEligibleAcres)
       : legacyRemainingEligible;
-  const allowedAreaAcres = parcelAreaAcres * (1 + env.claimAreaOverageFraction);
+  // A supplied policy carries the (hashed) rule values; without one the environment is used, so
+  // existing callers behave exactly as before.
+  const claimWindowDays = policy && policy.rules ? policy.rules.claimWindowDays : env.claimWindowDays;
+  const claimAreaOverageFraction =
+    policy && policy.rules ? policy.rules.claimAreaOverageFraction : env.claimAreaOverageFraction;
+  const allowedAreaAcres = parcelAreaAcres * (1 + claimAreaOverageFraction);
 
   // --- 1. timelinessCheck (P2: not future, within CLAIM_WINDOW_DAYS) ---
   const eventTime = claim && claim.eventDate ? new Date(claim.eventDate).getTime() : NaN;
-  const windowMs = env.claimWindowDays * 24 * 60 * 60 * 1000;
+  const windowMs = claimWindowDays * 24 * 60 * 60 * 1000;
   const timelinessPassed =
     !Number.isNaN(eventTime) &&
     eventTime <= timestamp &&
@@ -316,6 +389,14 @@ export const evaluateClaimVerification = ({
     reason = ai.reason;
   }
 
+  // ADR-020: the component gate may turn an approval into a hold or a request for more evidence.
+  const gated = applyComponentGate({ candidate: { outcome, reason }, ai, components, policy });
+  const disposition = gated.disposition;
+  outcome = gated.outcome;
+  reason = gated.reason;
+  if (disposition === "hold") reasons.push(gated.reason);
+  else if (gated.gate && gated.gate.blocking.length > 0) reasons.push(gated.reason);
+
   // E9-S9: approved area/geometry are authoritative server values. Fully verified claims keep the
   // geometry-derived area (P4); partially verified claims approve only the non-overlapping
   // remainder (Turf difference, computed by the spatial service). The remainder is normalized to a
@@ -372,6 +453,13 @@ export const evaluateClaimVerification = ({
         : 0,
     overlapWarnings,
     spatialEvaluated,
+    // ADR-020 additions (null/"decide" when no policy is supplied, i.e. the legacy path).
+    disposition,
+    gate: gated.gate,
+    components: components
+      ? Object.fromEntries(Object.entries(components).map(([name, entry]) => [name, entry.outcome]))
+      : null,
+    policy: policy ? { id: policy.id, hash: policy.hash } : null,
     engineVersion: VERIFICATION_ENGINE_VERSION,
   };
 };
@@ -380,4 +468,5 @@ export default {
   VERIFICATION_ENGINE_VERSION,
   OVERLAP_STATUSES,
   evaluateClaimVerification,
+  applyComponentGate,
 };

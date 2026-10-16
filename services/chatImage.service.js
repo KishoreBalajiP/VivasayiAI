@@ -1,7 +1,7 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
-import { withAiTimeout, AiTimeoutError } from "../utils/aiTimeout.js";
+import { withAiTimeout, AiTimeoutError, isProviderLimitError } from "../utils/aiTimeout.js";
 import ImageRecord from "../models/ImageRecord.js";
 import ChatSession from "../models/ChatSession.js";
 import { env } from "../config/env.js";
@@ -9,6 +9,7 @@ import { model, performRAG } from "./chat.service.js";
 import { getObject } from "./s3.service.js";
 import { analyzeImage } from "./vision.service.js";
 import { assembleContextAndRender } from "./context.service.js";
+import { INTENTS } from "../src/ai/Intent.js";
 import { getByUser as getFarmProfile } from "./farmProfile.service.js";
 import { getForUser, deriveTitle } from "./chatSession.service.js";
 import { buildImageDiagnosisPrompt } from "../src/ai/PromptBuilder.js";
@@ -130,8 +131,10 @@ const generateImageResponse = async ({
       district,
       cognitoSub,
       userMessage: textInput || "image diagnosis",
+      // A photo turn is a crop-health question whatever the caption says (or omits).
+      intent: INTENTS.DISEASE_DIAGNOSIS,
     });
-    const rag = await performRAG(textInput || momentImageCaption(), chatHistory);
+    const rag = await performRAG(textInput || momentImageCaption());
     const hasRag = !!rag.context;
 
     // 6. Stage-2 reasoning (mock seam for tests, otherwise one Gemini call).
@@ -165,6 +168,9 @@ const generateImageResponse = async ({
       ).catch((err) => {
         if (err instanceof AiTimeoutError) {
           throw ApiError.internal("AI service did not respond in time");
+        }
+        if (isProviderLimitError(err)) {
+          throw ApiError.serviceUnavailable("AI service is busy. Please try again later.");
         }
         throw err;
       });

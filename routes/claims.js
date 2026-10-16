@@ -1,12 +1,14 @@
 import express from "express";
 import validate from "../middlewares/validate.js";
-import { claimLimiter, evidenceLimiter } from "../middlewares/rateLimit.js";
+import { claimLimiter, claimReadLimiter, evidenceLimiter } from "../middlewares/rateLimit.js";
 import {
   claimParams,
   claimEvidenceParams,
   createClaimBody,
   presignUploadBody,
   appealBody,
+  ownershipBody,
+  ownershipEvidenceParams,
 } from "../utils/validation.schemas.js";
 import {
   createClaim,
@@ -20,8 +22,17 @@ import {
   completeEvidence,
   deleteEvidence,
   getEvidenceUrl,
+  getClaimVerification,
+  examineClaimLandDocuments,
+  runClaimSatelliteVerification,
+  verifyClaimOfficialLandRecords,
 } from "../controllers/claim.controller.js";
 import { submitAppeal, getAppeal } from "../controllers/appeal.controller.js";
+import {
+  submitOwnershipEvidence,
+  listOwnershipEvidence,
+  getOwnershipDocumentUrl,
+} from "../controllers/ownership.controller.js";
 
 // F-49 (ADR-019) — Agricultural Loss Claim endpoints (08_API_Documentation §10).
 // Mounted after requireAuth in app.js; all claim endpoints carry the per-user claim/evidence
@@ -32,9 +43,13 @@ import { submitAppeal, getAppeal } from "../controllers/appeal.controller.js";
 const router = express.Router();
 
 // Claim lifecycle
-router.get("/", claimLimiter, listClaims);
+router.get("/", claimReadLimiter, listClaims);
 router.post("/", claimLimiter, validate(createClaimBody), createClaim);
-router.get("/:claimId", claimLimiter, validate(claimParams, "params"), getClaim);
+router.get("/:claimId", claimReadLimiter, validate(claimParams, "params"), getClaim);
+router.get("/:claimId/verification", claimReadLimiter, validate(claimParams, "params"), getClaimVerification);
+router.post("/:claimId/verification/land-documents", claimLimiter, validate(claimParams, "params"), examineClaimLandDocuments);
+router.post("/:claimId/verification/satellite", claimLimiter, validate(claimParams, "params"), runClaimSatelliteVerification);
+router.post("/:claimId/verification/official-land-record", claimLimiter, validate(claimParams, "params"), verifyClaimOfficialLandRecords);
 router.post("/:claimId/submit", claimLimiter, validate(claimParams, "params"), submitClaim);
 router.post("/:claimId/withdraw", claimLimiter, validate(claimParams, "params"), withdrawClaim);
 router.post("/:claimId/resubmit", claimLimiter, validate(claimParams, "params"), resubmitClaim);
@@ -47,7 +62,7 @@ router.post("/:claimId/verify", claimLimiter, validate(claimParams, "params"), v
 // Phase 10 (E9-S10) — farmer appeal of an eligible engine decision (08 §10.9). Idempotent: an
 // active appeal returns as-is. Claim ownership still flows through claim.service lookups.
 router.post("/:claimId/appeal", claimLimiter, validate(claimParams, "params"), validate(appealBody), submitAppeal);
-router.get("/:claimId/appeal", claimLimiter, validate(claimParams, "params"), getAppeal);
+router.get("/:claimId/appeal", claimReadLimiter, validate(claimParams, "params"), getAppeal);
 
 // Claim evidence (reuses the existing presigned S3 pipeline)
 router.post(
@@ -71,12 +86,34 @@ router.delete(
   validate(claimEvidenceParams, "params"),
   deleteEvidence
 );
+// Signed-URL reads use the READ bucket: the gallery fetches one per stored photo on every view, and
+// sharing the 20-per-hour upload budget made a 10-photo claim exhaust it (thumbnails went blank and
+// further uploads failed with 429).
 router.get(
   "/:claimId/evidence/:evidenceId/url",
-  evidenceLimiter,
+  claimReadLimiter,
   validate(claimParams, "params"),
   validate(claimEvidenceParams, "params"),
   getEvidenceUrl
+);
+
+// Phase 12 (E12) — Land ownership evidence (08_API_Documentation §10.13). The document bytes use
+// the EXISTING private presigned /upload pipeline; these routes attach an owned, stored upload to
+// the claim and expose owner-scoped reads. The attach mutation reuses evidenceLimiter (per-user,
+// matching the claim-evidence surface); the GETs use the read bucket like the other claim reads.
+router.post(
+  "/:claimId/ownership",
+  evidenceLimiter,
+  validate(claimParams, "params"),
+  validate(ownershipBody),
+  submitOwnershipEvidence
+);
+router.get("/:claimId/ownership", claimReadLimiter, validate(claimParams, "params"), listOwnershipEvidence);
+router.get(
+  "/:claimId/ownership/:evidenceId/url",
+  claimReadLimiter,
+  validate(ownershipEvidenceParams, "params"),
+  getOwnershipDocumentUrl
 );
 
 export default router;

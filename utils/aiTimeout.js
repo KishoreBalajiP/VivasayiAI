@@ -56,4 +56,20 @@ export const withAiTimeout = (work, label, timeoutMs) => {
   });
 };
 
-export default { withAiTimeout, AiTimeoutError, GEMINI_DEFAULT_TIMEOUT_MS, getDefaultTimeoutMs };
+// A provider that refuses a call for quota or overload (HTTP 429/503) is not a timeout and not an
+// internal fault. LangChain retries such responses with backoff, which used to run out the
+// timeout and surface a quota error as "did not respond in time" (HTTP 500). Callers map this
+// to 503 so the client shows "busy, try later" and does not retry immediately.
+export const isProviderLimitError = (err) => {
+  const status = Number(err?.status ?? err?.response?.status);
+  return status === 429 || status === 503;
+};
+
+// Retries LangChain performs on a failed provider call (its default is 6). One retry absorbs a
+// transient blip and still leaves the call well inside the timeout.
+export const getAiMaxRetries = () => {
+  const value = Number(process.env.AI_MAX_RETRIES);
+  return Number.isInteger(value) && value >= 0 ? value : 1;
+};
+
+export default { withAiTimeout, AiTimeoutError, GEMINI_DEFAULT_TIMEOUT_MS, getDefaultTimeoutMs, isProviderLimitError, getAiMaxRetries };

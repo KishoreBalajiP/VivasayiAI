@@ -1,0 +1,14 @@
+# Keep the Lambda image to what runs in production. `COPY . .` otherwise ships the git history,
+# tests, docs, phase reports and any local .env into the image.
+node_modules
+.git
+.github
+.env
+.env.*
+!.env.example
+tests
+docs
+*.md
+vitest.config.js
+.vscode
+.DS_Store
