@@ -93,7 +93,7 @@ const verificationSchema = new mongoose.Schema(
   {
     status: {
       type: String,
-      enum: ["pending", "verifying", "completed", "failed"],
+      enum: ["pending", "verifying", "completed", "failed", "held"],
       default: "pending",
     },
     version: { type: String, default: null }, // VERIFICATION_ENGINE_VERSION
@@ -156,6 +156,16 @@ const claimAssessmentSchema = new mongoose.Schema(
     aiAggregate: { type: aiAggregateSchema, default: null },
     weatherCorrelation: { type: weatherCorrelationSchema, default: null },
     rules: { type: rulesSchema, default: null },
+    // ADR-020 — component statuses, the policy in force and the evidence rows the engine saw, at
+    // decision (or hold) time. `hold` is set while a required component is unresolved: the claim
+    // stays `submitted` (withdrawable) and `state` stays null until the engine decides.
+    components: { type: mongoose.Schema.Types.Mixed, default: null },
+    policy: {
+      id: { type: String, default: null },
+      hash: { type: String, default: null },
+    },
+    evidenceRefs: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    hold: { type: mongoose.Schema.Types.Mixed, default: null },
     state: { type: String, default: null }, // mirrors claim.state at decision time
     reason: { type: String, default: null },
     decidedAt: { type: Date, default: null },

@@ -1,5 +1,6 @@
 import ApiError from "../utils/ApiError.js";
-import { extractToken, verifyAccessToken, buildUserContext } from "../utils/token.js";
+import { extractToken, verifyAccessToken, diagnoseAccessToken, buildUserContext } from "../utils/token.js";
+import logger from "../utils/logger.js";
 
 // Provider-agnostic auth middleware. Not mounted yet — wired up under E1-S4
 // (all routes except auth/health). Reads the backend-issued session token (E1-S3) from
@@ -10,6 +11,8 @@ const requireAuth = async (req, res, next) => {
   const payload = verifyAccessToken(token);
 
   if (!payload) {
+    // A category only (never the token): lets an operator tell an expired session from a forged one.
+    logger.warn({ requestId: req.requestId, reason: diagnoseAccessToken(token), path: req.path }, "auth.rejected");
     return next(ApiError.unauthorized("Authentication required"));
   }
 

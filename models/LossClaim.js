@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { geometryBbox } from "../utils/geometryBbox.js";
+import { CLAIMANT_RELATIONSHIPS } from "../config/claimantEvidence.js";
 
 // F-49 (ADR-019) — Agricultural Loss / Affected-Area Claim (07_Database_Design §6).
 //
@@ -71,6 +73,18 @@ const lossClaimSchema = new mongoose.Schema(
     // Client UUID for idempotent creation. Uniqueness is OWNER-scoped (compound sparse unique
     // index below) so one user's key can never collide with — or leak — another user's claim.
     idempotencyKey: { type: String, default: null },
+    // How the claimant relates to the land (config/claimantEvidence.js). Optional: claims made before
+    // this field existed, or without it, keep the historical behaviour (an ownership document).
+    claimantRelationship: { type: String, enum: [...CLAIMANT_RELATIONSHIPS, null], default: null },
+    // Bounding box of claimedGeometry, derived server-side on save. A cheap pre-filter for
+    // overlap lookups against OTHER farmers' claims (see services/crossFarmerOverlap.service.js).
+    // Claims created before this field existed have no box until the migration backfills it.
+    bbox: {
+      minLon: { type: Number, default: undefined },
+      minLat: { type: Number, default: undefined },
+      maxLon: { type: Number, default: undefined },
+      maxLat: { type: Number, default: undefined },
+    },
     submittedAt: { type: Date, default: null },
     processedAt: { type: Date, default: null },
     decidedAt: { type: Date, default: null },
@@ -78,9 +92,18 @@ const lossClaimSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+lossClaimSchema.pre("validate", function setBbox(next) {
+  if (this.isNew || this.isModified("claimedGeometry")) {
+    const box = geometryBbox(this.claimedGeometry);
+    if (box) this.bbox = box;
+  }
+  next();
+});
+
 // 07 §6 indexes.
 lossClaimSchema.index({ cognitoSub: 1, createdAt: -1 }); // my claims
 lossClaimSchema.index({ parcelId: 1, state: 1 }); // active claims per parcel
+lossClaimSchema.index({ "bbox.minLon": 1, "bbox.maxLon": 1 }); // cross-farmer overlap pre-filter
 // Idempotency: the same owner + same key may only ever map to ONE claim. Owner-scoped (never a
 // global unique), sparse so claims without a key never collide.
 lossClaimSchema.index(

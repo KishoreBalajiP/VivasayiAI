@@ -4,6 +4,12 @@ import ApiResponse from "../utils/ApiResponse.js";
 import * as claimService from "../services/claim.service.js";
 import * as claimEvidenceService from "../services/claimEvidence.service.js";
 import claimVerificationService from "../services/claimVerification.service.js";
+import * as verificationEvidenceService from "../services/verificationEvidence.service.js";
+import * as landDocumentExaminationService from "../services/landDocumentExamination.service.js";
+import * as officialLandRecordService from "../services/officialLandRecord.service.js";
+import * as satelliteVerificationService from "../services/satelliteVerification.service.js";
+import { drain } from "../services/verificationJobs.service.js";
+import { env } from "../config/env.js";
 
 // F-49 (ADR-019) — claim lifecycle + claim-scoped evidence (08_API_Documentation §10).
 // Identity always derives from the verified token (req.user.id = cognitoSub), never from the
@@ -64,6 +70,14 @@ const resubmitClaim = asyncHandler(async (req, res) => {
 // Only { claimId, cognitoSub, requestId } are read — ANY client-supplied result/state/area/AI
 // payload is structurally ignored (P5-20 preserve). Idempotent + concurrency-safe (CAS).
 const verifyClaim = asyncHandler(async (req, res) => {
+  // ADR-021: run this claim's queued steps first (bounded by the request budget), so the decision
+  // below sees the evidence they produce. Nothing is queued when automated verification is off.
+  if (env.claimAutomatedVerificationEnabled) {
+    await drain({
+      claimId: req.params.claimId,
+      deadline: Date.now() + env.claimVerificationRequestBudgetMs,
+    }).catch(() => {});
+  }
   const verification = await claimVerificationService.verifyClaim({
     claimId: req.params.claimId,
     cognitoSub: req.user.id,
@@ -120,6 +134,68 @@ const getEvidenceUrl = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Evidence url generated", result);
 });
 
+// Phase 15 — farmer-facing verification summary (owner-scoped).
+const getClaimVerification = asyncHandler(async (req, res) => {
+  // ADR-021: a status read also advances ONE queued step, so polling makes progress even when no
+  // scheduled worker is attached. The claim is owner-checked below; the step runs for its owner.
+  if (env.claimAutomatedVerificationEnabled && env.claimVerificationDrainOnRead) {
+    const owned = await claimService.getForUser(req.user.id, req.params.claimId);
+    if (owned) {
+      await drain({ claimId: req.params.claimId, maxJobs: 1, deadline: Date.now() + 15000 }).catch(() => {});
+    }
+  }
+  const view = await verificationEvidenceService.getVerificationEvidenceView({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+  });
+  const claim = await claimService.getForUser(req.user.id, req.params.claimId);
+  return ApiResponse.success(res, "Verification summary fetched", {
+    verification: view,
+    claim,
+  });
+});
+
+const examineClaimLandDocuments = asyncHandler(async (req, res) => {
+  const result = await landDocumentExaminationService.examineOwnershipDocumentsForClaim({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+    requestId: req.requestId ?? null,
+  });
+  return ApiResponse.success(res, "Land documents examined", result);
+});
+
+const runClaimSatelliteVerification = asyncHandler(async (req, res) => {
+  const claim = await claimService.getForUser(req.user.id, req.params.claimId);
+  if (!claim) throw ApiError.notFound("Claim not found");
+  // Windows, area of interest and persistence are decided by the service, so this endpoint and the
+  // queued step always analyse the same land the same way.
+  const result = await satelliteVerificationService.runSatelliteVerificationForClaim({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+    claim,
+  });
+  // Only the evidence summary is returned: not the scenes, request shape or provider diagnostics.
+  const summary = result.recorded
+    ? {
+        recorded: true,
+        evidence: result.persisted.evidence,
+        idempotent: result.persisted.idempotent,
+        outcome: result.run.outcome,
+        analysisOutcome: (result.run.analysis && result.run.analysis.analysisOutcome) || null,
+      }
+    : { recorded: false, skipped: result.skipped, retryAfter: result.rescheduleAt };
+  return ApiResponse.success(res, "Satellite verification processed", summary);
+});
+
+const verifyClaimOfficialLandRecords = asyncHandler(async (req, res) => {
+  const result = await officialLandRecordService.verifyOfficialLandRecordForClaim({
+    claimId: req.params.claimId,
+    cognitoSub: req.user.id,
+    // Deliberately no request-body input: the provider is queried with the stored AI extraction.
+  });
+  return ApiResponse.success(res, "Official land record verification processed", result);
+});
+
 export {
   createClaim,
   listClaims,
@@ -132,4 +208,8 @@ export {
   completeEvidence,
   deleteEvidence,
   getEvidenceUrl,
+  getClaimVerification,
+  examineClaimLandDocuments,
+  runClaimSatelliteVerification,
+  verifyClaimOfficialLandRecords,
 };

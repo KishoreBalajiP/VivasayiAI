@@ -1,0 +1,959 @@
+{
+  "environment": {
+    "date": "2026-10-16",
+    "node": "v26.7.0",
+    "platform": "darwin-arm64",
+    "commit": "522d212",
+    "branch": "feat/verification-hardening-2026-10",
+    "dirty": true
+  },
+  "name": "satelliteSimulation",
+  "description": "Behaviour of the provisional NDVI-change thresholds on simulated Statistical API responses.",
+  "groundTruth": "the simulation's own known parameters (true NDVI drop, masked fraction); NO real imagery",
+  "thresholds": {
+    "preWindowDays": [
+      40,
+      5
+    ],
+    "postWindowDays": [
+      1,
+      20
+    ],
+    "minValidPixelFraction": 0.6,
+    "ndviDropSupport": 0.15,
+    "maxCloudFraction": 0.3,
+    "source": "provisional, uncalibrated policy values"
+  },
+  "model": {
+    "preEventNdviRange": [
+      0.5,
+      0.85
+    ],
+    "measurementNoiseSd": 0.03,
+    "trialsPerCell": 400,
+    "preEventMaskedFraction": 0.05
+  },
+  "table": [
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": {
+        "k": 5,
+        "n": 400,
+        "value": 0.0125,
+        "ci95": {
+          "low": 0.0054,
+          "high": 0.0289
+        }
+      },
+      "noChange": {
+        "k": 395,
+        "n": 400,
+        "value": 0.9875,
+        "ci95": {
+          "low": 0.9711,
+          "high": 0.9946
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": {
+        "k": 50,
+        "n": 400,
+        "value": 0.125,
+        "ci95": {
+          "low": 0.0961,
+          "high": 0.161
+        }
+      },
+      "noChange": {
+        "k": 350,
+        "n": 400,
+        "value": 0.875,
+        "ci95": {
+          "low": 0.839,
+          "high": 0.9039
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": {
+        "k": 199,
+        "n": 400,
+        "value": 0.4975,
+        "ci95": {
+          "low": 0.4488,
+          "high": 0.5463
+        }
+      },
+      "noChange": {
+        "k": 201,
+        "n": 400,
+        "value": 0.5025,
+        "ci95": {
+          "low": 0.4537,
+          "high": 0.5512
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": {
+        "k": 366,
+        "n": 400,
+        "value": 0.915,
+        "ci95": {
+          "low": 0.8836,
+          "high": 0.9385
+        }
+      },
+      "noChange": {
+        "k": 34,
+        "n": 400,
+        "value": 0.085,
+        "ci95": {
+          "low": 0.0615,
+          "high": 0.1164
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": {
+        "k": 399,
+        "n": 400,
+        "value": 0.9975,
+        "ci95": {
+          "low": 0.986,
+          "high": 0.9996
+        }
+      },
+      "noChange": {
+        "k": 1,
+        "n": 400,
+        "value": 0.0025,
+        "ci95": {
+          "low": 0.0004,
+          "high": 0.014
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": {
+        "k": 3,
+        "n": 400,
+        "value": 0.0075,
+        "ci95": {
+          "low": 0.0026,
+          "high": 0.0218
+        }
+      },
+      "noChange": {
+        "k": 397,
+        "n": 400,
+        "value": 0.9925,
+        "ci95": {
+          "low": 0.9782,
+          "high": 0.9974
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": {
+        "k": 39,
+        "n": 400,
+        "value": 0.0975,
+        "ci95": {
+          "low": 0.0721,
+          "high": 0.1305
+        }
+      },
+      "noChange": {
+        "k": 361,
+        "n": 400,
+        "value": 0.9025,
+        "ci95": {
+          "low": 0.8695,
+          "high": 0.9279
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": {
+        "k": 196,
+        "n": 400,
+        "value": 0.49,
+        "ci95": {
+          "low": 0.4413,
+          "high": 0.5389
+        }
+      },
+      "noChange": {
+        "k": 204,
+        "n": 400,
+        "value": 0.51,
+        "ci95": {
+          "low": 0.4611,
+          "high": 0.5587
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": {
+        "k": 361,
+        "n": 400,
+        "value": 0.9025,
+        "ci95": {
+          "low": 0.8695,
+          "high": 0.9279
+        }
+      },
+      "noChange": {
+        "k": 39,
+        "n": 400,
+        "value": 0.0975,
+        "ci95": {
+          "low": 0.0721,
+          "high": 0.1305
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "noChange": {
+        "k": 0,
+        "n": 400,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0095
+        }
+      },
+      "inconclusive": {
+        "k": 400,
+        "n": 400,
+        "value": 1,
+        "ci95": {
+          "low": 0.9905,
+          "high": 1
+        }
+      }
+    }
+  ],
+  "headline": {
+    "falseSupportAtNoChangeClearSky": {
+      "k": 0,
+      "n": 400,
+      "value": 0,
+      "ci95": {
+        "low": 0,
+        "high": 0.0095
+      }
+    },
+    "falseSupportAtNoChangeCloudy": {
+      "k": 0,
+      "n": 400,
+      "value": 0,
+      "ci95": {
+        "low": 0,
+        "high": 0.0095
+      }
+    },
+    "detectionAtDrop015ClearSky": {
+      "k": 199,
+      "n": 400,
+      "value": 0.4975,
+      "ci95": {
+        "low": 0.4488,
+        "high": 0.5463
+      }
+    },
+    "detectionAtDrop030ClearSky": {
+      "k": 399,
+      "n": 400,
+      "value": 0.9975,
+      "ci95": {
+        "low": 0.986,
+        "high": 0.9996
+      }
+    },
+    "inconclusiveWhenMostlyMasked": {
+      "k": 400,
+      "n": 400,
+      "value": 1,
+      "ci95": {
+        "low": 0.9905,
+        "high": 1
+      }
+    }
+  },
+  "limitations": [
+    "Simulated data only: shows the rule's behaviour, not that NDVI change identifies crop loss.",
+    "Noise is Gaussian with a fixed SD; real noise depends on crop, season, atmosphere and sensor geometry.",
+    "Normal seasonal change (growth, senescence, harvest, flooding of paddy at transplanting) is not simulated and is the main real-world confound; a drop that large can occur with no damage.",
+    "NO_CHANGE never refutes a claim; the rule can only support one."
+  ]
+}

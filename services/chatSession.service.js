@@ -40,7 +40,9 @@ const appendMessage = async (id, cognitoSub, { sender, text }) => {
   session.messages.push({
     sender,
     text,
-    timestamp: new Date()
+    timestamp: new Date(),
+    // Anything other than a plain user message written through this endpoint is client-authored.
+    ...(sender === "user" ? {} : { origin: "client" }),
   });
 
   await session.save();

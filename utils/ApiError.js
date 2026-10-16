@@ -25,6 +25,10 @@ class ApiError extends Error {
     return new ApiError(409, message);
   }
 
+  static serviceUnavailable(message) {
+    return new ApiError(503, message);
+  }
+
   static internal(message) {
     return new ApiError(500, message);
   }

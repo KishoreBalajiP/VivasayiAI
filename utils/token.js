@@ -42,6 +42,11 @@ const verifyToken = async (token) => {
 
   // Restrict the issuer to the AWS Cognito family before trusting its JWKS (SSRF + forgery guard).
   if (!isCognitoIssuer(payload.iss)) return null;
+  // With a pool configured, only THAT pool is trusted: a token validly issued by some other Cognito
+  // pool must not be accepted, and its keys must not even be fetched.
+  if (env.cognitoUserPoolId && !payload.iss.replace(/\/+$/, "").endsWith(`/${env.cognitoUserPoolId}`)) return null;
+  // Only ID tokens carry the identity claims this app reads. An access token is not one.
+  if (payload.token_use !== "id") return null;
 
   const key = await getKey(payload.iss, header.kid);
   if (!key) return null;
@@ -127,6 +132,22 @@ const verifyAccessToken = (token) => {
   }
 };
 
+// Why an access token was refused, for logs. Never includes the token or any claim value: only a
+// category, so a rejection can be diagnosed (expired vs forged vs wrong kind) without leaking.
+const diagnoseAccessToken = (token) => {
+  if (!token || typeof token !== "string") return "missing_token";
+  const secret = env.sessionJwtSecret;
+  if (!secret) return "secret_not_configured";
+  try {
+    const decoded = jwt.verify(token, secret, { algorithms: ["HS256"], issuer: SESSION_ISSUER, audience: "session" });
+    if (decoded.tokenType !== "access") return "wrong_token_type";
+    if (typeof decoded.sub !== "string") return "missing_subject";
+    return "valid";
+  } catch (error) {
+    return error && error.name === "TokenExpiredError" ? "expired" : error && error.name === "JsonWebTokenError" ? `invalid_${String(error.message).replace(/[^a-z ]/gi, "").trim().slice(0, 40).replace(/ /g, "_")}` : "verification_error";
+  }
+};
+
 const buildUserContext = (payload) => ({
   id: payload?.sub || null,
   email: payload?.email || null,
@@ -138,6 +159,7 @@ export {
   extractToken,
   verifyToken,
   verifyAccessToken,
+  diagnoseAccessToken,
   signAccessToken,
   signRefreshToken,
   buildUserContext,

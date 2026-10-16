@@ -574,7 +574,18 @@ describe("Phase 10 admin exception workflow (API)", () => {
       expect(data.appeals[0].status).toBe("submitted");
       expect(data.audit).toBeInstanceOf(Array);
       expect(data.adminActions).toBeInstanceOf(Array);
-      expect(data.evidenceUrls.length).toBeGreaterThanOrEqual(0);
+      // Each stored evidence photo gets exactly one short-lived signed URL (regression: the S3 key
+      // was excluded from the populate and the signer's string result was destructured as an
+      // object, so admins always received an empty or `undefined` URL list).
+      const storedEvidence = await ClaimEvidence.findOne({ claimId: claim._id });
+      expect(data.evidenceUrls).toHaveLength(1);
+      expect(data.evidenceUrls[0].uploadId).toBe(storedEvidence.uploadId);
+      expect(typeof data.evidenceUrls[0].url).toBe("string");
+      expect(data.evidenceUrls[0].url).toContain(storedEvidence.s3Key);
+      expect(data.evidenceUrls[0].url).not.toContain("undefined");
+      expect(data.evidenceUrls[0].expiresIn).toBe(300);
+      // The raw S3 key must still never appear as a field of the serialized evidence list.
+      expect(JSON.stringify(data.evidence ?? [])).not.toContain("s3Key");
       expect(data.assessment).toBeTruthy();
     });
 
@@ -714,6 +725,84 @@ describe("Phase 10 admin exception workflow (API)", () => {
       expect(adminAudit).toBe(1);
     });
   });
+
+  describe("K. override atomicity (no silent or half-applied overrides)", () => {
+    const override = (claimId, body) =>
+      api().post(`/admin/claims/${claimId}/override`).set(adminHeader(adminUser())).send(body);
+    const REASON = "Reviewed the claim file and photographs manually";
+
+    it("K1: two keyless overrides on the same claim both succeed with a full audit pair each", async () => {
+      const { user, profile, parcel } = await seedFarmer("k1");
+      const claim = await insertClaim({ user, profile, parcel, state: "rejected" });
+
+      const first = await override(claim._id, { toState: "verified", reason: REASON });
+      expect(first.status).toBe(200);
+      // Regression: the second keyless override used to change the claim, then fail with a
+      // duplicate-key error on (claimId, null) -> HTTP 500 with no AdminAction/ClaimAudit.
+      const second = await override(claim._id, { toState: "rejected", reason: REASON });
+      expect(second.status).toBe(200);
+
+      const stored = await LossClaim.findById(claim._id);
+      expect(stored.state).toBe("rejected");
+      expect(await AdminAction.countDocuments({ claimId: claim._id })).toBe(2);
+      expect(await ClaimAudit.countDocuments({ claimId: claim._id, action: "overridden" })).toBe(2);
+    });
+
+    it("K2: concurrent conflicting overrides — exactly one wins, the loser gets 409, no orphan state", async () => {
+      const { user, profile, parcel } = await seedFarmer("k2");
+      const claim = await insertClaim({ user, profile, parcel, state: "rejected" });
+
+      const results = await Promise.all([
+        override(claim._id, { toState: "verified", reason: REASON }),
+        override(claim._id, { toState: "out_of_limit", reason: REASON }),
+      ]);
+      const statuses = results.map((r) => r.status).sort();
+      expect(statuses).toEqual([200, 409]);
+
+      const winner = results.find((r) => r.status === 200).body.data;
+      const stored = await LossClaim.findById(claim._id);
+      expect(stored.state).toBe(winner.claim.state);
+      // The record of what happened must match the state that actually exists.
+      const actions = await AdminAction.find({ claimId: claim._id });
+      expect(actions).toHaveLength(1);
+      expect(actions[0].targetState).toBe(stored.state);
+      expect(await ClaimAudit.countDocuments({ claimId: claim._id, action: "overridden" })).toBe(1);
+    });
+
+    it("K3: the same overrideKey sent concurrently applies once and replays idempotently", async () => {
+      const { user, profile, parcel } = await seedFarmer("k3");
+      const claim = await insertClaim({ user, profile, parcel, state: "rejected" });
+      const body = { toState: "verified", reason: REASON, overrideKey: "override-key-concurrent-1" };
+
+      const results = await Promise.all([override(claim._id, body), override(claim._id, body)]);
+      expect(results.map((r) => r.status)).toEqual([200, 200]);
+      expect(results.filter((r) => r.body.data.idempotent === true)).toHaveLength(1);
+      expect(await AdminAction.countDocuments({ claimId: claim._id })).toBe(1);
+      expect(await ClaimAudit.countDocuments({ claimId: claim._id, action: "overridden" })).toBe(1);
+    });
+
+    it("K4: a client overrideKey with a server-reserved prefix is rejected (400), nothing changes", async () => {
+      const { user, profile, parcel } = await seedFarmer("k4");
+      const claim = await insertClaim({ user, profile, parcel, state: "rejected" });
+      await AdminAction.create({
+        claimId: claim._id,
+        action: "manual_review",
+        actorSub: "admin-x",
+        reason: "ownership review",
+        idempotencyKey: "ownreview_abc123",
+      });
+      const response = await override(claim._id, {
+        toState: "verified",
+        reason: REASON,
+        overrideKey: "ownreview_abc123",
+      });
+      // A manual_review row must never be returned as "Override already applied".
+      expect(response.status).toBe(400);
+      expect((await LossClaim.findById(claim._id)).state).toBe("rejected");
+      expect(await AdminAction.countDocuments({ claimId: claim._id, action: "override" })).toBe(0);
+    });
+  });
+
 });
 
 function signAdminLike() {

@@ -77,6 +77,10 @@ export const env = Object.freeze({
   claimWindowDays: Number(process.env.CLAIM_WINDOW_DAYS) || 30,
   claimRateLimitWindowMs: Number(process.env.CLAIM_RATE_LIMIT_WINDOW_MS) || 3600000,
   claimRateLimitMax: Number(process.env.CLAIM_RATE_LIMIT_MAX) || 5,
+  // Reads (GET claim/verification/appeal) have their own bucket so polling can never exhaust the
+  // strict write budget above. 600/hour allows a status poll about every 6 seconds.
+  claimReadRateLimitWindowMs: Number(process.env.CLAIM_READ_RATE_LIMIT_WINDOW_MS) || 3600000,
+  claimReadRateLimitMax: Number(process.env.CLAIM_READ_RATE_LIMIT_MAX) || 600,
   evidenceRateLimitWindowMs: Number(process.env.EVIDENCE_RATE_LIMIT_WINDOW_MS) || 3600000,
   evidenceRateLimitMax: Number(process.env.EVIDENCE_RATE_LIMIT_MAX) || 20,
   claimEvidenceMaxImages: Number(process.env.CLAIM_EVIDENCE_MAX_IMAGES) || 10,
@@ -113,8 +117,21 @@ export const env = Object.freeze({
   sessionJwtSecret: process.env.SESSION_JWT_SECRET || undefined,
   accessTokenTtlMs: Number(process.env.ACCESS_TOKEN_TTL_MS) || 15 * 60 * 1000,
   refreshTokenTtlMs: Number(process.env.REFRESH_TOKEN_TTL_MS) || 30 * 24 * 60 * 60 * 1000,
+  // Verification policy id (config/verificationPolicy.js). "v1-legacy" reproduces the historical
+  // decisions exactly; "v2-components" adds the required-component gate (ADR-020).
+  claimVerificationPolicy: process.env.CLAIM_VERIFICATION_POLICY || "v1-legacy",
+  // ADR-021: wall-clock budget (ms) the verify call spends running queued steps before it decides.
+  // Must stay under the API Gateway limit (29 s); the AI timeout alone defaults to 25 s.
+  claimVerificationRequestBudgetMs: Number(process.env.CLAIM_VERIFICATION_REQUEST_BUDGET_MS) || 22000,
+  // When true, GET /claims/:id/verification also runs ONE due step (a status poll then makes
+  // progress even with no scheduled worker). Off by default in tests.
+  claimVerificationDrainOnRead: (process.env.CLAIM_VERIFICATION_DRAIN_ON_READ || "true").toLowerCase() === "true",
+  claimAutomatedVerificationEnabled: (process.env.CLAIM_AUTOMATED_VERIFICATION_ENABLED || "true").toLowerCase() === "true",
   mongoUri: process.env.MONGO_URI,
   cognitoClientId: process.env.COGNITO_CLIENT_ID,
+  // When set, id tokens must come from THIS user pool (otherwise any Cognito pool is accepted and the
+  // audience check alone binds the token to this app).
+  cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID,
   cognitoClientSecret: process.env.COGNITO_CLIENT_SECRET,
   cognitoDomain: process.env.COGNITO_DOMAIN,
   cognitoRedirectUri: process.env.COGNITO_REDIRECT_URI,
@@ -136,6 +153,7 @@ export const env = Object.freeze({
   weatherStaleAfterMs: Number(process.env.WEATHER_STALE_AFTER_MS) || 60 * 60 * 1000,
   openMeteoBase:
     process.env.OPEN_METEO_BASE_URL || "https://api.open-meteo.com/v1",
+  openMeteoArchiveBase: process.env.OPEN_METEO_ARCHIVE_BASE_URL || "https://archive-api.open-meteo.com/v1",
   openMeteoGeocodingBase:
     process.env.OPEN_METEO_GEOCODING_BASE_URL ||
     "https://geocoding-api.open-meteo.com/v1",

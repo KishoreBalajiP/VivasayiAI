@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import LossClaim from "../models/LossClaim.js";
 import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
@@ -5,6 +6,7 @@ import AdminAction from "../models/AdminAction.js";
 import Appeal from "../models/Appeal.js";
 import FarmProfile from "../models/FarmProfile.js";
 import ClaimEvidence from "../models/ClaimEvidence.js";
+import logger from "../utils/logger.js";
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import { env } from "../config/env.js";
@@ -107,18 +109,27 @@ const serializeAdminAction = (row) => ({
   createdAt: row.createdAt,
 });
 
-const signStoredEvidenceUrls = async (evidenceDocs) => {
+const EVIDENCE_URL_TTL_SECONDS = 5 * 60;
+
+// Signs a short-lived GET URL for each STORED evidence photo of a claim. The S3 key is read from
+// the database here and used only to sign; it is never part of the serialized claim (the detail
+// view populates evidence with `-s3Key`), so the raw object key never reaches the client.
+const signStoredEvidenceUrls = async (evidenceIds) => {
+  if (!evidenceIds.length) return [];
+  const rows = await ClaimEvidence.find({ _id: { $in: evidenceIds }, status: "stored" })
+    .select("uploadId s3Key")
+    .lean();
   const urls = [];
-  for (const entry of evidenceDocs) {
-    if (entry.status !== "stored") continue;
+  for (const entry of rows) {
     try {
-      const { url, expiresIn } = await getSignedGetUrl({
+      const url = await getSignedGetUrl({
         key: entry.s3Key,
-        expiresInSeconds: 5 * 60,
+        expiresInSeconds: EVIDENCE_URL_TTL_SECONDS,
       });
-      urls.push({ uploadId: entry.uploadId, url, expiresIn });
-    } catch {
-      // best-effort: a failed sign never fails the whole detail view
+      urls.push({ uploadId: entry.uploadId, url, expiresIn: EVIDENCE_URL_TTL_SECONDS });
+    } catch (error) {
+      // best-effort: a failed sign never fails the whole detail view, but it must not be silent
+      logger.warn({ err: error, uploadId: entry.uploadId }, "admin evidence url signing failed");
     }
   }
   return urls;
@@ -142,8 +153,8 @@ export const getAdminClaimDetail = async ({ claimId, actorSub }) => {
 
   const parcel =
     (profile?.parcels || []).find((item) => item.parcelId === claim.parcelId) ?? null;
-  const evidenceDocs = Array.isArray(claim.evidence) ? claim.evidence : [];
-  const evidenceUrls = await signStoredEvidenceUrls(evidenceDocs);
+  const evidenceIds = (Array.isArray(claim.evidence) ? claim.evidence : []).map((doc) => doc._id);
+  const evidenceUrls = await signStoredEvidenceUrls(evidenceIds);
 
   const base = serializeClaim(claim, serializeAssessmentDoc(assessment));
   return {
@@ -331,6 +342,13 @@ export const getInvestigation = async ({ rangeDays = 90 } = {}) => {
 // Admin override — the ONLY mutable admin operation (08_API_Documentation §10.10)
 // ---------------------------------------------------------------------------
 
+const RACE_WAIT_ATTEMPTS = 10;
+const RACE_WAIT_MS = 100;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const findOverrideByKey = (claimId, key) =>
+  AdminAction.findOne({ claimId, idempotencyKey: key, action: "override" });
+
 export const overrideClaim = async ({
   claimId,
   actorSub,
@@ -345,19 +363,22 @@ export const overrideClaim = async ({
   const claim = await LossClaim.findById(claimId);
   if (!claim) throw ApiError.notFound("Claim not found");
 
+  const replayResult = async (action) => {
+    const current = (await LossClaim.findById(claim._id)) ?? claim;
+    return {
+      claim: serializeClaim(current, serializeAssessmentDoc(await ClaimAssessment.findOne({ claimId: claim._id }))),
+      adminAction: serializeAdminAction(action),
+      idempotent: true,
+    };
+  };
+
   // Replay protection FIRST: the same claim+overrideKey may only ever map to ONE admin action,
   // and an exact replay must return the recorded result idempotently — even if the claim has
   // since reached the target state (where the transition guard below would otherwise 409).
   const key = typeof overrideKey === "string" ? overrideKey.trim() || null : null;
   if (key) {
-    const prior = await AdminAction.findOne({ claimId: claim._id, idempotencyKey: key });
-    if (prior) {
-      return {
-        claim: serializeClaim(claim, serializeAssessmentDoc(await ClaimAssessment.findOne({ claimId: claim._id }))),
-        adminAction: serializeAdminAction(prior),
-        idempotent: true,
-      };
-    }
+    const prior = await findOverrideByKey(claim._id, key);
+    if (prior) return replayResult(prior);
   }
 
   const transition = evaluateOverrideTransition({ fromState: claim.state, toState });
@@ -374,15 +395,21 @@ export const overrideClaim = async ({
     }
   }
 
-  // Replay protection: the same owner+key may only ever map to ONE admin action on the claim.
-  // (Pre-check happens before the transition guard; 11000 recovery covers the concurrent race.)
-
   const priorState = claim.state;
+  const priorDecidedAt = claim.decidedAt ?? null;
   const decidedAt = new Date();
-  claim.state = toState;
-  claim.decidedAt = decidedAt;
+  const activeAppeal = await getActiveAppeal(claim._id);
+
+  // Atomic state change: only succeeds if the claim is STILL in the state this decision was based
+  // on. A concurrent override (or the engine) that moved the claim first makes this one lose
+  // cleanly with 409 instead of silently overwriting it.
+  let updated;
   try {
-    await claim.save();
+    updated = await LossClaim.findOneAndUpdate(
+      { _id: claim._id, state: priorState },
+      { $set: { state: toState, decidedAt } },
+      { new: true }
+    );
   } catch (error) {
     // Overriding into verified/partially_verified must not collide with the existing unique
     // parcel+eventDate+eventType claim index (a batch duplicate the engine already protected).
@@ -391,6 +418,76 @@ export const overrideClaim = async ({
     }
     throw error;
   }
+  if (!updated) {
+    // Lost the race. If the winner used the SAME client key this is a replay, not a conflict;
+    // give the winner a moment to write its AdminAction before deciding.
+    if (key) {
+      for (let attempt = 0; attempt < RACE_WAIT_ATTEMPTS; attempt += 1) {
+        const raced = await findOverrideByKey(claim._id, key);
+        if (raced) return replayResult(raced);
+        await sleep(RACE_WAIT_MS);
+      }
+    }
+    throw ApiError.conflict("Claim state changed while the override was being applied; reload and retry");
+  }
+
+  // The AdminAction is written IMMEDIATELY after the state change so an override can never be
+  // silent. Keyless overrides get a server-generated key so they can never collide on the
+  // per-claim unique key index (the previous null-key collision made the second keyless override
+  // fail AFTER the claim had already been changed).
+  const actionKey = key ?? `ovr_auto_${String(claim._id)}_${randomUUID()}`;
+  let adminAction;
+  try {
+    adminAction = await AdminAction.create({
+      claimId: claim._id,
+      action: "override",
+      actorSub,
+      actorEmail,
+      priorState,
+      targetState: toState,
+      reason,
+      adminNote: adminNote ?? null,
+      approverSub: approverSub ?? null,
+      appealId: activeAppeal?._id ?? null,
+      idempotencyKey: actionKey,
+      metadata: {
+        claimedAreaAcres: claim.claimedAreaAcres,
+        administeredApproverRequired: env.adminOverrideApproverAcreThreshold > 0,
+      },
+      requestId,
+    });
+  } catch (error) {
+    // Could not record the decision: undo our state change (only if nobody has touched the claim
+    // since) so the claim never sits in a state without its AdminAction.
+    await LossClaim.updateOne(
+      { _id: claim._id, state: toState, decidedAt },
+      { $set: { state: priorState, decidedAt: priorDecidedAt } }
+    ).catch((rollbackError) =>
+      logger.error({ err: rollbackError, claimId: String(claim._id) }, "override rollback failed")
+    );
+    if (error?.code === 11000 && key) {
+      const raced = await findOverrideByKey(claim._id, key);
+      if (raced) return replayResult(raced);
+    }
+    throw error;
+  }
+
+  await ClaimAudit.create({
+    claimId: claim._id,
+    actor: "admin",
+    action: "overridden",
+    fromState: priorState,
+    toState,
+    reason: "Admin override of the verification decision",
+    metadata: { adminNote: adminNote ?? null, adminActionId: adminAction._id },
+    requestId,
+  }).catch((error) => {
+    logger.error(
+      { err: error, claimId: String(claim._id), adminActionId: String(adminAction._id) },
+      "override applied but its ClaimAudit row could not be written"
+    );
+    throw error;
+  });
 
   let assessment = await ClaimAssessment.findOne({ claimId: claim._id });
   const decisionFields = {
@@ -415,12 +512,11 @@ export const overrideClaim = async ({
     }
     await assessment.save();
   } else {
-    const created = await ClaimAssessment.create({
+    assessment = await ClaimAssessment.create({
       claimId: claim._id,
       ...decisionFields,
       verification: { status: "completed", completedAt: decidedAt, version: null },
     });
-    assessment = created;
   }
   const adminAssessment = serializeAssessmentDoc(assessment);
 
@@ -432,57 +528,8 @@ export const overrideClaim = async ({
     requestId,
   });
 
-  const activeAppeal = resolvedAppeals[0] ?? null;
-
-  // Immutable ADMIN decision record. A duplicate-key race (same overrideKey) is treated as the
-  // replay-safe idempotent response exactly like claim creation.
-  let adminAction;
-  try {
-    adminAction = await AdminAction.create({
-      claimId: claim._id,
-      action: "override",
-      actorSub,
-      actorEmail,
-      priorState,
-      targetState: toState,
-      reason,
-      adminNote: adminNote ?? null,
-      approverSub: approverSub ?? null,
-      appealId: activeAppeal?._id ?? null,
-      idempotencyKey: key,
-      metadata: {
-        claimedAreaAcres: claim.claimedAreaAcres,
-        administeredApproverRequired: env.adminOverrideApproverAcreThreshold > 0,
-      },
-      requestId,
-    });
-  } catch (error) {
-    if (error?.code === 11000 && key) {
-      const raced = await AdminAction.findOne({ claimId: claim._id, idempotencyKey: key });
-      if (raced) {
-        return {
-          claim: serializeClaim(claim, adminAssessment),
-          adminAction: serializeAdminAction(raced),
-          idempotent: true,
-        };
-      }
-    }
-    throw error;
-  }
-
-  await ClaimAudit.create({
-    claimId: claim._id,
-    actor: "admin",
-    action: "overridden",
-    fromState: priorState,
-    toState,
-    reason: "Admin override of the verification decision",
-    metadata: { adminNote: adminNote ?? null, adminActionId: adminAction._id },
-    requestId,
-  });
-
   return {
-    claim: serializeClaim(claim, adminAssessment),
+    claim: serializeClaim(updated, adminAssessment),
     adminAction: serializeAdminAction(adminAction),
     resolvedAppeals: resolvedAppeals.map((appeal) => ({ id: appeal._id, status: appeal.status })),
     idempotent: false,

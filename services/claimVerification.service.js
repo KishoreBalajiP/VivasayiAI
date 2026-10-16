@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
+import { createHash } from "node:crypto";
 import ApiError from "../utils/ApiError.js";
 import LossClaim from "../models/LossClaim.js";
 import ClaimEvidence from "../models/ClaimEvidence.js";
 import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
+import VerificationEvidence from "../models/VerificationEvidence.js";
 import { env } from "../config/env.js";
 import { applyTransition } from "./claimState.service.js";
 import claimAssessmentService from "./claimAssessment.service.js";
@@ -14,6 +16,9 @@ import {
   evaluateClaimVerification,
   VERIFICATION_ENGINE_VERSION,
 } from "./claimVerificationEngine.service.js";
+import { resolvePolicy } from "../config/verificationPolicy.js";
+import { resolveComponents } from "./verificationComponents.js";
+import { findCrossFarmerOverlap } from "./crossFarmerOverlap.service.js";
 
 // E9-S5/E9-S6 (ADR-019) — Claim Verification orchestration. Phase 5 shipped it as an internal
 // service with no public endpoint; Phase 6 (integration) exposes it through the THIN HTTP surface
@@ -138,13 +143,32 @@ const buildSpatialFacts = async ({ claim, cognitoSub }) => {
   };
 };
 
-export const serializeDecision = ({ claim, assessment, idempotent, inProgress }) => ({
+// ADR-020 — what a decision looked like at the time: component outcomes (without the evidence
+// references), the evidence rows the engine saw, and the policy. Stored on the assessment and on
+// the decision audit row so any decision can be explained from the evidence and policy used.
+export const buildDecisionSnapshot = ({ components, policy }) => {
+  const summary = {};
+  const refs = new Map();
+  for (const [name, value] of Object.entries(components)) {
+    summary[name] = {
+      outcome: value.outcome,
+      required: value.required,
+      authoritative: value.authoritative,
+      actionableBy: value.actionableBy,
+      reasonCodes: value.reasonCodes,
+    };
+    for (const ref of value.evidenceRefs || []) refs.set(ref.id, ref);
+  }
+  return { components: summary, evidenceRefs: [...refs.values()], policy: { id: policy.id, hash: policy.hash } };
+};
+
+export const serializeDecision = ({ claim, assessment, idempotent, inProgress, held }) => ({
   claimId: String(claim._id),
   idempotent,
   inProgress,
   claimState: claim.state,
-  outcome: assessment && assessment.state ? assessment.state : null,
-  decision: assessment && assessment.state ? assessment.state : null,
+  outcome: !held && assessment && assessment.state ? assessment.state : null,
+  decision: !held && assessment && assessment.state ? assessment.state : null,
   reason: assessment ? assessment.reason : null,
   rules: assessment ? assessment.rules : null,
   approvedGeometry: assessment ? assessment.approvedGeometry : null,
@@ -163,6 +187,15 @@ export const serializeDecision = ({ claim, assessment, idempotent, inProgress })
   parcelAreaAcres: claim.parcelSnapshot ? claim.parcelSnapshot.parcelAreaAcres : null,
   evidenceVersion: assessment ? assessment.evidenceVersion : null,
   engineVersion: assessment && assessment.verification ? assessment.verification.version : null,
+  // ADR-020 (additive). `held`: a required component is unresolved, so no decision exists yet and
+  // the claim is still `submitted`. Decisions made before policies existed report policyId "legacy".
+  held: Boolean(held) || Boolean(assessment && !assessment.state && assessment.verification && assessment.verification.status === "held"),
+  pendingComponents: assessment && assessment.hold && Array.isArray(assessment.hold.blocking)
+    ? assessment.hold.blocking.map((item) => ({ component: item.component, outcome: item.outcome, action: item.action }))
+    : [],
+  components: assessment && assessment.components ? assessment.components : null,
+  policyId: assessment && assessment.policy && assessment.policy.id ? assessment.policy.id : "legacy",
+  policyHash: assessment && assessment.policy ? assessment.policy.hash || null : null,
 });
 
 const loadDecision = async (claim) => {
@@ -201,6 +234,127 @@ const failVerification = async ({ claimId, assessment, stage, message, requestId
     metadata: { stage },
     requestId: requestId || null,
   });
+};
+
+// ADR-020 — a required component is unresolved, so there is NO decision yet. The claim is left in
+// `submitted` (no lock is held, the farmer can still withdraw) and the reason is recorded on the
+// assessment. The audit row is written only when the SITUATION changes (different blockers or a
+// changed evidence row), so a poller or a retry cannot flood the audit trail.
+const persistHold = async ({ claim, assessment, evaluation, snapshot, fingerprint, now, requestId }) => {
+  const blocking = evaluation.gate.blocking.map((item) => ({
+    component: item.component,
+    outcome: item.outcome,
+    action: item.action,
+    reasonCodes: item.reasonCodes || [],
+  }));
+  const holdFingerprint = createHash("sha1")
+    .update(
+      JSON.stringify({
+        blocking: blocking.map((item) => [item.component, item.outcome]),
+        refs: snapshot.evidenceRefs.map((ref) => [ref.id, ref.status, String(ref.updatedAt)]),
+        policy: snapshot.policy.hash,
+      })
+    )
+    .digest("hex")
+    .slice(0, 24);
+
+  const previous = assessment && assessment.hold ? assessment.hold : null;
+  const changed = !previous || previous.fingerprint !== holdFingerprint;
+  const hold = {
+    since: previous && previous.since ? previous.since : now,
+    fingerprint: holdFingerprint,
+    blocking,
+    lastEvaluatedAt: now,
+  };
+  const write = {
+    components: snapshot.components,
+    policy: snapshot.policy,
+    evidenceRefs: snapshot.evidenceRefs,
+    hold,
+    reason: evaluation.reason,
+    // A hold means "no decision yet". After a resubmission the assessment still carries the
+    // previous round's decision, which must not be shown as current. That decision stays on the
+    // append-only ClaimAudit trail.
+    state: null,
+    decidedAt: null,
+    approvedGeometry: null,
+    approvedAreaAcres: null,
+    verifiedAreaAcres: null,
+    verification: {
+      status: "held",
+      version: evaluation.engineVersion,
+      startedAt: previous && previous.since ? previous.since : now,
+      completedAt: null,
+      failedAt: null,
+      error: null,
+    },
+  };
+
+  if (assessment) {
+    await ClaimAssessment.updateOne({ claimId: claim._id }, { $set: write });
+  } else {
+    try {
+      await ClaimAssessment.create({
+        claimId: claim._id,
+        status: "pending",
+        version: null,
+        model: null,
+        evidenceVersion: fingerprint,
+        aiImageAssessments: [],
+        aiAggregate: null,
+        ...write,
+      });
+    } catch (error) {
+      if (error?.code === 11000) await ClaimAssessment.updateOne({ claimId: claim._id }, { $set: write });
+      else throw error;
+    }
+  }
+
+  if (changed) {
+    await ClaimAudit.create({
+      claimId: claim._id,
+      actor: "engine",
+      action: "verification_held",
+      fromState: "submitted",
+      toState: "submitted",
+      reason: evaluation.reason,
+      metadata: {
+        policyId: snapshot.policy.id,
+        policyHash: snapshot.policy.hash,
+        blocking,
+        evidenceRefs: snapshot.evidenceRefs,
+        engineVersion: evaluation.engineVersion,
+      },
+      requestId: requestId || null,
+    });
+  }
+
+  const fresh = await ClaimAssessment.findOne({ claimId: claim._id });
+  return serializeDecision({ claim, assessment: fresh, idempotent: false, inProgress: false, held: true });
+};
+
+// Engine-only release of a claim stuck in `processing` back to `submitted` so verification can be
+// retried. It is NOT a farmer or admin transition, which is why it is not in the state machine's
+// ALLOWED table: it only undoes the engine's own `submitted -> processing` lock, and only while the
+// claim is still locked. Audited, so the move is never silent.
+export const releaseProcessingSlot = async ({ claimId, reason, requestId = null }) => {
+  const released = await LossClaim.findOneAndUpdate(
+    { _id: claimId, state: "processing" },
+    { $set: { state: "submitted", processedAt: null } },
+    { new: true }
+  );
+  if (!released) return false;
+  await ClaimAudit.create({
+    claimId,
+    actor: "engine",
+    action: "verification_released",
+    fromState: "processing",
+    toState: "submitted",
+    reason,
+    metadata: { reason: "engine_lock_released" },
+    requestId: requestId || null,
+  });
+  return true;
 };
 
 export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
@@ -309,6 +463,47 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
   // ---- E9-S9: real overlap-prevention facts (owner-scoped siblings + Turf spatial engine) ----
   const { spatial, eligibleContext } = await buildSpatialFacts({ claim, cognitoSub });
 
+  // ---- ADR-020: policy + per-component evidence status (pure, from the rows already stored) ----
+  const policy = resolvePolicy();
+  const evidenceRows = await VerificationEvidence.find({ claimId: claim._id }).lean();
+  const crossOverlap = await findCrossFarmerOverlap({ claim, cognitoSub, thresholds: policy.crossFarmer });
+  if (crossOverlap.flagged) {
+    // Admin-only trail (farmers never read ClaimAudit); written once per distinct set of matches.
+    const already = await ClaimAudit.exists({
+      claimId: claim._id,
+      action: "cross_farmer_overlap_flagged",
+      "metadata.matchKey": crossOverlap.matchKey,
+    });
+    if (!already) {
+      await ClaimAudit.create({
+        claimId: claim._id,
+        actor: "engine",
+        action: "cross_farmer_overlap_flagged",
+        fromState: claim.state,
+        toState: claim.state,
+        reason: "Claimed area overlaps another farmer's claim; flagged for review, not a duplicate verdict",
+        metadata: {
+          matchKey: crossOverlap.matchKey,
+          matchCount: crossOverlap.matchCount,
+          maxOverlapAcres: crossOverlap.maxOverlapAcres,
+          maxShare: crossOverlap.maxShare,
+          matches: crossOverlap.matches,
+        },
+        requestId: requestId || null,
+      });
+    }
+  }
+  const components = resolveComponents({
+    claim: claim.toObject(),
+    assessment: assessment ? assessment.toObject() : null,
+    spatial,
+    crossOverlap,
+    evidenceRows,
+    evidenceCount: evidenceDocs.length,
+    policy,
+  });
+  const snapshot = buildDecisionSnapshot({ components, policy });
+
   // ---- pure deterministic evaluation (no DB/network/LLM) ----
   const now = new Date();
   const evaluation = evaluateClaimVerification({
@@ -320,7 +515,14 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
     weatherCorrelation: null,
     evidenceCount: evidenceDocs.length,
     now,
+    components,
+    policy,
   });
+
+  // A required component is unresolved: record why and leave the claim in `submitted`.
+  if (evaluation.disposition === "hold") {
+    return persistHold({ claim, assessment, evaluation, snapshot, fingerprint, now, requestId });
+  }
 
   // ---- concurrency guard: exactly one worker runs the decision (atomic submitted → processing) ----
   applyTransition({ claim, toState: "processing" }); // validate via the frozen machine
@@ -413,6 +615,10 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
       spatialEvaluated: evaluation.spatialEvaluated,
       rules: evaluation.rules,
       weatherCorrelation: null,
+      components: snapshot.components,
+      policy: snapshot.policy,
+      evidenceRefs: snapshot.evidenceRefs,
+      hold: null,
       verification: {
         status: "completed",
         version: evaluation.engineVersion,
@@ -467,6 +673,10 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
       toState: evaluation.outcome,
       reason: evaluation.reason,
       metadata: {
+        policyId: snapshot.policy.id,
+        policyHash: snapshot.policy.hash,
+        componentOutcomes: Object.fromEntries(Object.entries(snapshot.components).map(([name, value]) => [name, value.outcome])),
+        evidenceRefs: snapshot.evidenceRefs,
         evidenceVersion: fingerprint,
         imageCount: evidenceDocs.length,
         overlapEvaluated: evaluation.spatialEvaluated,
@@ -508,10 +718,7 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
         }
       ).catch(() => {});
     }
-    await LossClaim.updateOne(
-      { _id: claim._id, state: "processing" },
-      { $set: { state: "submitted", processedAt: null } }
-    ).catch(() => {});
+    await releaseProcessingSlot({ claimId: claim._id, reason: "Verification failed; the claim was returned for a retry", requestId }).catch(() => {});
     await ClaimAudit.create({
       claimId: claim._id,
       actor: "engine",
@@ -526,4 +733,4 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
   }
 };
 
-export default { verifyClaim, serializeDecision };
+export default { verifyClaim, serializeDecision, releaseProcessingSlot };

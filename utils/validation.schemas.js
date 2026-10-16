@@ -1,7 +1,18 @@
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { validateParcelGeometry } from "../services/parcelGeometry.service.js";
-import { DECISION_STATES } from "../services/adminOverrideRules.service.js";
+import { CLAIMANT_RELATIONSHIPS } from "../config/claimantEvidence.js";
+import {
+  DECISION_STATES,
+  hasReservedActionKeyPrefix,
+} from "../services/adminOverrideRules.service.js";
+import {
+  OWNERSHIP_DOCUMENT_CATEGORIES,
+  OWNERSHIP_REVIEW_REASON_MAX,
+  OWNERSHIP_REVIEW_REASON_MIN,
+  OWNERSHIP_REVIEW_STATUSES,
+  OWNERSHIP_VERIFICATION_METHODS,
+} from "./ownershipEvidence.js";
 
 const MONGO_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
 
@@ -73,6 +84,9 @@ const chatBody = z
     district: weatherDistrict.optional(),
     // E3: attach a previously uploaded image to this turn (POST /chat → image diagnosis).
     uploadId: uploadId.optional(),
+    // The parcel the question is about. Looked up only inside the caller's own profile, so a
+    // foreign id simply matches nothing.
+    parcelId: z.string().trim().min(1).max(64).optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.message && !data.uploadId) {
@@ -251,6 +265,10 @@ const createClaimBody = z.object({
   eventDate: claimDate,
   geometry: polygonGeometry,
   idempotencyKey,
+  // How the claimant relates to the land; selects which supporting documents are expected.
+  claimantRelationship: z
+    .enum(CLAIMANT_RELATIONSHIPS, { message: "Unsupported claimant relationship" })
+    .optional(),
 });
 
 const claimParams = z.object({ claimId });
@@ -316,6 +334,7 @@ const overrideBody = z.object({
     .min(8, "overrideKey must be at least 8 characters")
     .max(64, "overrideKey exceeds 64 characters")
     .regex(/^[A-Za-z0-9_-]+$/, "overrideKey contains invalid characters")
+    .refine((value) => !hasReservedActionKeyPrefix(value), "overrideKey uses a reserved prefix")
     .optional(),
 });
 
@@ -345,7 +364,60 @@ const adminDashboardQuery = z
   })
   .strict();
 
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// Phase 12 (E12) — Land ownership evidence (08_API_Documentation §10.13).
+// A claimant attaches a document they ALREADY uploaded (stored private upload); ownership/identity
+// always derives from the verified token. `uploadId` is the server-generated `img_<uuid>`;
+// `documentCategory` is a fixed vocabulary. Review is admin-only and its outcome is limited to the
+// ownership review vocabulary. Unknown body keys are stripped (never client authority).
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+
+const ownershipBody = z.object({
+  uploadId,
+  documentCategory: z
+    .enum(OWNERSHIP_DOCUMENT_CATEGORIES, { message: "Unknown ownership document category" })
+    .optional(),
+});
+
+const ownershipEvidenceParams = z.object({
+  claimId,
+  evidenceId: mongoId("Invalid evidence ID format"),
+});
+
+const ownershipReviewBody = z.object({
+  status: z.enum(OWNERSHIP_REVIEW_STATUSES, { message: "Unsupported ownership review outcome" }),
+  method: z
+    .enum(OWNERSHIP_VERIFICATION_METHODS, { message: "Unknown ownership verification method" })
+    .optional()
+    .default("manual_review"),
+  reason: z
+    .string({ message: "Review reason is required" })
+    .trim()
+    .min(OWNERSHIP_REVIEW_REASON_MIN, `Review reason must be at least ${OWNERSHIP_REVIEW_REASON_MIN} characters`)
+    .max(OWNERSHIP_REVIEW_REASON_MAX, `Review reason exceeds ${OWNERSHIP_REVIEW_REASON_MAX} characters`),
+});
+
+const reviewCaseParams = z.object({
+  claimId,
+  evidenceId: mongoId("Invalid review case ID format"),
+});
+
+// Review cases resolve to a REVIEW outcome only. VERIFIED (authoritative) is deliberately absent:
+// a manual decision can accept, reject or ask for more, but it can never make evidence authoritative.
+const reviewCaseDecisionBody = z.object({
+  decision: z.enum(["AVAILABLE", "INSUFFICIENT", "INCONSISTENT", "UNAVAILABLE"], {
+    message: "Unsupported review decision",
+  }),
+  reason: z
+    .string({ message: "Review reason is required" })
+    .trim()
+    .min(10, "Review reason must be at least 10 characters")
+    .max(2000, "Review reason exceeds 2000 characters"),
+});
+
 export {
+  reviewCaseParams,
+  reviewCaseDecisionBody,
   googleLoginBody,
   chatBody,
   chatParams,
@@ -372,6 +444,9 @@ export {
   overrideBody,
   adminQueueQuery,
   adminDashboardQuery,
+  ownershipBody,
+  ownershipEvidenceParams,
+  ownershipReviewBody,
   APPEAL_ELIGIBLE_STATES,
   DECISION_STATES,
 };

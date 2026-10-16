@@ -1,0 +1,246 @@
+{
+  "environment": {
+    "date": "2026-10-16",
+    "node": "v26.7.0",
+    "platform": "darwin-arm64",
+    "commit": "522d212",
+    "branch": "feat/verification-hardening-2026-10",
+    "dirty": true
+  },
+  "name": "chatContext",
+  "description": "Intent classification and the decision to ask a follow-up question, new context-sufficiency logic versus the previous 'ends with ?' rule, scored against a written specification.",
+  "groundTruth": "a written specification of when a question is necessary (a slot the question depends on cannot be derived from the farmer's records or the message); AUTHOR-DEFINED, no human rater and no language model involved",
+  "intent": {
+    "n": 29,
+    "accuracy": {
+      "k": 29,
+      "n": 29,
+      "value": 1,
+      "ci95": {
+        "low": 0.883,
+        "high": 1
+      }
+    },
+    "confusionMatrix": {
+      "greeting": {
+        "greeting": 4,
+        "claim_status": 0,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 0,
+        "fertilizer": 0,
+        "irrigation": 0,
+        "weather_planning": 0,
+        "general_agriculture": 0,
+        "unclear": 0
+      },
+      "claim_status": {
+        "greeting": 0,
+        "claim_status": 3,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 0,
+        "fertilizer": 0,
+        "irrigation": 0,
+        "weather_planning": 0,
+        "general_agriculture": 0,
+        "unclear": 0
+      },
+      "crop_recommendation": {
+        "greeting": 0,
+        "claim_status": 0,
+        "crop_recommendation": 3,
+        "disease_diagnosis": 0,
+        "fertilizer": 0,
+        "irrigation": 0,
+        "weather_planning": 0,
+        "general_agriculture": 0,
+        "unclear": 0
+      },
+      "disease_diagnosis": {
+        "greeting": 0,
+        "claim_status": 0,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 5,
+        "fertilizer": 0,
+        "irrigation": 0,
+        "weather_planning": 0,
+        "general_agriculture": 0,
+        "unclear": 0
+      },
+      "fertilizer": {
+        "greeting": 0,
+        "claim_status": 0,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 0,
+        "fertilizer": 3,
+        "irrigation": 0,
+        "weather_planning": 0,
+        "general_agriculture": 0,
+        "unclear": 0
+      },
+      "irrigation": {
+        "greeting": 0,
+        "claim_status": 0,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 0,
+        "fertilizer": 0,
+        "irrigation": 3,
+        "weather_planning": 0,
+        "general_agriculture": 0,
+        "unclear": 0
+      },
+      "weather_planning": {
+        "greeting": 0,
+        "claim_status": 0,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 0,
+        "fertilizer": 0,
+        "irrigation": 0,
+        "weather_planning": 3,
+        "general_agriculture": 0,
+        "unclear": 0
+      },
+      "general_agriculture": {
+        "greeting": 0,
+        "claim_status": 0,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 0,
+        "fertilizer": 0,
+        "irrigation": 0,
+        "weather_planning": 0,
+        "general_agriculture": 3,
+        "unclear": 0
+      },
+      "unclear": {
+        "greeting": 0,
+        "claim_status": 0,
+        "crop_recommendation": 0,
+        "disease_diagnosis": 0,
+        "fertilizer": 0,
+        "irrigation": 0,
+        "weather_planning": 0,
+        "general_agriculture": 0,
+        "unclear": 2
+      }
+    },
+    "errors": []
+  },
+  "followUp": {
+    "cases": 55,
+    "necessaryCases": 11,
+    "unnecessaryCases": 44,
+    "newLogic": {
+      "unnecessaryFollowUpRate": {
+        "k": 0,
+        "n": 44,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.0803
+        }
+      },
+      "missedNecessaryFollowUpRate": {
+        "k": 0,
+        "n": 11,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.2588
+        }
+      },
+      "askedAboutWrongSlot": 0,
+      "silentAssumptionWhenAmbiguous": {
+        "k": 0,
+        "n": 6,
+        "value": 0,
+        "ci95": {
+          "low": 0,
+          "high": 0.3903
+        }
+      }
+    },
+    "previousRule": {
+      "unnecessaryFollowUpRate": {
+        "k": 36,
+        "n": 44,
+        "value": 0.8182,
+        "ci95": {
+          "low": 0.6804,
+          "high": 0.9049
+        }
+      },
+      "missedNecessaryFollowUpRate": {
+        "k": 3,
+        "n": 11,
+        "value": 0.2727,
+        "ci95": {
+          "low": 0.0975,
+          "high": 0.5657
+        }
+      },
+      "silentAssumptionWhenAmbiguous": {
+        "k": 6,
+        "n": 6,
+        "value": 1,
+        "ci95": {
+          "low": 0.6097,
+          "high": 1
+        }
+      }
+    },
+    "cropResolvedCorrectlyWhenDerivable": {
+      "k": 19,
+      "n": 19,
+      "value": 1,
+      "ci95": {
+        "low": 0.8318,
+        "high": 1
+      }
+    },
+    "byArchetype": {
+      "noProfile": {
+        "cases": 12,
+        "newUnnecessary": 0,
+        "oldUnnecessary": 6
+      },
+      "singleCrop": {
+        "cases": 10,
+        "newUnnecessary": 0,
+        "oldUnnecessary": 8
+      },
+      "multiCrop": {
+        "cases": 10,
+        "newUnnecessary": 0,
+        "oldUnnecessary": 6
+      },
+      "twoParcels": {
+        "cases": 13,
+        "newUnnecessary": 0,
+        "oldUnnecessary": 8
+      },
+      "oneParcel": {
+        "cases": 10,
+        "newUnnecessary": 0,
+        "oldUnnecessary": 8
+      }
+    },
+    "mismatches": []
+  },
+  "latencyMs": {
+    "n": 55,
+    "mean": 0.424,
+    "min": 0.01,
+    "max": 2.86,
+    "p50": 0.37,
+    "p95": 0.75,
+    "note": "Context assembly only; weather is a stub, so network latency is excluded"
+  },
+  "pending": [
+    "Answer relevance, correctness and groundedness need expert-rated answers from the live model (Gemini API key required).",
+    "Whether farmers experience fewer annoying questions needs a user study."
+  ],
+  "limitations": [
+    "The specification and the new logic were written by the same author, so agreement with the specification shows the logic implements the intended rule, not that the rule matches what farmers need.",
+    "The previous-rule baseline is a faithful reimplementation of the old heuristic, not a run of the old deployment.",
+    "Synthetic profiles and ten question templates; real questions are far more varied."
+  ]
+}
