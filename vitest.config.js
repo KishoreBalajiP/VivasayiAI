@@ -31,6 +31,20 @@ export default defineConfig({
       ADMIN_RATE_LIMIT_MAX: "1000",
       ADMIN_OVERRIDE_APPROVER_ACRE_THRESHOLD: "0",
       CLAIM_AUTOMATED_VERIFICATION_ENABLED: "false",
+      // config/env.js loads the developer's .env, and dotenv never overrides a variable that is
+      // already set. Blanking every live credential here keeps a local .env from routing a test to
+      // a real provider (Atlas, S3, Copernicus, a land-record service, Cognito).
+      MONGO_URI: "",
+      MY_AWS_ACCESS_KEY_ID: "",
+      MY_AWS_SECRET_ACCESS_KEY: "",
+      CDSE_CLIENT_ID: "",
+      CDSE_CLIENT_SECRET: "",
+      SENTINEL_HUB_CLIENT_ID: "",
+      SENTINEL_HUB_CLIENT_SECRET: "",
+      SATELLITE_PROCESSING_ENABLED: "false",
+      LAND_RECORD_PROVIDER_URL: "",
+      LAND_RECORD_API_KEY: "",
+      COGNITO_CLIENT_SECRET: "",
     },
   },
 });

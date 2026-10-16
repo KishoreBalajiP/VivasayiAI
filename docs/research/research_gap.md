@@ -43,3 +43,13 @@ Basis: abstracts and metadata of 45 verified sources plus three web documents, s
 ## Next steps that would create defensible claims
 
 Collect field-verified claim labels; run the Sentinel-2 path live and report mask and timing sensitivity; build bilingual expert-rated question and Tamil land-document test sets; run the ablations in `base_paper_selection.md`.
+
+## Second-pass update (2026-10-16)
+
+After full-text reading and 26 added sources (see `literature_review.md` sections 11-15):
+
+- **Deterministic fusion is not unprecedented.** A rule-based decision matrix fusing Sentinel-2 NDVI vigour with Sentinel-1 change was used for Cyclone Amphan crop damage in India [chakraborty2021]. YES-TECH fixes a 70/30 CCE/model blend by rule [mncfc2023yestech]. Vivasayi AI's distinct element is narrower: a *required-component gate with hold semantics over heterogeneous per-claim evidence* (geometry, ownership documents, photos, satellite, weather). Even that was found only as an absence in this search.
+- **Context-sufficiency gating has a general-domain precedent** [joren2025], and slot-gated multi-turn clarification has an agricultural one [krishisathi2025]. Frame Vivasayi AI's gate as an application of these ideas to per-farmer records, not as a new concept.
+- **Photo-based claim verification in India has a peer-reviewed pilot** [ceballos2019], built on human assessment of a photo series. Vivasayi AI's single claim-time photo with AI assessment is weaker on pre-event condition. Say so.
+- **Still not found:** cross-claimant polygon overlap studies (only a news report of duplicate insurance [tribune2023cotton]); Tamil-language agricultural RAG; Tamil/Latin land-record name matching; labelled Indian claim-outcome datasets. SICKLE [sani2024] provides Tamil Nadu plot labels but no damage labels.
+- **Accuracy ceilings from labelled studies** (Bocchino 2025: OA 0.74, weak at separating no damage from medium damage; Ha 2022: |r| 0.80-0.90 with a 32-day AUC) show what a Sentinel-2 damage component can reach *with* ground truth. Vivasayi AI must not imply comparable performance without it.

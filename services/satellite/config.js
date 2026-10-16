@@ -106,6 +106,12 @@ export const resolveSatelliteConfig = (env = process.env) => {
     maxRetries: pickInt(env, ["SATELLITE_MAX_RETRIES", "SATELLITE_POC_MAX_RETRIES"], 1),
     maxScenes: pickInt(env, ["SATELLITE_MAX_SCENES", "SATELLITE_POC_MAX_SCENES"], 10),
     cloudMaxFraction: pickFloat(env, ["SATELLITE_CLOUD_MAX", "SATELLITE_POC_CLOUD_MAX"], 0.3),
+    // Tile-level cloud limit used when SELECTING scenes for parcel processing and for the "all scenes
+    // cloudy" shortcut. A Sentinel-2 tile is about 100 km across; its cloud percentage says little about a
+    // one-hectare parcel, and per-pixel cloud masking (SCL) plus the minimum valid-pixel fraction already
+    // decide whether the parcel itself was observed. The original 30% tile filter rejected every scene
+    // in live north-east-monsoon tests (Oct 2026), so it is a separate, looser setting.
+    processingSceneCloudMax: pickFloat(env, ["SATELLITE_PROCESSING_SCENE_CLOUD_MAX"], 0.9),
     maxWindowDays: pickInt(env, ["SATELLITE_MAX_WINDOW_DAYS", "SATELLITE_POC_MAX_WINDOW_DAYS"], 120),
     stacUrl: pickEnv(env, ["SATELLITE_STAC_URL", "SATELLITE_POC_STAC_URL"]) || DEFAULT_STAC_URL,
     tokenUrl: pickEnv(env, ["SATELLITE_TOKEN_URL", "SATELLITE_POC_TOKEN_URL"]) || DEFAULT_TOKEN_URL,
@@ -128,6 +134,7 @@ export const redactSatelliteConfig = (config = {}) => ({
   maxRetries: config.maxRetries,
   maxScenes: config.maxScenes,
   cloudMaxFraction: config.cloudMaxFraction,
+  processingSceneCloudMax: config.processingSceneCloudMax,
   maxWindowDays: config.maxWindowDays,
   stacUrl: config.stacUrl,
   tokenUrl: config.tokenUrl,

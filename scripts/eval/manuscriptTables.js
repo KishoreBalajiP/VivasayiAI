@@ -93,6 +93,55 @@ Drop 0.30, 70\\% of pixels masked: inconclusive & ${pct(headline.inconclusiveWhe
 \\end{tabular}
 \\end{table}`);
 
+// Table: live Sentinel-2 case studies (production adapter, Copernicus Statistical API). Each row
+// is one 100 m square near a documented event, or a harvest control; outcome columns are counts.
+const live = JSON.parse(
+  readFileSync(join(root, "docs", "research", "evaluation", "live", "satellite_case_studies_2026-10-16.json"), "utf8")
+);
+const liveRows = live.events.map((event) => {
+  const cases = live.cases.filter((c) => c.event === event.id);
+  const outcomeOf = (c) => (c.outcome === "ANALYSIS_COMPLETE" ? c.analysis.analysisOutcome : "NO_POST_DATA");
+  const count = (name) => cases.filter((c) => outcomeOf(c) === name).length;
+  const deltas = cases.filter((c) => c.analysis?.deltaNdvi != null).map((c) => c.analysis.deltaNdvi.toFixed(2));
+  return `${tex(event.id)} (${event.eventDate}) & ${cases.length} & ${count("SUPPORTS_LOSS")} & ${count("NO_CHANGE")} & ${count("INCONCLUSIVE") + count("NO_POST_DATA")} & ${deltas.join(", ")} \\\\`;
+});
+out.push(`
+\\begin{table*}[t]
+\\caption{Live Sentinel-2 L2A runs of the production adapter on 100\\,m squares near documented events and a harvest control (run ${live.runDate}). Land cover and crop at each square were not verified; the event rows are case studies, not labelled damage.}
+\\label{tab:satellitelive}
+\\centering
+\\begin{tabular}{lrrrrl}
+\\hline
+Event (date) & Squares & Supports loss & No change & Inconclusive & $\\Delta$NDVI \\\\
+\\hline
+${liveRows.join("\n")}
+\\hline
+\\end{tabular}
+\\end{table*}`);
+
+// Table: live retrieval over the production knowledge collection (read-only queries).
+const rag = JSON.parse(
+  readFileSync(join(root, "docs", "research", "evaluation", "live", "rag_retrieval_2026-10-16.json"), "utf8")
+);
+const ragK = rag.summaryAtProductionTopK;
+out.push(`
+\\begin{table}[t]
+\\caption{Live retrieval on the production collection (${rag.config.collection}, ${rag.config.embeddingModel}, top-${rag.config.productionTopK}). Relevance by a mechanical author-written rule, not human judgement.}
+\\label{tab:rag}
+\\centering
+\\begin{tabular}{lr}
+\\hline
+Measure & Rate (k/n) \\\\
+\\hline
+Answerable: any relevant chunk & ${pct(ragK.answerable.hitRateAnyRelevant)} (${frac(ragK.answerable.hitRateAnyRelevant)}) \\\\
+Answerable: top-1 relevant & ${pct(ragK.answerable.top1Relevant)} (${frac(ragK.answerable.top1Relevant)}) \\\\
+Answerable: expected file retrieved & ${pct(ragK.answerable.anyExpectedFile)} (${frac(ragK.answerable.anyExpectedFile)}) \\\\
+Expected-file hits that are header-only & ${pct(ragK.answerableExpectedFileHitsThatAreHeaderOnly)} (${frac(ragK.answerableExpectedFileHitsThatAreHeaderOnly)}) \\\\
+Advisory: answer-bearing chunks & ${pct(ragK.advisory.answerBearingChunks)} (${frac(ragK.advisory.answerBearingChunks)}) \\\\
+\\hline
+\\end{tabular}
+\\end{table}`);
+
 out.push(`\n% Name matching: ${names.n} author-labelled pairs; accuracy ${pct(names.accuracy)} after tuning on the same set (${names.failures.length} errors).\n`);
 writeFileSync(join(root, "docs", "research", "manuscript", "generated_tables.tex"), `${out.join("\n")}\n`);
 console.log("wrote docs/research/manuscript/generated_tables.tex");

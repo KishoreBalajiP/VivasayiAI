@@ -384,7 +384,8 @@ export const buildStatisticalRequest = ({ bbox, start, end, maxCloudCoverage = 3
 // fraction. Defensive: accepts the documented `outputs.default.bands` shape and tolerates missing
 // intervals by ignoring them.
 export const parseStatisticalResponse = (response) => {
-  const data = Array.isArray(response?.data) ? response.data : [];
+  // Accepts the real body shape ({ data: [...] } under response.data) as well as the fixture shape.
+  const data = Array.isArray(response?.data) ? response.data : Array.isArray(response?.data?.data) ? response.data.data : [];
   const intervals = [];
   for (const entry of data) {
     const bands = entry?.outputs?.default?.bands || entry?.bands;

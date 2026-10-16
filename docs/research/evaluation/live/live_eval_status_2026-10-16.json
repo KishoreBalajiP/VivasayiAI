@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-16",
+  "ragRetrieval": { "status": "completed", "file": "rag_retrieval_2026-10-16.json" },
+  "chatContextLive": {
+    "status": "blocked: free-tier daily quota (20 req/day) exhausted on 2026-10-16",
+    "detail": "Run of scripts/live/chatContext.live.js (46 planned items x 2 modes + LLM judge) was stopped by hand after its progress log reported 15 of 46 items processed and 29 instrumented model.generate calls (successful and failed together). The script then wrote results only at the end, so no per-item results were persisted and NO chat metrics are reported. The quota diagnosis (free tier, 20 generate_content requests/day for gemini-2.5-flash, quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier) comes from the coordinator, not from this run's saved output.",
+    "fixApplied": "The script now writes <name>.rows.partial.json after every item and stops at the first quota/429 error instead of retrying.",
+    "rerun": "node scripts/live/chatContext.live.js --date=<date>  (needs about 92 generation + 23 judge calls, so a paid-tier key or several days of free quota)"
+  },
+  "landDocExtractionSynthetic": {
+    "status": "blocked: free-tier daily quota (20 req/day) exhausted on 2026-10-16",
+    "detail": "Images (12 synthetic, watermarked) and the scoring pipeline are ready. A one-document smoke test (D01) through examineOwnershipDocument at the production 25 s AI timeout failed with 'AI service did not respond in time' (twice). Quota exhaustion is the probable cause: LangChain retries an HTTP 429 with backoff, which shows up as a timeout. So this is NOT evidence of slow image extraction. No extraction results exist.",
+    "rerun": "node scripts/live/landDocExtraction.live.js --date=<date>  (12 calls, plus up to 12 retries)"
+  },
+  "geminiCallsMadeWhileDeveloping": "1 provider probe (succeeded), 2 chat smoke-test calls (succeeded; output file deleted), 2 timed-out document smoke-test calls, plus the interrupted chat run above."
+}

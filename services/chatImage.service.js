@@ -1,7 +1,7 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
-import { withAiTimeout, AiTimeoutError } from "../utils/aiTimeout.js";
+import { withAiTimeout, AiTimeoutError, isProviderLimitError } from "../utils/aiTimeout.js";
 import ImageRecord from "../models/ImageRecord.js";
 import ChatSession from "../models/ChatSession.js";
 import { env } from "../config/env.js";
@@ -168,6 +168,9 @@ const generateImageResponse = async ({
       ).catch((err) => {
         if (err instanceof AiTimeoutError) {
           throw ApiError.internal("AI service did not respond in time");
+        }
+        if (isProviderLimitError(err)) {
+          throw ApiError.serviceUnavailable("AI service is busy. Please try again later.");
         }
         throw err;
       });

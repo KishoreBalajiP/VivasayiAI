@@ -1,0 +1,10 @@
+{
+  "_source": "Real response body from the Copernicus Data Space Statistical API for the production NDVI request (100 m square at 79.2E 10.8N, January 2024), captured 2026-10-16. Public Sentinel-2 data; no personal data.",
+  "data": [
+    { "interval": { "from": "2024-01-15T00:00:00Z", "to": "2024-01-16T00:00:00Z" }, "outputs": { "ndvi": { "bands": { "B0": { "stats": { "min": 0.3432055711746216, "max": 0.545064389705658, "mean": 0.4222961841151118, "stDev": 0.04747976979380555, "sampleCount": 100, "noDataCount": 68 } } } } } },
+    { "interval": { "from": "2024-01-25T00:00:00Z", "to": "2024-01-26T00:00:00Z" }, "outputs": { "ndvi": { "bands": { "B0": { "stats": { "min": 0.54923415184021, "max": 0.7161312103271484, "mean": 0.6502360767126084, "stDev": 0.04134665941372215, "sampleCount": 100, "noDataCount": 0 } } } } } },
+    { "interval": { "from": "2024-01-30T00:00:00Z", "to": "2024-01-31T00:00:00Z" }, "outputs": { "ndvi": { "bands": { "B0": { "stats": { "min": 0.7579461932182312, "max": 0.8833333253860474, "mean": 0.8394464182853698, "stDev": 0.02864394417753241, "sampleCount": 100, "noDataCount": 0 } } } } } }
+  ],
+  "status": "OK",
+  "geometryPixelCount": 100
+}

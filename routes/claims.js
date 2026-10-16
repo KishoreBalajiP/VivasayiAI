@@ -86,9 +86,12 @@ router.delete(
   validate(claimEvidenceParams, "params"),
   deleteEvidence
 );
+// Signed-URL reads use the READ bucket: the gallery fetches one per stored photo on every view, and
+// sharing the 20-per-hour upload budget made a 10-photo claim exhaust it (thumbnails went blank and
+// further uploads failed with 429).
 router.get(
   "/:claimId/evidence/:evidenceId/url",
-  evidenceLimiter,
+  claimReadLimiter,
   validate(claimParams, "params"),
   validate(claimEvidenceParams, "params"),
   getEvidenceUrl
@@ -97,7 +100,7 @@ router.get(
 // Phase 12 (E12) — Land ownership evidence (08_API_Documentation §10.13). The document bytes use
 // the EXISTING private presigned /upload pipeline; these routes attach an owned, stored upload to
 // the claim and expose owner-scoped reads. The attach mutation reuses evidenceLimiter (per-user,
-// matching the claim-evidence surface); the GETs are unmetered like the other read endpoints.
+// matching the claim-evidence surface); the GETs use the read bucket like the other claim reads.
 router.post(
   "/:claimId/ownership",
   evidenceLimiter,
@@ -105,9 +108,10 @@ router.post(
   validate(ownershipBody),
   submitOwnershipEvidence
 );
-router.get("/:claimId/ownership", validate(claimParams, "params"), listOwnershipEvidence);
+router.get("/:claimId/ownership", claimReadLimiter, validate(claimParams, "params"), listOwnershipEvidence);
 router.get(
   "/:claimId/ownership/:evidenceId/url",
+  claimReadLimiter,
   validate(ownershipEvidenceParams, "params"),
   getOwnershipDocumentUrl
 );

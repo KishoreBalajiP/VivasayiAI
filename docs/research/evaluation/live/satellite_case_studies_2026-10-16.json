@@ -1,0 +1,939 @@
+{
+  "runDate": "2026-10-16",
+  "source": "Copernicus Data Space Ecosystem, Sentinel-2 L2A, Statistical API",
+  "events": [
+    {
+      "id": "south_tn_floods_2023",
+      "kind": "event",
+      "eventDate": "2023-12-18",
+      "label": "Extreme rainfall and floods in southern Tamil Nadu, 17-18 Dec 2023 (Thoothukudi, Tirunelveli)",
+      "source": "Sphere India SitRep 1, TN Flood, 19-12-2023, https://www.sphereindia.org.in/sites/default/files/2023-12/SitRep%201_TN_%20Flood_19-12-23.pdf",
+      "areas": 3
+    },
+    {
+      "id": "cyclone_michaung_2023",
+      "kind": "event",
+      "eventDate": "2023-12-04",
+      "label": "Cyclone Michaung, 4 Dec 2023 (Tiruvallur district)",
+      "source": "Sphere India SitRep 3, Cyclone Michaung, 09-12-2023, https://www.sphereindia.org.in/sites/default/files/2023-12/SitRep3_CycloneMichaung_09-12-23.pdf",
+      "areas": 3
+    },
+    {
+      "id": "cyclone_fengal_2024",
+      "kind": "event",
+      "eventDate": "2024-12-01",
+      "label": "Cyclone Fengal landfall 30 Nov - 1 Dec 2024 (Villupuram district)",
+      "source": "Sphere India SitRep 2, Cyclone Fengal, 09-12-2024, https://www.sphereindia.org.in/sites/default/files/2025-04/SI%20Sitrep-2__cyclone%20Fengal_09-12-2024.pdf",
+      "areas": 3
+    },
+    {
+      "id": "thanjavur_harvest_control_2024",
+      "kind": "control",
+      "eventDate": "2024-02-15",
+      "label": "CONTROL: no reported event; Cauvery delta during the samba paddy harvest season",
+      "source": "Pseudo-event date chosen inside the harvest season to test the seasonal confound; no damage is implied",
+      "areas": 3
+    }
+  ],
+  "cases": [
+    {
+      "event": "south_tn_floods_2023",
+      "kind": "event",
+      "eventDate": "2023-12-18",
+      "centre": [
+        77.905,
+        8.635
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2023-11-08T00:00:00.000Z",
+          "end": "2023-12-13T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2023-12-19T00:00:00.000Z",
+          "end": "2024-01-07T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 4047,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 11,
+      "sceneCloudFractions": [
+        0.8375,
+        0.5306000000000001,
+        0.685,
+        0.5283,
+        1,
+        0.861,
+        0.8266
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.058241958804428486,
+          "validPixelFraction": 1,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2023-11-09",
+              "ndvi": 0.0582,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.16665189806371924,
+          "validPixelFraction": 0.72,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2024-01-03",
+              "ndvi": 0.1667,
+              "validPixelFraction": 0.72
+            }
+          ]
+        },
+        "deltaNdvi": 0.10840993925929077,
+        "analysisOutcome": "NO_CHANGE",
+        "reasons": [
+          "no_ndvi_drop_beyond_threshold"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    },
+    {
+      "event": "south_tn_floods_2023",
+      "kind": "event",
+      "eventDate": "2023-12-18",
+      "centre": [
+        77.935,
+        8.62
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2023-11-08T00:00:00.000Z",
+          "end": "2023-12-13T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2023-12-19T00:00:00.000Z",
+          "end": "2024-01-07T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 2019,
+      "outcome": "INCONCLUSIVE",
+      "evidenceStatus": "INSUFFICIENT",
+      "processingStatus": "inconclusive",
+      "scenes": 11,
+      "sceneCloudFractions": [
+        0.8375,
+        0.5306000000000001,
+        0.685,
+        0.5283,
+        1,
+        0.861,
+        0.8266
+      ],
+      "analysis": null,
+      "requestCount": 5,
+      "notes": [
+        "Processing returned no usable statistics (post-event window: no valid statistics in Statistical API response)."
+      ]
+    },
+    {
+      "event": "south_tn_floods_2023",
+      "kind": "event",
+      "eventDate": "2023-12-18",
+      "centre": [
+        77.96,
+        8.6
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2023-11-08T00:00:00.000Z",
+          "end": "2023-12-13T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2023-12-19T00:00:00.000Z",
+          "end": "2024-01-07T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 2439,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 11,
+      "sceneCloudFractions": [
+        0.8375,
+        0.5306000000000001,
+        0.685,
+        0.5283,
+        1,
+        0.861,
+        0.8266
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.6142902038246393,
+          "validPixelFraction": 1,
+          "sampleCount": 200,
+          "intervals": 2,
+          "series": [
+            {
+              "date": "2023-11-09",
+              "ndvi": 0.4439,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2023-12-04",
+              "ndvi": 0.7847,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.5940708807110785,
+          "validPixelFraction": 1,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2024-01-03",
+              "ndvi": 0.5941,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "deltaNdvi": -0.020219323113560783,
+        "analysisOutcome": "NO_CHANGE",
+        "reasons": [
+          "no_ndvi_drop_beyond_threshold"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    },
+    {
+      "event": "cyclone_michaung_2023",
+      "kind": "event",
+      "eventDate": "2023-12-04",
+      "centre": [
+        80.15,
+        13.3
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2023-10-25T00:00:00.000Z",
+          "end": "2023-11-29T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2023-12-05T00:00:00.000Z",
+          "end": "2023-12-24T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 2424,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 18,
+      "sceneCloudFractions": [
+        0.7572,
+        0.6433,
+        0.9501999999999999,
+        0.8251999999999999,
+        0.9065000000000001,
+        0.038599999999999995,
+        0.3933,
+        0.35090000000000005,
+        0.4919,
+        0.4495
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.09254208236932754,
+          "validPixelFraction": 1,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2023-11-06",
+              "ndvi": 0.0925,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.5490421837195751,
+          "validPixelFraction": 0.8,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2023-12-11",
+              "ndvi": 0.549,
+              "validPixelFraction": 0.8
+            }
+          ]
+        },
+        "deltaNdvi": 0.4565001013502476,
+        "analysisOutcome": "NO_CHANGE",
+        "reasons": [
+          "no_ndvi_drop_beyond_threshold"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    },
+    {
+      "event": "cyclone_michaung_2023",
+      "kind": "event",
+      "eventDate": "2023-12-04",
+      "centre": [
+        80.18,
+        13.35
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2023-10-25T00:00:00.000Z",
+          "end": "2023-11-29T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2023-12-05T00:00:00.000Z",
+          "end": "2023-12-24T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 2539,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 11,
+      "sceneCloudFractions": [
+        0.7572,
+        0.9501999999999999,
+        0.9065000000000001,
+        0.3933,
+        0.4919,
+        0.42450000000000004,
+        0.4057
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.3818584630638362,
+          "validPixelFraction": 1,
+          "sampleCount": 200,
+          "intervals": 2,
+          "series": [
+            {
+              "date": "2023-11-01",
+              "ndvi": 0.5179,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2023-11-06",
+              "ndvi": 0.2458,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.692267000824213,
+          "validPixelFraction": 1,
+          "sampleCount": 200,
+          "intervals": 2,
+          "series": [
+            {
+              "date": "2023-12-06",
+              "ndvi": 0.5639,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2023-12-11",
+              "ndvi": 0.8206,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "deltaNdvi": 0.3104085377603768,
+        "analysisOutcome": "NO_CHANGE",
+        "reasons": [
+          "no_ndvi_drop_beyond_threshold"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    },
+    {
+      "event": "cyclone_michaung_2023",
+      "kind": "event",
+      "eventDate": "2023-12-04",
+      "centre": [
+        80.12,
+        13.25
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2023-10-25T00:00:00.000Z",
+          "end": "2023-11-29T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2023-12-05T00:00:00.000Z",
+          "end": "2023-12-24T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 3336,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 18,
+      "sceneCloudFractions": [
+        0.7572,
+        0.6433,
+        0.9501999999999999,
+        0.8251999999999999,
+        0.9065000000000001,
+        0.038599999999999995,
+        0.3933,
+        0.35090000000000005,
+        0.4919,
+        0.4495
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": -0.037071172238850016,
+          "validPixelFraction": 0.82,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2023-11-06",
+              "ndvi": -0.0371,
+              "validPixelFraction": 0.82
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.5252331079528579,
+          "validPixelFraction": 0.53,
+          "sampleCount": 200,
+          "intervals": 2,
+          "series": [
+            {
+              "date": "2023-12-06",
+              "ndvi": 0.3459,
+              "validPixelFraction": 0.06
+            },
+            {
+              "date": "2023-12-11",
+              "ndvi": 0.536,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "deltaNdvi": 0.562304280191708,
+        "analysisOutcome": "INCONCLUSIVE",
+        "reasons": [
+          "post_event_too_few_valid_pixels"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    },
+    {
+      "event": "cyclone_fengal_2024",
+      "kind": "event",
+      "eventDate": "2024-12-01",
+      "centre": [
+        79.43,
+        11.905
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2024-10-22T00:00:00.000Z",
+          "end": "2024-11-26T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2024-12-02T00:00:00.000Z",
+          "end": "2024-12-21T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 2578,
+      "outcome": "INCONCLUSIVE",
+      "evidenceStatus": "INSUFFICIENT",
+      "processingStatus": "inconclusive",
+      "scenes": 11,
+      "sceneCloudFractions": [
+        0.9965999999999999,
+        0.838,
+        0.9102,
+        0.3378,
+        0.2273,
+        0.5864,
+        0.0001
+      ],
+      "analysis": null,
+      "requestCount": 5,
+      "notes": [
+        "Processing returned no usable statistics (post-event window: no valid statistics in Statistical API response)."
+      ]
+    },
+    {
+      "event": "cyclone_fengal_2024",
+      "kind": "event",
+      "eventDate": "2024-12-01",
+      "centre": [
+        79.56,
+        11.96
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2024-10-22T00:00:00.000Z",
+          "end": "2024-11-26T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2024-12-02T00:00:00.000Z",
+          "end": "2024-12-21T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 1986,
+      "outcome": "INCONCLUSIVE",
+      "evidenceStatus": "INSUFFICIENT",
+      "processingStatus": "inconclusive",
+      "scenes": 11,
+      "sceneCloudFractions": [
+        0.9965999999999999,
+        0.838,
+        0.9102,
+        0.3378,
+        0.2273,
+        0.5864,
+        0.0001
+      ],
+      "analysis": null,
+      "requestCount": 5,
+      "notes": [
+        "Processing returned no usable statistics (post-event window: no valid statistics in Statistical API response)."
+      ]
+    },
+    {
+      "event": "cyclone_fengal_2024",
+      "kind": "event",
+      "eventDate": "2024-12-01",
+      "centre": [
+        79.38,
+        11.85
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2024-10-22T00:00:00.000Z",
+          "end": "2024-11-26T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2024-12-02T00:00:00.000Z",
+          "end": "2024-12-21T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 2080,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 11,
+      "sceneCloudFractions": [
+        0.9965999999999999,
+        0.838,
+        0.9102,
+        0.3378,
+        0.2273,
+        0.5864,
+        0.0001
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.6234441459078917,
+          "validPixelFraction": 0.9933333333333333,
+          "sampleCount": 300,
+          "intervals": 3,
+          "series": [
+            {
+              "date": "2024-10-26",
+              "ndvi": 0.6516,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-11-05",
+              "ndvi": 0.5084,
+              "validPixelFraction": 0.98
+            },
+            {
+              "date": "2024-11-10",
+              "ndvi": 0.708,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.6534432566165923,
+          "validPixelFraction": 1,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2024-12-20",
+              "ndvi": 0.6534,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "deltaNdvi": 0.02999911070870065,
+        "analysisOutcome": "NO_CHANGE",
+        "reasons": [
+          "no_ndvi_drop_beyond_threshold"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    },
+    {
+      "event": "thanjavur_harvest_control_2024",
+      "kind": "control",
+      "eventDate": "2024-02-15",
+      "centre": [
+        79.2,
+        10.8
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2024-01-06T00:00:00.000Z",
+          "end": "2024-02-10T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2024-02-16T00:00:00.000Z",
+          "end": "2024-03-06T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 11843,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 20,
+      "sceneCloudFractions": [
+        0.3311,
+        0.2838,
+        0.3447,
+        0.5095000000000001,
+        0.4744,
+        0.5123,
+        0.4715,
+        0.34130000000000005,
+        0.2152,
+        0.314
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.736515929663418,
+          "validPixelFraction": 0.755,
+          "sampleCount": 400,
+          "intervals": 4,
+          "series": [
+            {
+              "date": "2024-01-15",
+              "ndvi": 0.4223,
+              "validPixelFraction": 0.32
+            },
+            {
+              "date": "2024-01-25",
+              "ndvi": 0.7087,
+              "validPixelFraction": 0.8
+            },
+            {
+              "date": "2024-01-30",
+              "ndvi": 0.8368,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-02-04",
+              "ndvi": 0.7615,
+              "validPixelFraction": 0.9
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.4915066606551406,
+          "validPixelFraction": 1,
+          "sampleCount": 200,
+          "intervals": 2,
+          "series": [
+            {
+              "date": "2024-02-24",
+              "ndvi": 0.5252,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-02-29",
+              "ndvi": 0.4578,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "deltaNdvi": -0.24500926900827735,
+        "analysisOutcome": "SUPPORTS_LOSS",
+        "reasons": [
+          "ndvi_dropped_beyond_threshold"
+        ]
+      },
+      "requestCount": 6,
+      "notes": []
+    },
+    {
+      "event": "thanjavur_harvest_control_2024",
+      "kind": "control",
+      "eventDate": "2024-02-15",
+      "centre": [
+        79.3,
+        10.85
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2024-01-06T00:00:00.000Z",
+          "end": "2024-02-10T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2024-02-16T00:00:00.000Z",
+          "end": "2024-03-06T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 4125,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 18,
+      "sceneCloudFractions": [
+        0.3311,
+        0.2838,
+        0.34130000000000005,
+        0.2152,
+        0.33409999999999995,
+        0.5197999999999999,
+        0.42100000000000004,
+        0.20879999999999999,
+        0.7276,
+        0.9256
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.30715764676531154,
+          "validPixelFraction": 1,
+          "sampleCount": 300,
+          "intervals": 3,
+          "series": [
+            {
+              "date": "2024-01-20",
+              "ndvi": 0.3679,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-01-30",
+              "ndvi": 0.3395,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-02-09",
+              "ndvi": 0.2141,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.23792953049143156,
+          "validPixelFraction": 1,
+          "sampleCount": 300,
+          "intervals": 3,
+          "series": [
+            {
+              "date": "2024-02-19",
+              "ndvi": 0.2329,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-02-24",
+              "ndvi": 0.2272,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-03-05",
+              "ndvi": 0.2537,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "deltaNdvi": -0.06922811627387998,
+        "analysisOutcome": "NO_CHANGE",
+        "reasons": [
+          "no_ndvi_drop_beyond_threshold"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    },
+    {
+      "event": "thanjavur_harvest_control_2024",
+      "kind": "control",
+      "eventDate": "2024-02-15",
+      "centre": [
+        79.1,
+        10.75
+      ],
+      "areaSideMetres": 100,
+      "windows": {
+        "preWindow": {
+          "start": "2024-01-06T00:00:00.000Z",
+          "end": "2024-02-10T00:00:00.000Z"
+        },
+        "postWindow": {
+          "start": "2024-02-16T00:00:00.000Z",
+          "end": "2024-03-06T00:00:00.000Z"
+        },
+        "postWindowOpen": true,
+        "postWindowComplete": true,
+        "reopensAt": null
+      },
+      "latencyMs": 2309,
+      "outcome": "ANALYSIS_COMPLETE",
+      "evidenceStatus": "AVAILABLE",
+      "processingStatus": "executed",
+      "scenes": 12,
+      "sceneCloudFractions": [
+        0.5123,
+        0.4715,
+        0.26839999999999997,
+        0.1776,
+        0.37479999999999997,
+        0.9932,
+        0.35969999999999996,
+        0.9934000000000001
+      ],
+      "analysis": {
+        "method": "per-pixel-mean-scl-masked",
+        "before": {
+          "ndvi": 0.2674060853965142,
+          "validPixelFraction": 0.34,
+          "sampleCount": 100,
+          "intervals": 1,
+          "series": [
+            {
+              "date": "2024-02-04",
+              "ndvi": 0.2674,
+              "validPixelFraction": 0.34
+            }
+          ]
+        },
+        "after": {
+          "ndvi": 0.47279550374191714,
+          "validPixelFraction": 0.935,
+          "sampleCount": 400,
+          "intervals": 4,
+          "series": [
+            {
+              "date": "2024-02-19",
+              "ndvi": 0.4836,
+              "validPixelFraction": 0.92
+            },
+            {
+              "date": "2024-02-24",
+              "ndvi": 0.4926,
+              "validPixelFraction": 0.82
+            },
+            {
+              "date": "2024-02-29",
+              "ndvi": 0.4889,
+              "validPixelFraction": 1
+            },
+            {
+              "date": "2024-03-05",
+              "ndvi": 0.4305,
+              "validPixelFraction": 1
+            }
+          ]
+        },
+        "deltaNdvi": 0.20538941834540292,
+        "analysisOutcome": "INCONCLUSIVE",
+        "reasons": [
+          "pre_event_too_few_valid_pixels"
+        ]
+      },
+      "requestCount": 5,
+      "notes": []
+    }
+  ],
+  "resolutionCheck": {
+    "production": {
+      "ok": true,
+      "method": "per-pixel-mean-scl-masked",
+      "sampleCount": 400,
+      "intervals": 4,
+      "ndvi": 0.7287825522705529,
+      "validPixelFraction": 0.78,
+      "reason": null
+    },
+    "pocRequest": {
+      "httpStatus": 400,
+      "intervalsReturned": null,
+      "sampleCountPerInterval": null,
+      "parsed": null,
+      "error": "Output dataMask requested but missing from function setup()"
+    }
+  }
+}

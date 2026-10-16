@@ -33,7 +33,7 @@ The claim response now includes `claimantRelationship` (`null` when not given). 
 | `components` | Per-component status (below), or `null` for claims decided before this change. |
 | `policyId`, `policyHash` | Which rules produced the decision. `policyId` is `"legacy"` for older decisions. |
 
-When `held` is true, `outcome` and `state` are `null`. Do not show "rejected" or "approved".
+When `held` is true, `outcome` and `decision` on the `/verify` response are `null`, and `assessment.state` inside `GET /claims/:id` is `null`. The `/verify` response has no `state` field; its `claimState` is the claim state, `submitted`. A claim held after a resubmission no longer carries the previous round's decision (fixed 16 October 2026). Do not show "rejected" or "approved".
 
 **`components`** is an object keyed by `parcel_identity`, `claimant_rights`, `land_documents`, `geometry`, `crop`,
 `satellite`, `photos`, `weather`, `overlap`, `manual_review`. Each value:
@@ -85,6 +85,8 @@ means "slow down"; the write limit is unchanged.
   farmer's own document and returns `409` if no document has been examined. Official records are not available, so
   expect `unavailable`, not a match.
 - `GET /claims/:id/ownership` lists only documents the farmer attached (not automated review cases).
+- Ownership documents are attached with `POST /claims/:id/ownership` `{ uploadId, documentCategory? }`. The `uploadId` comes from the generic `/upload/presign` → PUT → `/upload/:uploadId/complete` flow, which accepts **JPEG, PNG and WebP only**: a PDF land record must be photographed or scanned to an image. These uploads count against the same per-user upload limit as chat images. `documentCategory` is one of `land_record`, `ownership_deed`, `lease_agreement`, `authorization_letter`, `tax_receipt`, `identity_proof`, `other`. The category decides whether the claimant relationship's required documents are present, so send it.
+- `GET /claims/:id/appeal` returns `200 { appeal: null }` when there is no appeal, and also for a claim that is not the caller's. It never reveals another farmer's appeal.
 
 ## 4. Chat
 
@@ -107,7 +109,10 @@ means "slow down"; the write limit is unchanged.
 - `POST /chatsessions/:id/message` accepts the same senders as before, but messages with sender `ai` or `system`
   are stored as client-authored and are **not replayed to the model** as earlier assistant turns. Do not rely on
   appending assistant messages to influence later answers.
-- Image diagnosis is unchanged except that it now uses the farmer's district, weather and forecast.
+- Image diagnosis is unchanged except that it now uses the farmer's district, weather and forecast. Image turns do **not** accept `parcelId` and return no `sources` or `meta`.
+
+### 4.4 Errors
+- `503` with "AI service is busy. Please try again later." means the model provider refused the call for quota or overload. It is not a timeout and not a fault in the request. Show a "try again in a few minutes" message and do not retry immediately. Before 16 October 2026 this case reached the client as a `500` "did not respond in time".
 
 ## 5. Auth (**Behaviour change**)
 `POST /auth/google` now returns distinct statuses instead of always `500`:
@@ -138,6 +143,6 @@ Other status changes: oversized JSON bodies return `413` and unsupported encodin
 
 ## 7. Not available, so do not build UI that assumes it
 - Official government land-record verification.
-- Live satellite verification (built, not yet run against the live service).
+- Satellite evidence as a decision input. It now runs live (16 October 2026 case studies), but it is supporting-only and uncalibrated: a harvest produced a false "supports loss". Never present it to the farmer as proof.
 - Soil data (the assistant recommends a soil test).
 - Text-to-speech or speech recognition on the backend.

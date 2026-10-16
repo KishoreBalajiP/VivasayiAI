@@ -251,4 +251,27 @@ describe("verification policy v2-components — required-component gate end to e
     expect(assessment.state).toBeNull();
   });
 
+  it("HD-9: a claim held after resubmission reports no decision, not the previous round's", async () => {
+    // Round 1: no ownership evidence -> more_evidence_required. The farmer adds a land record and
+    // resubmits; round 2 holds for review. The stale round-1 state must not survive on the hold.
+    const { user, claimId } = await seedSubmittedClaimWithPhoto("resubmit");
+    expect(decisionOf(await verify(user, claimId)).claimState).toBe("more_evidence_required");
+    await attachOwnershipDocument(user, claimId);
+    expect((await api().post(`/claims/${claimId}/resubmit`).set(authHeader(user))).status).toBe(200);
+
+    const data = decisionOf(await verify(user, claimId));
+    expect(data.held).toBe(true);
+    expect(data.claimState).toBe("submitted");
+    expect(data.outcome).toBeNull();
+    expect(data.decision).toBeNull();
+    expect(data.approvedAreaAcres).toBeNull();
+
+    const stored = await ClaimAssessment.findOne({ claimId });
+    expect(stored.state).toBeNull();
+    expect(stored.decidedAt).toBeNull();
+    const detail = await api().get(`/claims/${claimId}`).set(authHeader(user));
+    expect(detail.body.data.claim.assessment.state).toBeNull();
+    // The round-1 decision is still on the audit trail.
+    expect(await ClaimAudit.countDocuments({ claimId, toState: "more_evidence_required" })).toBeGreaterThanOrEqual(1);
+  });
 });
