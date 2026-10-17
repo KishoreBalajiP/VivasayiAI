@@ -2,6 +2,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
 import { withAiTimeout, AiTimeoutError, isProviderLimitError } from "../utils/aiTimeout.js";
+import { classifyProviderError, logProviderError, ProviderError, PROVIDER_ERROR_KINDS } from "../utils/providerErrors.js";
 import ImageRecord from "../models/ImageRecord.js";
 import ChatSession from "../models/ChatSession.js";
 import { env } from "../config/env.js";
@@ -171,6 +172,12 @@ const generateImageResponse = async ({
         }
         if (isProviderLimitError(err)) {
           throw ApiError.serviceUnavailable("AI service is busy. Please try again later.");
+        }
+        // Rejected or missing key: 503 "temporarily unavailable", logged for an operator.
+        if (classifyProviderError(err) === PROVIDER_ERROR_KINDS.AUTH_CONFIG) {
+          const authError = new ProviderError({ kind: PROVIDER_ERROR_KINDS.AUTH_CONFIG, provider: "gemini", operation: "image.reason_generate", httpStatus: err?.status ?? null });
+          logProviderError(logger, authError, { conversationId });
+          throw authError;
         }
         throw err;
       });

@@ -1,4 +1,4 @@
-import { COMPONENTS } from "../config/verificationPolicy.js";
+import { COMPONENTS, policySetting } from "../config/verificationPolicy.js";
 import { evaluateAiCheck } from "./claimVerificationEngine.service.js";
 import { missingCategoryGroups } from "../config/claimantEvidence.js";
 
@@ -25,7 +25,7 @@ const time = (row) => new Date(row.createdAt || row.updatedAt || 0).getTime();
 const newestFirst = (rows) => [...rows].sort((a, b) => time(b) - time(a));
 const keyOf = (row) => String(row.idempotencyKey || "");
 
-const isReviewCase = (row) =>
+export const isReviewCase = (row) =>
   (row.metadata && (row.metadata.kind === "review_case" || row.metadata.reviewRequired === true)) ||
   KEY.reviewCase.some((prefix) => keyOf(row).startsWith(prefix));
 const isDocument = (row) => row.source === "OWNERSHIP" && keyOf(row).startsWith(KEY.document);
@@ -77,7 +77,11 @@ const resolvePhotos = ({ claim, assessment, evidenceCount, policy }) => {
     case "no_evidence":
       return entry("unverified", { actionableBy: "farmer", reasonCodes: ["no_photographs"] });
     case "assessment_unavailable": {
-      const failed = assessment && assessment.verification && assessment.verification.status === "failed";
+      // Under `technicalFailure: "hold"` (v1.1) a failed AI assessment is a provider failure too, so
+      // the photo check is `unavailable` rather than still `pending`.
+      const failed =
+        (assessment && assessment.verification && assessment.verification.status === "failed") ||
+        (policySetting(policy, "technicalFailure") === "hold" && assessment && assessment.status === "failed");
       return entry(failed ? "unavailable" : "pending", { reasonCodes: [failed ? "ai_assessment_failed" : "ai_assessment_pending"] });
     }
     case "no_damage_confident":
@@ -255,8 +259,10 @@ export const groupEvidence = (rows = []) => {
     documents: list.filter((row) => isDocument(row) && !isReviewCase(row)),
     officialRecords: list.filter((row) => isOfficialRecord(row)),
     reviewRows: list.filter((row) => isReviewCase(row)),
-    satelliteRows: list.filter((row) => row.source === "SATELLITE"),
-    weatherRows: list.filter((row) => row.source === "WEATHER"),
+    // A review case labelled SATELLITE or WEATHER (a dead job's case) is a question for a person,
+    // not a satellite or weather reading: it must never be read as one.
+    satelliteRows: list.filter((row) => row.source === "SATELLITE" && !isReviewCase(row)),
+    weatherRows: list.filter((row) => row.source === "WEATHER" && !isReviewCase(row)),
   };
 };
 
@@ -294,4 +300,4 @@ export const resolveComponents = ({
   return resolved;
 };
 
-export default { resolveComponents, groupEvidence };
+export default { resolveComponents, groupEvidence, isReviewCase };

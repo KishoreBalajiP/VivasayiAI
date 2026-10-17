@@ -83,9 +83,11 @@ export const createAppealForUser = async ({
   return { appeal: serializeAppeal(appeal), idempotent: false };
 };
 
+// Owner-scoped like every claim read: another farmer's (or an unknown) claim is a 404, not an empty
+// "no appeal" answer (ADR-022 authorisation sweep, AZ-1). The owner still gets null when there is none.
 export const getAppealForUser = async ({ cognitoSub, claimId }) => {
   const claim = await findOwned(cognitoSub, claimId);
-  if (!claim) return null;
+  if (!claim) throw ApiError.notFound("Claim not found");
   const appeal = await Appeal.findOne({ claimId: claim._id }).sort({ createdAt: -1 });
   if (!appeal) return null;
   return serializeAppeal(appeal);

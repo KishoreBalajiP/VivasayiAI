@@ -1,7 +1,8 @@
-import { writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isolateSharedInfrastructure, instrumentModel, readUsage, redact, stats, tamilRatio, gitInfo, PRICING, isQuotaError } from "./lib/liveCommon.js";
+import { ResultExistsError, writeJsonOnce, writeResultOnce } from "./lib/writeOnce.js";
 
 // Live chat evaluation: the chat golden set (scripts/eval/chatContext.eval.js) run through the REAL
 // pipeline with the live Gemini model, Cohere + production Chroma retrieval (read-only) and live
@@ -13,6 +14,8 @@ import { isolateSharedInfrastructure, instrumentModel, readUsage, redact, stats,
 // MongoDB Atlas and S3 are never contacted (see lib/liveCommon.js isolateSharedInfrastructure).
 //
 // Usage: node scripts/live/chatContext.live.js --date=2026-10-16 [--limit=N] [--no-judge]
+// Results are write-once (scripts/live/lib/writeOnce.js): the run refuses to start when its result or
+// progress file for that date already exists, so an earlier run is never overwritten.
 
 isolateSharedInfrastructure();
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -20,6 +23,17 @@ const arg = (name) => { const a = process.argv.find((x) => x.startsWith(`--${nam
 const date = arg("date") || new Date().toISOString().slice(0, 10);
 const limit = arg("limit") ? Number(arg("limit")) : null;
 const useJudge = !process.argv.includes("--no-judge");
+const outDir = join(root, "docs", "research", "evaluation", "live");
+const suffix = limit ? `_limit${limit}` : "";
+const resultPaths = [`chat_context_live_${date}${suffix}.json`, `chat_context_live_${date}${suffix}.md`, `chat_context_live_${date}${suffix}.rows.partial.json`].map((name) => join(outDir, name));
+// Checked before any model call so a duplicate run spends no quota.
+for (const path of resultPaths) {
+  if (existsSync(path)) {
+    const error = new ResultExistsError(path);
+    console.error(error.message);
+    process.exit(error.exitCode);
+  }
+}
 
 const mongoose = (await import("mongoose")).default;
 const { MongoMemoryServer } = await import("mongodb-memory-server");
@@ -182,7 +196,7 @@ const runFull = async (item, sub) => {
 
 const rows = [];
 let quotaStop = null;
-const partialPath = join(root, "docs", "research", "evaluation", "live", `chat_context_live_${date}${limit ? `_limit${limit}` : ""}.rows.partial.json`);
+const partialPath = resultPaths[2];
 for (const [index, item] of items.entries()) {
   const sub = await makeUser(item.archetype);
   const spec = specification({ archetype: item.archetype, question: item.question, parcelId: item.parcelId, requestDistrict: item.requestDistrict });
@@ -199,9 +213,11 @@ for (const [index, item] of items.entries()) {
     }
   }
   rows.push(row);
-  // Persist after every item so an interrupted run (quota, crash) keeps what it measured.
-  mkdirSync(dirname(partialPath), { recursive: true });
-  writeFileSync(partialPath, `${JSON.stringify({ date, status: "in_progress", rows }, null, 2)}\n`);
+  // Persist after every item so an interrupted run (quota, crash) keeps what it measured. The progress
+  // file is created write-once on the first item and then rewritten only by this run.
+  const progress = `${JSON.stringify({ date, status: "in_progress", rows }, null, 2)}\n`;
+  if (rows.length === 1) writeResultOnce(partialPath, progress);
+  else writeFileSync(partialPath, progress);
   process.stderr.write(`${item.id} ${item.archetype} ${item.lang} done (model calls so far: ${calls.length})\n`);
   const quotaFailure = calls.find((c) => !c.ok && isQuotaError(c.error));
   if (quotaFailure) { quotaStop = { afterItem: item.id, error: quotaFailure.error }; process.stderr.write("Gemini quota/rate-limit error: stopping (no further retries)\n"); break; }
@@ -332,10 +348,7 @@ const result = {
   ],
 };
 
-const outDir = join(root, "docs", "research", "evaluation", "live");
-mkdirSync(outDir, { recursive: true });
-const suffix = limit ? `_limit${limit}` : "";
-writeFileSync(join(outDir, `chat_context_live_${date}${suffix}.json`), `${JSON.stringify(result, null, 2)}\n`);
+writeJsonOnce(resultPaths[0], result);
 
 const b = result.baseline; const f = result.full;
 const pct = (x) => (x.value === null ? "n/a" : `${(x.value * 100).toFixed(1)}% (${x.k}/${x.n})`);
@@ -383,7 +396,7 @@ Cost: ${PRICING.source}; input $${PRICING.inputUsdPerMTok}/1M, output incl. thin
 
 Limitations: ${result.limitations.join(" ")}
 `;
-writeFileSync(join(outDir, `chat_context_live_${date}${suffix}.md`), md);
+writeResultOnce(resultPaths[1], md);
 console.log(md);
 await mongoose.disconnect();
 await mongo.stop();

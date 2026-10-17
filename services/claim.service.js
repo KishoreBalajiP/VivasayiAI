@@ -3,9 +3,11 @@ import LossClaim from "../models/LossClaim.js";
 import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
 import { validateParcelGeometry } from "./parcelGeometry.service.js";
-import { canTransition, applyTransition } from "./claimState.service.js";
+import { canTransition } from "./claimState.service.js";
 import ApiError from "../utils/ApiError.js";
+import logger from "../utils/logger.js";
 import { env } from "../config/env.js";
+import { cancelJobsForClaim } from "./verificationJobs.service.js";
 
 // F-49 (ADR-019) — claim lifecycle service. Ownership is scoped by the authenticated cognitoSub
 // at every step (E1-S5/D-35). Probe, documented invariants:
@@ -83,7 +85,11 @@ const serializeAssessment = (assessment) => ({
       : [],
   components: assessment.components || null,
   policyId: assessment.policy && assessment.policy.id ? assessment.policy.id : "legacy",
-  policyHash: assessment.policy && assessment.policy.hash ? assessment.policy.hash : null,
+  // ADR-022 (farmer audience): this serializer feeds only the farmer's own claim reads
+  // (GET /claims/:id, GET /claims/:id/verification). The policy id says which rules decided; the hash
+  // is an internal reproducibility detail and stays on the reviewer's side (admin views use their own
+  // serializer, services/admin.service.js, and the verification diagnostics).
+  policyHash: null,
 });
 
 // Shared by the evidence service for ownership-scoped claim lookups.
@@ -207,16 +213,46 @@ export const getForUser = async (cognitoSub, claimId) => {
   return serializeClaim(claim, assessment ? serializeAssessment(assessment) : null);
 };
 
+// ADR-022: the round's verification plan is written INSIDE the request (awaited), so the job rows
+// exist before the response is sent. A failure is a 503 for the client to retry: the claim is
+// already saved, and the retry re-runs the (idempotent) plan. Nothing is queued when automated
+// verification is off.
+const schedulePlan = async ({ claimId, cognitoSub, requestId, trigger }) => {
+  if (!env.claimAutomatedVerificationEnabled) return [];
+  const { scheduleAutomatedVerification } = await import("./claimVerificationPipeline.service.js");
+  return scheduleAutomatedVerification({ claimId, cognitoSub, requestId, trigger });
+};
+
+// A claim that has been submitted at least once and has since moved on from `submitted` (the worker
+// decided it, or it waits for more evidence). A repeated submit for it is the same request arriving
+// late, typically the browser's automatic retry of a submit whose answer was lost while the worker
+// decided the claim within the retry delay (found by e2e E2E-03). A withdrawn claim is not included:
+// withdrawing is the farmer's own later choice, and submitting it stays a 409.
+export const wasSubmittedAndMovedOn = (claim) =>
+  Boolean(claim) &&
+  !["draft", "submitted", "withdrawn"].includes(claim.state) &&
+  (Number(claim.submissionRound) >= 1 || Boolean(claim.firstSubmittedAt) || Boolean(claim.submittedAt));
+
 export const submitForUser = async ({ cognitoSub, claimId, requestId = null }) => {
   const claim = await LossClaim.findOne({ _id: claimId, cognitoSub });
   if (!claim) throw ApiError.notFound("Claim not found");
 
-  // Safe repeated submission: an already-submitted claim returns as-is (no duplicate audit).
-  if (claim.state === "submitted") return { claim: serializeClaim(claim), idempotent: true };
+  // Safe repeated submission: an already-submitted claim returns as-is (no duplicate audit). Its plan
+  // is ensured again, which recovers a plan an earlier request could not write.
+  if (claim.state === "submitted") {
+    await schedulePlan({ claimId: claim._id, cognitoSub, requestId, trigger: "submit_retry" });
+    return { claim: serializeClaim(claim), idempotent: true };
+  }
+
+  // The same repeated submission after the round was already decided: answered as idempotent with the
+  // claim as it now stands. Nothing is written and nothing is planned (the round's plan has run).
+  if (wasSubmittedAndMovedOn(claim)) {
+    return { claim: serializeClaim(claim), idempotent: true };
+  }
 
   // Contract says submit = draft → submitted only; a more_evidence_required claim must use the
   // documented resubmit endpoint instead.
-  if (claim.state !== "draft") {
+  if (claim.state !== "draft" || !canTransition(claim.state, "submitted")) {
     throw ApiError.conflict(`Claim can only be submitted from draft state`);
   }
 
@@ -226,37 +262,40 @@ export const submitForUser = async ({ cognitoSub, claimId, requestId = null }) =
   const geometryResult = validateParcelGeometry(claim.claimedGeometry);
   if (!geometryResult.ok) throw ApiError.badRequest(geometryResult.reason);
 
-  const { claim: updated, fromState, toState } = applyTransition({
-    claim,
-    toState: "submitted",
-  });
-  updated.claimedAreaAcres = geometryResult.acres; // server-authoritative, idempotent
-  updated.submittedAt = new Date();
-  await updated.save();
+  // Compare-and-set on the expected state: of any number of concurrent submits exactly one moves the
+  // claim, writes the audit row and builds the plan. `firstSubmittedAt` is the claim-window reference
+  // (a resubmission overwrites `submittedAt`), and `submissionRound` scopes the plan.
+  const now = new Date();
+  const updated = await LossClaim.findOneAndUpdate(
+    { _id: claim._id, cognitoSub, state: "draft" },
+    {
+      $set: { state: "submitted", submittedAt: now, firstSubmittedAt: now, claimedAreaAcres: geometryResult.acres },
+      $inc: { submissionRound: 1 },
+    },
+    { new: true }
+  );
+  if (!updated) {
+    const current = await LossClaim.findOne({ _id: claim._id, cognitoSub });
+    if (current && current.state === "submitted") {
+      await schedulePlan({ claimId: current._id, cognitoSub, requestId, trigger: "submit_retry" });
+      return { claim: serializeClaim(current), idempotent: true };
+    }
+    if (wasSubmittedAndMovedOn(current)) return { claim: serializeClaim(current), idempotent: true };
+    throw ApiError.conflict(`Claim can only be submitted from draft state`);
+  }
 
   await ClaimAudit.create({
     claimId: updated._id,
     actor: "farmer",
     action: "submitted",
-    fromState,
-    toState,
+    fromState: "draft",
+    toState: "submitted",
     reason: "Claim submitted by farmer",
-    metadata: { claimedAreaAcres: updated.claimedAreaAcres },
+    metadata: { claimedAreaAcres: updated.claimedAreaAcres, submissionRound: updated.submissionRound },
     requestId,
   });
 
-  // Phase 15 (automated pipeline): trigger backend-owned verification after successful submission.
-  // Fire-and-forget — the HTTP response returns immediately; results persist as they complete.
-  // Gated by env so tests can disable the background worker while exercising the manual flow.
-  if (env.claimAutomatedVerificationEnabled) {
-    try {
-      const { triggerAutomatedVerification } = await import("./claimVerificationPipeline.service.js");
-      triggerAutomatedVerification(String(updated._id), cognitoSub, requestId);
-    } catch (error) {
-      // Never block submission on orchestration scheduling.
-    }
-  }
-
+  await schedulePlan({ claimId: updated._id, cognitoSub, requestId, trigger: "submit" });
   return { claim: serializeClaim(updated), idempotent: false };
 };
 
@@ -268,28 +307,64 @@ export const withdrawForUser = async ({ cognitoSub, claimId, requestId = null })
     throw ApiError.conflict(`Claim cannot be withdrawn from ${claim.state} state`);
   }
 
-  const { claim: updated, fromState, toState } = applyTransition({
-    claim,
-    toState: "withdrawn",
-  });
-  await updated.save();
+  // Compare-and-set: the engine's own `submitted → processing` lock and a withdrawal can race, and
+  // exactly one of them wins. A claim the engine has locked can no longer be withdrawn.
+  const fromState = claim.state;
+  const updated = await LossClaim.findOneAndUpdate(
+    { _id: claim._id, cognitoSub, state: fromState },
+    { $set: { state: "withdrawn" } },
+    { new: true }
+  );
+  if (!updated) {
+    const current = await LossClaim.findOne({ _id: claim._id, cognitoSub });
+    // A concurrent withdrawal already won: same result, no second audit row.
+    if (current && current.state === "withdrawn") return serializeClaim(current);
+    throw ApiError.conflict(`Claim cannot be withdrawn from ${current ? current.state : claim.state} state`);
+  }
 
   await ClaimAudit.create({
     claimId: updated._id,
     actor: "farmer",
     action: "withdrawn",
     fromState,
-    toState,
+    toState: "withdrawn",
     reason: "Claim withdrawn by farmer",
     requestId,
   });
 
+  // Queued checks for a withdrawn claim would only spend provider calls. A job already running is
+  // stopped by the queue's own withdrawn-claim guard.
+  await cancelJobsForClaim({ claimId: updated._id, reason: "claim_withdrawn" }).catch((error) =>
+    logger.warn({ claimId: String(updated._id), requestId, err: error?.message }, "verification.cancel_failed")
+  );
+
   return serializeClaim(updated);
+};
+
+// B4 (ADR-022): a resubmit whose response was lost (for example a 503 because the plan could not be
+// written) is retried by the client. The claim is then already `submitted` by THAT resubmission, so
+// the retry is answered as idempotent instead of 409. Round 1 is the first submit, so any later
+// round was a resubmission; claims from before `submissionRound` existed are recognised by their
+// latest submission audit row being a `resubmitted` one.
+const lastSubmissionWasResubmit = async (claim) => {
+  if ((claim.submissionRound || 0) >= 2) return true;
+  const latest = await ClaimAudit.findOne({ claimId: claim._id, action: { $in: ["submitted", "resubmitted"] } })
+    .sort({ createdAt: -1, _id: -1 })
+    .select("action metadata")
+    .lean();
+  if (!latest || latest.action !== "resubmitted") return false;
+  const round = latest.metadata && latest.metadata.submissionRound;
+  return round === undefined || round === null || round === claim.submissionRound;
 };
 
 export const resubmitForUser = async ({ cognitoSub, claimId, requestId = null }) => {
   const claim = await LossClaim.findOne({ _id: claimId, cognitoSub });
   if (!claim) throw ApiError.notFound("Claim not found");
+
+  if (claim.state === "submitted" && (await lastSubmissionWasResubmit(claim))) {
+    await schedulePlan({ claimId: claim._id, cognitoSub, requestId, trigger: "resubmit_retry" });
+    return { claim: serializeClaim(claim), idempotent: true };
+  }
 
   // Per P6 resubmission is only ever from more_evidence_required.
   if (claim.state !== "more_evidence_required") {
@@ -308,24 +383,38 @@ export const resubmitForUser = async ({ cognitoSub, claimId, requestId = null })
     throw ApiError.conflict("Claim cannot be resubmitted yet");
   }
 
-  const { claim: updated, fromState, toState } = applyTransition({
-    claim,
-    toState: "submitted",
-  });
-  updated.submittedAt = new Date();
-  await updated.save();
+  // Compare-and-set on the expected state (see submitForUser). `firstSubmittedAt` is left alone: the
+  // claim window is measured at the FIRST submission.
+  const now = new Date();
+  const updated = await LossClaim.findOneAndUpdate(
+    { _id: claim._id, cognitoSub, state: "more_evidence_required" },
+    { $set: { state: "submitted", submittedAt: now }, $inc: { submissionRound: 1 } },
+    { new: true }
+  );
+  if (!updated) {
+    const current = await LossClaim.findOne({ _id: claim._id, cognitoSub });
+    // A concurrent resubmit of the same round won (from more_evidence_required the only way to
+    // `submitted` is a resubmit): this request is its duplicate.
+    if (current && current.state === "submitted" && (current.submissionRound || 0) === (claim.submissionRound || 0) + 1) {
+      await schedulePlan({ claimId: current._id, cognitoSub, requestId, trigger: "resubmit_retry" });
+      return { claim: serializeClaim(current), idempotent: true };
+    }
+    throw ApiError.conflict("Claim can only be resubmitted from more_evidence_required state");
+  }
 
   await ClaimAudit.create({
     claimId: updated._id,
     actor: "farmer",
     action: "resubmitted",
-    fromState,
-    toState,
+    fromState: "more_evidence_required",
+    toState: "submitted",
     reason: "Claim resubmitted with new evidence",
+    metadata: { submissionRound: updated.submissionRound },
     requestId,
   });
 
-  return serializeClaim(updated);
+  await schedulePlan({ claimId: updated._id, cognitoSub, requestId, trigger: "resubmit" });
+  return { claim: serializeClaim(updated), idempotent: false };
 };
 
 export default {

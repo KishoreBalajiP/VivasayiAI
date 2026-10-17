@@ -5,6 +5,9 @@ import fs from "node:fs";
 const SYSTEM_MONGOD_CANDIDATES = [
   "C:\\Program Files\\MongoDB\\Server\\8.0\\bin\\mongod.exe",
   "C:\\Program Files\\MongoDB\\Server\\7.0\\bin\\mongod.exe",
+  // macOS Homebrew (Apple silicon, then Intel). Without these a hermetic run would download mongod.
+  "/opt/homebrew/bin/mongod",
+  "/usr/local/bin/mongod",
 ];
 
 for (const candidate of SYSTEM_MONGOD_CANDIDATES) {

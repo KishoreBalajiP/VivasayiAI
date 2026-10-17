@@ -3,6 +3,7 @@ import logger from "../utils/logger.js";
 import VerificationEvidence from "../models/VerificationEvidence.js";
 import { buildVerificationEvidence } from "../utils/verificationEvidence.js";
 import { findOwned } from "./claim.service.js";
+import { classifyProviderError, logProviderError, toProviderError } from "../utils/providerErrors.js";
 
 // Official land-record verification provider abstraction (Phase 15 Phase 3).
 //
@@ -131,6 +132,8 @@ export const queryOfficialLandRecord = async ({ state, district, taluk, village,
         referenceId: null,
         observedAt: new Date().toISOString(),
         reason: `Official land-record provider error (HTTP ${response.status})`,
+        // Provider error kind (utils/providerErrors.js), additive: tells a quota refusal from a defect.
+        reasonCode: classifyProviderError({ status: response.status }),
       };
     }
     const data = await response.json();
@@ -180,7 +183,8 @@ export const queryOfficialLandRecord = async ({ state, district, taluk, village,
       reason: "Official land-record provider returned unsupported response",
     };
   } catch (error) {
-    logger.error({ err: error }, "Official land-record provider failed");
+    const providerError = toProviderError(error, { provider: "official-land-record", operation: "landrecord.lookup" });
+    logProviderError(logger, providerError);
     return {
       status: "unavailable",
       provider: "official-land-record",
@@ -190,6 +194,7 @@ export const queryOfficialLandRecord = async ({ state, district, taluk, village,
       referenceId: null,
       observedAt: new Date().toISOString(),
       reason: "Official land-record provider unavailable",
+      reasonCode: providerError.kind,
     };
   }
 };

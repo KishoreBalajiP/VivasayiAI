@@ -1,11 +1,17 @@
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
-import { env, validateEnv, SERVER_REQUIRED } from "./config/env.js";
+import { env, validateEnv, assertProductionSafety, SERVER_REQUIRED } from "./config/env.js";
 import logger from "./utils/logger.js";
 import serverless from "serverless-http";
-import { drainDueJobs } from "./services/verificationWorker.service.js";
+import { handleScheduledWorker } from "./services/verificationWorker.service.js";
+import { assertPolicyConfigured } from "./config/verificationPolicy.js";
 
 validateEnv(SERVER_REQUIRED);
+// ADR-024: a production process (NODE_ENV=production or Lambda) refuses to boot with any mock mode or
+// the dev upload receiver configured.
+assertProductionSafety();
+// Fail at boot, not at the first claim, when CLAIM_VERIFICATION_POLICY names an unknown policy.
+assertPolicyConfigured();
 
 // MongoDB connection
 await connectDB();
@@ -21,10 +27,8 @@ if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
 // Lambda server
 export const handler = serverless(app);
 
-// ADR-021: scheduled worker. Point an EventBridge rule (for example every minute) at this handler
-// to run queued verification steps and escalate stale holds without waiting for a request. It is
-// optional: the verify and status endpoints also advance the queue.
-export const worker = async (_event, context) => {
-  const remaining = context && typeof context.getRemainingTimeInMillis === "function" ? context.getRemainingTimeInMillis() : 25000;
-  return drainDueJobs({ deadline: Date.now() + Math.max(0, remaining - 5000) });
-};
+// ADR-021/ADR-022: scheduled worker. An EventBridge rule (infra/verification-worker.yaml, DISABLED
+// until the owner enables it; see docs/engineering/WORKER_RUNBOOK.md) invokes this handler to run
+// queued verification steps and the recovery sweeps without waiting for a request. Each run stops
+// 10 s before its timeout and tags its job logs with the invocation's awsRequestId.
+export const worker = (event, context) => handleScheduledWorker(event, context);

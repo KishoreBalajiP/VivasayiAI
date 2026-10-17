@@ -3,7 +3,10 @@ import pino from "pino";
 
 const EMAIL_PATTERN = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 
-export const maskUrl = (url = "") => url.replace(EMAIL_PATTERN, "<email>");
+// A signed capability in a query string (the dev upload receiver's `sig`, ADR-024) is never logged.
+const SIGNATURE_PARAM = /([?&]sig=)[^&#]*/g;
+
+export const maskUrl = (url = "") => url.replace(EMAIL_PATTERN, "<email>").replace(SIGNATURE_PARAM, "$1<redacted>");
 
 const require = createRequire(import.meta.url);
 

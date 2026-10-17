@@ -5,6 +5,7 @@ import { CloudClient } from "chromadb";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
 import { withAiTimeout, AiTimeoutError, isProviderLimitError, getAiMaxRetries } from "../utils/aiTimeout.js";
+import { classifyProviderError, logProviderError, ProviderError, PROVIDER_ERROR_KINDS } from "../utils/providerErrors.js";
 import ChatSession from "../models/ChatSession.js";
 import { env, validateEnv, CHAT_REQUIRED } from "../config/env.js";
 import { deriveTitle, getForUser } from "./chatSession.service.js";
@@ -52,9 +53,10 @@ const ensureCollection = async () => {
   if (!collectionPromise) {
     collectionPromise = (async () => {
       try {
-        collection = await chromaClient.getCollection({ name: "farming-documents" });
+        const name = (await import("../config/ragConfig.js")).ragCollectionName();
+        collection = await chromaClient.getCollection({ name });
         collectionReady = true;
-        logger.info("Connected to ChromaDB collection: farming-documents");
+        logger.info({ collection: name }, `Connected to ChromaDB collection: ${name}`);
         return collection;
       } catch (error) {
         logger.error({ err: error }, "Failed to connect to ChromaDB collection");
@@ -201,6 +203,13 @@ const generateResponse = async ({ message, chatId, cognitoSub, email, district, 
       if (isProviderLimitError(err)) {
         logger.warn({ conversationId, status: err.status, latencyMs: Date.now() - modelStart }, "chat.text_generate_provider_limit");
         throw ApiError.serviceUnavailable("AI service is busy. Please try again later.");
+      }
+      // A rejected or missing key is an operator problem, not a farmer one: answer 503 "temporarily
+      // unavailable" (logged at error level with operatorAction) instead of a generic 500.
+      if (classifyProviderError(err) === PROVIDER_ERROR_KINDS.AUTH_CONFIG) {
+        const authError = new ProviderError({ kind: PROVIDER_ERROR_KINDS.AUTH_CONFIG, provider: "gemini", operation: "chat.text_generate", httpStatus: err?.status ?? null });
+        logProviderError(logger, authError, { conversationId });
+        throw authError;
       }
       throw err;
     });

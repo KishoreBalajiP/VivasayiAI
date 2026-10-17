@@ -1,6 +1,7 @@
-import { writeFileSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { ResultExistsError, writeJsonOnce } from "./lib/writeOnce.js";
 
 // Live provider connectivity check. READ-ONLY against shared infrastructure:
 //   MongoDB: ping + list collection names and estimated counts (no writes)
@@ -9,10 +10,18 @@ import { fileURLToPath } from "node:url";
 //   Cohere:  one query embedding;  Gemini: one tiny generation;  Copernicus: OAuth token + one catalogue search
 // It never prints credentials, connection strings or object contents. Output: a JSON record of status,
 // latency and counts. Usage: node scripts/live/checkProviders.js --date=YYYY-MM-DD
+// The output is write-once (scripts/live/lib/writeOnce.js): an existing file for the date is never replaced.
 process.env.LOG_LEVEL ||= "silent";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const dateArg = process.argv.find((a) => a.startsWith("--date="));
 const date = dateArg ? dateArg.slice(7) : null;
+const outFile = join(root, "docs", "research", "evaluation", "live", `provider_check${date ? `_${date}` : ""}.json`);
+// Checked before any provider call; writeJsonOnce checks again when writing.
+if (existsSync(outFile)) {
+  const error = new ResultExistsError(outFile);
+  console.error(error.message);
+  process.exit(error.exitCode);
+}
 
 const { env } = await import("../../config/env.js");
 const results = { date, checks: {} };
@@ -59,7 +68,7 @@ await timed("cohere", async () => {
 await timed("chroma", async () => {
   const { CloudClient } = await import("chromadb");
   const client = new CloudClient({ apiKey: env.chromaApiKey, tenant: env.chromaTenant, database: env.chromaDatabase });
-  const collection = await client.getCollection({ name: "farming-documents" });
+  const collection = await client.getCollection({ name: (await import("../../config/ragConfig.js")).ragCollectionName() });
   const count = await collection.count();
   let filenames = [];
   if (queryEmbedding) {
@@ -104,8 +113,6 @@ await timed("copernicus", async () => {
   };
 });
 
-const outDir = join(root, "docs", "research", "evaluation", "live");
-mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, `provider_check${date ? `_${date}` : ""}.json`), `${JSON.stringify(results, null, 2)}\n`);
+writeJsonOnce(outFile, results);
 console.log(JSON.stringify(results, null, 2));
 process.exit(0);

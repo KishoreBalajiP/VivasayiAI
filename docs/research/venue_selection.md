@@ -6,7 +6,7 @@
 
 - **Synthetic, deterministic benchmarks** (`evaluation/results/SUMMARY.md`):
   - Geometry: analytic ground truth, n = 300.
-  - Fusion-gate rule conformance: 192 author-built scenarios. v1 photo-only policy: 10/190 invalid approvals. v2 gate: 0/190.
+  - Fusion-gate rule conformance: 192 author-built scenarios. v1 photo-only policy: 10/190 invalid approvals. v2 gate: 0/190. v1.1-safe-ai (the default as of the change of 2026-10-16, ADR-022): 10/190, so it does not reduce invalid approvals, and 0/2 rejections on the AI reading alone (`evaluation/results/fusion_v1.1_2026-10-16.json`).
   - Chat follow-up decisions: scored against an author-written specification.
   - Name matching: 60 author-labelled pairs, tuned on the same set.
   - NDVI threshold simulation: no imagery.
@@ -22,7 +22,7 @@ This is a **system-design and feasibility paper**, not a validated detector. Rev
 | Fact | Value | Source |
 |---|---|---|
 | Length | No page limit; authors "strongly recommend" under 20 pages. Over 20 pages gets editorial review and may be returned for shortening. Appendices and supplementary material are excluded. | https://ieeeaccess.ieee.org/authors/submission-guidelines/ |
-| Template | Required **IEEE Access template**, double column, single spaced. Word or LaTeX source plus a matching PDF; maximum 40 MB. | same |
+| Template | A **required IEEE Access template**: "double column, single-spaced". "A Word or LaTex file and a PDF file are both required upon submission", and "the content on each file must match exactly". Files must not exceed 40 MB. "Short biographies are required for ALL authors", placed "directly within the article below the references section". The page says nothing about author photos; the template has a no-photo biography option. Page length: see the Length row (under 20 pages strongly recommended). Downloads: LaTeX https://ieeeaccess.ieee.org/wp-content/uploads/2026/05/ACCESS_latex_template_20260513-1-1.zip (class `ieeeaccess.cls`, checked inside the zip; vendored with its SHA-256 in `manuscript/vendor/SOURCE.md`) and Word https://ieeeaccess.ieee.org/wp-content/uploads/2025/08/Access-Template-2024.docx. Re-checked 2026-10-16. | https://ieeeaccess.ieee.org/authors/submission-guidelines/ |
 | Article type | "Applied Research" articles "describe challenges and practical solutions"; "Quantitative results for validation of the approach are expected." | same |
 | APC | **US$2,160** per article plus local taxes. No overlength charges. IEEE member discount 5%; IEEE+Society member 20% (students excluded). There is a low-income-country discount, but the page does not say whether India qualifies. | https://ieeeaccess.ieee.org/about-ieee-access/article-processing-charges/ |
 | Review | **Single-anonymized**; at least 2 reviewers; **binary** accept/reject after review; on average 4 weeks to decision; average acceptance rate stated as **20%**. | https://ieeeaccess.ieee.org/about/rapid-peer-review/ |
@@ -109,7 +109,7 @@ This is a **system-design and feasibility paper**, not a validated detector. Rev
 3. **Review criteria favour soundness over novelty** ("not necessarily expected to have a high level of novelty"), which matches what we can defend: a careful design with conformance tests, not a new algorithm.
 4. **Rolling submission.** There is no deadline to rush the evidence for.
 
-**Formatting:** the IEEE Access template, **not** the generic `IEEEtran` conference class that `manuscript/main.tex` uses today (`\documentclass[conference]{IEEEtran}`). The manuscript must be ported. Double column; aim for 20 pages or fewer. Single-anonymized review, so author names stay on the manuscript and anonymisation is not needed. APC US$2,160 (fully OA). Check the IEEE-member discount and the institution's library deposit account.
+**Formatting:** the IEEE Access template, **not** the generic `IEEEtran` class in journal mode that `manuscript/main.tex` uses (`\documentclass[journal]{IEEEtran}`). *Update 2026-10-16:* the manuscript is now ported to `manuscript/main-access.tex` (`\documentclass{ieeeaccess}`, 7 pages). It is **not submission-ready**: author names and biographies are missing, and other blockers are listed in `manuscript/README.md`. `main.tex` stays as the IEEEtran version. Double column; aim for 20 pages or fewer. Single-anonymized review, so author names stay on the manuscript and anonymisation is not needed. APC US$2,160 (fully OA). Check the IEEE-member discount and the institution's library deposit account.
 
 **What reviewers will likely demand, and how we stand:**
 
@@ -120,7 +120,7 @@ This is a **system-design and feasibility paper**, not a validated detector. Rev
 | A baseline comparison | Standard reviewer expectation (inferred) | Internal ablations exist: v1 photo-only vs the v2 gate, component knock-outs, and the previous vs new follow-up rule. External baselines (AgroLLM, Farmer.Chat) are not reproducible on our data, so state that. |
 | Real-world satellite evidence | The live case studies are the only real-data component | Report all 12 areas, including the 3 inconclusive, with scene dates, cloud fractions and valid-pixel fractions. Present them as **acquisition-feasibility** evidence, not damage detection. |
 | Expert-rated chat answers (RQ2) | Every agri-LLM paper reviewed reports answer quality [ravindran2026; singh2024; agriregion2025] | **Pending.** Strongly advised before submission: even a small expert-rated set (for example 2 raters, around 50 to 100 bilingual questions, with kappa) would much improve the paper's chances. |
-| Reproducibility | Access requires experiments "described in sufficient detail" | We have this: a seeded `npm run eval`, recorded commits, and policy hashes. Release the code and the synthetic scenario generator. |
+| Reproducibility | Access requires experiments "described in sufficient detail" | Partly. We have a seeded `npm run eval` and policy hashes. Commits are recorded for the synthetic results (`522d212`) and the RAG run (`b760596`), both from working trees with uncommitted changes. The 2026-10-16 satellite and acceptance JSONs record no commit. The satellite script now records a provenance block, per-case thresholds and all notes, but not yet the post-event scenes: that waits on the adapter returning `discovery.scenesByWindow` (plan Part D, PC-7; status 2026-10-16). *Update, later on 2026-10-16:* the adapter now returns `discovery.scenesByWindow` (PC-7 passes), so future runs also record the post-event scenes. The 2026-10-16 satellite JSON still lacks them. Its 2026-10-16 provenance is reconstructed in `evaluation/live/satellite_case_studies_2026-10-16.provenance.md`. Release the code and the synthetic scenario generator. |
 | Ethics and privacy | Farmer data, land records | Cover from `ethics_privacy_legal.md`. State that no official land-record API is used. |
 
 ### Backup: IGARSS 2027 full paper (4 pages), satellite-evidence component only
@@ -133,7 +133,7 @@ This is a **system-design and feasibility paper**, not a validated detector. Rev
 
 **Formatting:** 4-page full paper (the IGARSS template; the CFP page does not name the class, so download it from the IGARSS site when the portal opens). Review type is not stated.
 
-**What reviewers will likely demand:** an RS audience will ask for ground truth, or at least an independent reference such as a flood extent map, SAR, or a district crop-loss report, for the 3 events. They will ask for a comparison with Sentinel-1 (the standard for cyclone-season cloud [chakraborty2021]), valid-pixel statistics for small parcels, and a justification for the 0.10-style thresholds on Tamil Nadu crops. Without these the paper would read as a pipeline demo. The minimum credible additions: (a) per-area valid-pixel fractions and scene dates; (b) a timing-sensitivity analysis like Ursu Table 4; (c) agreement with one independent, documented event-extent product, if one can be located and verified.
+**What reviewers will likely demand:** an RS audience will ask for ground truth, or at least an independent reference such as a flood extent map, SAR, or a district crop-loss report, for the 3 events. They will ask for a comparison with Sentinel-1 (the standard for cyclone-season cloud [chakraborty2021]), valid-pixel statistics for small parcels, and a justification for the 0.15 NDVI-drop threshold on Tamil Nadu crops (Ursu 2025 used 0.10 and 0.20). Without these the paper would read as a pipeline demo. The minimum credible additions: (a) per-area valid-pixel fractions and scene dates; (b) a timing-sensitivity analysis like Ursu Table 4; (c) agreement with one independent, documented event-extent product, if one can be located and verified.
 
 ### Not recommended now (and why)
 
@@ -147,3 +147,14 @@ This is a **system-design and feasibility paper**, not a validated detector. Rev
 
 - Acceptance rates, fees and dates are as stated on the pages on 2026-10-16. IEEE Access's own page says 20%; a search snippet from another IEEE Access page said 27%. Use the figure from the page you cite.
 - "What reviewers will likely demand" is my reading of each venue's stated criteria plus the evidence norms in the papers reviewed. It is not a guarantee of any reviewer's behaviour.
+
+## Errata (2026-10-16)
+
+Each correction was checked against the repository files.
+
+| Was | Now | Checked against |
+|---|---|---|
+| `manuscript/main.tex` uses "the generic `IEEEtran` conference class" (`\documentclass[conference]{IEEEtran}`) | journal mode (`\documentclass[journal]{IEEEtran}`) | `manuscript/main.tex` line 1 |
+| "a justification for the 0.10-style thresholds" | "the 0.15 NDVI-drop threshold (Ursu 2025 used 0.10 and 0.20)" | `config/verificationPolicy.js` `SHARED_TUNING.satellite.ndviDropSupport` = 0.15 |
+| Template row: "Word or LaTeX source plus a matching PDF; maximum 40 MB" | Adds the all-authors biography requirement, the page's exact wording and both template URLs (a later correction, 2026-10-16) | https://ieeeaccess.ieee.org/authors/submission-guidelines/, fetched 2026-10-16 |
+| Reproducibility: "recorded commits" | Commits are recorded for the synthetic results and the RAG run, both from dirty trees. The 2026-10-16 satellite and acceptance JSONs record none. | `evaluation/results/*.json` `environment.commit` = `522d212` (`dirty: true`); `evaluation/live/rag_retrieval_2026-10-16.json` `commit` = `b760596` (`dirtyWorkingTree: true`); `satellite_case_studies_2026-10-16.json` and both `acceptance_*_2026-10-16.json` have no commit field |

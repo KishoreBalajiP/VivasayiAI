@@ -1,6 +1,7 @@
 import axios from "axios";
 import { centroid } from "@turf/turf";
 import weatherConfig from "../config/weather.js";
+import { weatherMode } from "../config/env.js";
 import logger from "../utils/logger.js";
 
 // ADR-020 — rainfall around a claimed event, as SUPPORTING evidence only (ADR-019 P3). The numbers
@@ -44,12 +45,51 @@ export const buildWindow = ({ eventDate, daysBefore, daysAfter, now = new Date()
   return { start, end, valid: Number.isFinite(event) && start <= end };
 };
 
+// ADR-024 (plan A8) dev/e2e seam. WEATHER_MODE=off records weather as switched off; WEATHER_MODE=mock
+// answers without any network call, as WEATHER_MOCK_OUTCOME says (read on every call so the e2e
+// control server can switch it): `available` (default) a fixed, deterministic rainfall series around
+// the event, `unavailable` a provider failure, `timeout` a provider timeout. Never in production
+// (assertProductionSafety refuses WEATHER_MODE=mock there).
+export const MOCK_WEATHER_OUTCOMES = Object.freeze(["available", "unavailable", "timeout"]);
+const mockWeatherOutcome = () => {
+  const value = String(process.env.WEATHER_MOCK_OUTCOME || "available").trim().toLowerCase();
+  return MOCK_WEATHER_OUTCOMES.includes(value) ? value : "available";
+};
+const mockEventRainfall = ({ point, window, eventDate }) => {
+  const outcome = mockWeatherOutcome();
+  if (outcome === "unavailable") return { status: "UNAVAILABLE", reason: "provider_error", provider: "mock-weather" };
+  if (outcome === "timeout") return { status: "UNAVAILABLE", reason: "timeout", provider: "mock-weather" };
+  // 30 mm on the event day and 12 mm the day before, dry otherwise: 42 mm over two rainy days.
+  const event = startOfDay(eventDate);
+  const dailyMm = [];
+  for (let day = window.start; day <= window.end; day += DAY_MS) {
+    dailyMm.push({ date: isoDay(day), mm: day === event ? 30 : day === event - DAY_MS ? 12 : 0 });
+  }
+  const values = dailyMm.map((entry) => entry.mm);
+  return {
+    status: "AVAILABLE",
+    api: "mock",
+    provider: "mock-weather",
+    window: { start: isoDay(window.start), end: isoDay(window.end) },
+    rainfallTotalMm: round1(values.reduce((sum, value) => sum + value, 0)),
+    rainfallPeakMm: Math.max(0, ...values),
+    daysWithRain: values.filter((value) => value >= 1).length,
+    dailyMm,
+    locationRounded: { latitude: Math.round(point.latitude * 100) / 100, longitude: Math.round(point.longitude * 100) / 100 },
+  };
+};
+
 export const fetchEventRainfall = async ({ geometry, eventDate, daysBefore = 3, daysAfter = 1, now = new Date(), http = defaultHttp }) => {
+  const mode = weatherMode();
+  if (mode === "off") return { status: "UNAVAILABLE", reason: "weather_disabled" };
+
   const point = claimCentroid(geometry);
   if (!point) return { status: "UNAVAILABLE", reason: "no_usable_geometry" };
 
   const window = buildWindow({ eventDate, daysBefore, daysAfter, now });
   if (!window.valid) return { status: "UNAVAILABLE", reason: "event_window_not_yet_observable" };
+
+  if (mode === "mock") return mockEventRainfall({ point, window, eventDate });
 
   const today = startOfDay(now);
   const useArchive = window.end <= today - ARCHIVE_LAG_DAYS * DAY_MS;
@@ -104,4 +144,4 @@ export const fetchEventRainfall = async ({ geometry, eventDate, daysBefore = 3, 
   }
 };
 
-export default { fetchEventRainfall, claimCentroid, buildWindow };
+export default { fetchEventRainfall, claimCentroid, buildWindow, MOCK_WEATHER_OUTCOMES };

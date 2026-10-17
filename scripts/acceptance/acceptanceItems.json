@@ -1,0 +1,927 @@
+{
+  "schema": "vivasayi-acceptance-items/v1",
+  "$comment": "Inputs for the independent acceptance audit (plan Part F; design-testing section 6). One item per binding requirement. tests[] use the selector syntax of scripts/acceptance/matrix.json. liveValidation.status: N/A | BLOCKED | NOT_DEPLOYED | OWNER_APPROVAL | EXTERNAL. report.js lists every non-N/A live status under blocked[]; an item with no evidence is NOT VERIFIED for the arbiter, never PASS.",
+  "gitBaseline": {
+    "$comment": "Recorded read-only on 2026-10-16 before this work (git rev-parse / for-each-ref). report.js compares the live refs against these.",
+    "backend": {
+      "head": "6dbe6b8497cedef558fb912072787935d5565d19",
+      "branch": "develop",
+      "refs": {
+        "refs/heads/develop": "6dbe6b8497cedef558fb912072787935d5565d19",
+        "refs/heads/feat/verification-hardening-2026-10": "522d21206370f11878b9f0dd11c08fd9e6bb3e96",
+        "refs/heads/main": "5efe5611ba37709172a07d72592d15f89f91c281",
+        "refs/remotes/origin/HEAD": "5efe5611ba37709172a07d72592d15f89f91c281",
+        "refs/remotes/origin/admin-panel-integration": "a88a808ce8776da7606de746188cddf7dedfe04c",
+        "refs/remotes/origin/auth": "aa9f8c2fbc7b4a8811baa19b2ac6a09048dd1dee",
+        "refs/remotes/origin/develop": "6dbe6b8497cedef558fb912072787935d5565d19",
+        "refs/remotes/origin/main": "5efe5611ba37709172a07d72592d15f89f91c281"
+      }
+    },
+    "frontend": {
+      "head": "56f26eb4a7f06aa2d329516cfda6ccfcedd80bbd",
+      "branch": "develop",
+      "refs": {
+        "refs/heads/develop": "56f26eb4a7f06aa2d329516cfda6ccfcedd80bbd",
+        "refs/heads/main": "f083ae6f4372217165868781d14baf72905fb6ca",
+        "refs/remotes/origin/HEAD": "f083ae6f4372217165868781d14baf72905fb6ca",
+        "refs/remotes/origin/develop": "56f26eb4a7f06aa2d329516cfda6ccfcedd80bbd",
+        "refs/remotes/origin/main": "f083ae6f4372217165868781d14baf72905fb6ca"
+      }
+    }
+  },
+  "items": [
+    {
+      "id": "ACC-01",
+      "title": "Satellite never blocks a decision",
+      "decisionRef": "D1",
+      "requirement": "Satellite never blocks a decision under any policy; the engine waits only for policy.engineWaitsFor minus NON_BLOCKING_STEPS = {satellite}.",
+      "evidenceRequired": ["VJ-20 and VF-3/VF-4 under all three policies", "E2E-14 decision shown while satellite is pending", "code trace of NON_BLOCKING_STEPS in verificationJobs.service.js"],
+      "tests": ["VJ-20", "VJ-21", "VF-3", "VF-4", "E2E-14"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-02",
+      "title": "Satellite never changes a decision",
+      "decisionRef": "D1",
+      "requirement": "Satellite and weather results never flip a decision under v1.1 (supporting evidence only).",
+      "evidenceRequired": ["PV-5 0/1536 flips", "SA-7, SA-8", "SD truth table"],
+      "tests": ["PV-5", "SA-7", "SA-8", "SD-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-03",
+      "title": "Claim window measured at first submission",
+      "decisionRef": "D1",
+      "requirement": "Timeliness uses firstSubmittedAt (falling back to the earliest submitted audit); waiting can never turn into a window rejection.",
+      "evidenceRequired": ["PV-6", "SA-4", "SA-5", "EQ-5 firstSubmittedAt unchanged on resubmit", "MGA-4 backfill picks the earliest audit", "ADR-022 records the interpretation (critique D7)"],
+      "tests": ["PV-6", "SA-4", "SA-5", "EQ-5", "MGA-4"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-04",
+      "title": "Dead satellite and weather jobs never open review cases",
+      "decisionRef": "D1",
+      "requirement": "Satellite runs independently including reschedules; dead satellite/weather jobs are logged and shown in diagnostics only.",
+      "evidenceRequired": ["VJ-17", "VC-26", "AD-2 diagnostics show them"],
+      "tests": ["VJ-17", "VC-26", "AD-2"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-05",
+      "title": "v1.1-safe-ai is the default policy",
+      "decisionRef": "D2(a)",
+      "requirement": "New versioned policy v1.1-safe-ai is the default; AI-only 'no damage' leads to a hold plus one review case.",
+      "evidenceRequired": ["VP-8", "VP-10", "PV-3", "PV-4", "SA-1"],
+      "tests": ["VP-8", "VP-10", "PV-3", "PV-4", "SA-1"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-06",
+      "title": "Provider failures never become adverse decisions",
+      "decisionRef": "D2(b)",
+      "requirement": "Provider failures and malformed output make the component unavailable, then retry, then review; never rejected or more_evidence_required.",
+      "evidenceRequired": ["SA-2", "SA-3", "PE-1..6", "P4-35", "P4-36", "E2E-06/07/08a/08b"],
+      "tests": ["SA-2", "SA-3", "PE-*", "P4-35", "P4-36", "E2E-06", "E2E-07", "E2E-08a", "E2E-08b"],
+      "liveValidation": {
+        "status": "BLOCKED",
+        "label": "BLOCKED (D6)",
+        "reason": "Live Gemini evaluations wait for the owner's billed key (D6)."
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-07",
+      "title": "v1-legacy and v2 replay byte-identically",
+      "decisionRef": "D2(c)",
+      "requirement": "v1-legacy and v2-components stay selectable and replay byte-identically against the golden fixture.",
+      "evidenceRequired": ["PV-1", "PV-2", "VP-7", "VP-9", "EV-16", "tests/fixtures/engine-golden-2026-10.json captured at 6dbe6b8"],
+      "tests": ["PV-1", "PV-2", "VP-7", "VP-9", "EV-16"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-08",
+      "title": "Technical hold inside the engine; one review case per cause",
+      "decisionRef": "D2(d)",
+      "requirement": "technicalFailure:'hold' is honoured inside the pure engine; reviewCaseOnHold opens a case only for ai_no_damage_needs_review.",
+      "evidenceRequired": ["PV-7", "SA-3 exactly one review case"],
+      "tests": ["PV-7", "SA-3"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-09",
+      "title": "RAG fix evaluated on a local index only",
+      "decisionRef": "D3",
+      "requirement": "Table chunker and local index; S3 read-only on the allow-list; production Chroma never written; production chat keeps the old collection.",
+      "evidenceRequired": ["RC-1..13", "RS-1..3", "static grep for upsert/add/PutObject/DeleteObject in RAG build and eval scripts"],
+      "tests": ["RC-*", "RS-*"],
+      "liveValidation": {
+        "status": "OWNER_APPROVAL",
+        "label": "Owner-approved read-only",
+        "reason": "Production read needs explicit owner approval and stays out of the automated acceptance run (critique C1)."
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-10",
+      "title": "RAG parity before any after-numbers",
+      "decisionRef": "D3",
+      "requirement": "The local evaluator reproduces the frozen baseline row by row before conditions (ii) and (iii) are cited.",
+      "evidenceRequired": ["rag_parity_<date>.json PASS", "RAG_BEFORE_AFTER_<date>.{md,json} with McNemar labelled underpowered"],
+      "tests": [],
+      "liveValidation": {
+        "status": "OWNER_APPROVAL",
+        "label": "Owner-approved read-only",
+        "reason": "Production read needs explicit owner approval and stays out of the automated acceptance run (critique C1)."
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-11",
+      "title": "Playwright e2e against a hermetic backend",
+      "decisionRef": "D4",
+      "requirement": "@playwright/test exact pin; E2E-01..25 on desktop-chromium and mobile-chromium with zero network violations.",
+      "evidenceRequired": ["Playwright JSON", "networkViolations empty", "no __e2e in dist/", "HX-1..6"],
+      "tests": ["HX-*", "E2E-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-12",
+      "title": "Rate limits evidence 60/h, claim writes 15/h",
+      "decisionRef": "D5",
+      "requirement": "Defaults raised so a 10-photo + 2-document wizard fits; reads unchanged.",
+      "evidenceRequired": ["RL-7", "RL-8", "E2E-05"],
+      "tests": ["RL-7", "RL-8", "E2E-05"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-13",
+      "title": "Live Gemini evaluations",
+      "decisionRef": "D6",
+      "requirement": "Live chat, land-document and 10-photo v1.1 evaluations stay BLOCKED until the billed key arrives; scripts are ready with a call cap.",
+      "evidenceRequired": ["LIVE_GEMINI_APPROVED=1 gate and --max-calls cap present in the scripts"],
+      "tests": [],
+      "liveValidation": {
+        "status": "BLOCKED",
+        "label": "BLOCKED (D6)",
+        "reason": "Live Gemini evaluations wait for the owner's billed key (D6)."
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-14",
+      "title": "Durable, idempotent enqueue",
+      "decisionRef": "D7",
+      "requirement": "Submit/resubmit/withdraw use compare-and-set; only the winner audits and awaits ensurePlan; late evidence queues steps.",
+      "evidenceRequired": ["EQ-1..9"],
+      "tests": ["EQ-1", "EQ-2", "EQ-3", "EQ-4", "EQ-5", "EQ-6", "EQ-7", "EQ-8", "EQ-9"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-15",
+      "title": "Local worker (npm run worker)",
+      "decisionRef": "D7",
+      "requirement": "scripts/worker.js with --once and --requeue-dead; refuses mongodb+srv without the override; crash recovery.",
+      "evidenceRequired": ["WK-1..4", "WK-7", "WK-8", "E2E-11 process worker"],
+      "tests": ["WK-1", "WK-2", "WK-3", "WK-4", "WK-7", "WK-8", "E2E-11"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-16",
+      "title": "Lambda worker handler",
+      "decisionRef": "D7",
+      "requirement": "The Lambda worker handler passes awsRequestId into job logs.",
+      "evidenceRequired": ["WK-5"],
+      "tests": ["WK-5"],
+      "liveValidation": {
+        "status": "NOT_DEPLOYED",
+        "label": "Not deployed",
+        "reason": "Nothing is deployed in this work (D7); CI is unchanged."
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-17",
+      "title": "EventBridge template and runbook",
+      "decisionRef": "D7",
+      "requirement": "infra/verification-worker.yaml with the rule DISABLED by default; WORKER_RUNBOOK.md with a secrets-safe procedure.",
+      "evidenceRequired": ["WK-6 static check", "docs/engineering/WORKER_RUNBOOK.md"],
+      "tests": ["WK-6"],
+      "liveValidation": {
+        "status": "NOT_DEPLOYED",
+        "label": "Not deployed",
+        "reason": "Nothing is deployed in this work (D7); CI is unchanged."
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-18",
+      "title": "Production preconditions for removing the verify button",
+      "decisionRef": "D7",
+      "requirement": "Runbook preflight: the production Lambda env must set CLAIM_AUTOMATED_VERIFICATION_ENABLED and CLAIM_VERIFICATION_DRAIN_ON_READ to true, plus the worker (critique B5).",
+      "evidenceRequired": ["WORKER_RUNBOOK.md preflight section", "owner confirmation of the production env (values never printed)"],
+      "tests": [],
+      "liveValidation": {
+        "status": "NOT_DEPLOYED",
+        "label": "Not deployed",
+        "reason": "Nothing is deployed in this work (D7); CI is unchanged."
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-19",
+      "title": "Admin override of a held claim",
+      "decisionRef": "D8",
+      "requirement": "An admin may override a held claim, and only a held one; compare-and-set on submitted, clears hold, cancels queued jobs; held claims appear in the admin queue.",
+      "evidenceRequired": ["SA-1", "AD-*", "E2E-19a", "FE canOverrideFrom allows held"],
+      "tests": ["SA-1", "E2E-19a"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-20",
+      "title": "Reviewer diagnostics and requeue",
+      "decisionRef": "D9",
+      "requirement": "GET /admin/claims/:id/verification-diagnostics, POST /admin/claims/:id/jobs/requeue (reason required, AdminAction + ClaimAudit), one read-only FE diagnostics panel.",
+      "evidenceRequired": ["AD-1..3", "VL-2"],
+      "tests": ["AD-1", "AD-2", "AD-3", "VL-2"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-21",
+      "title": "Wizard requires at least one photo",
+      "decisionRef": "Default",
+      "requirement": "The wizard requires at least one photo; every policy returns more_evidence_required without photos.",
+      "evidenceRequired": ["WZ photo minimum test", "E2E wizard validation"],
+      "tests": ["WZ-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-22",
+      "title": "Farmer progress contract and leak fix",
+      "decisionRef": "A6",
+      "requirement": "GET /claims/:id/progress (progress-v1) and the farmer /verification projection never expose job ids, attempts, error codes, review cases, deltaNdvi, provider names or policyHash.",
+      "evidenceRequired": ["PRG-1..10", "SD-*", "VL-1..4", "CT-1..3"],
+      "tests": ["PRG-*", "VL-*", "CT-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-23",
+      "title": "CORS exposes Retry-After and x-request-id",
+      "decisionRef": "A6",
+      "requirement": "exposedHeaders includes Retry-After, x-request-id and RateLimit-Reset (critique A8).",
+      "evidenceRequired": ["supertest check of Access-Control-Expose-Headers"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-24",
+      "title": "Hermetic dev seams never reachable in production",
+      "decisionRef": "A8",
+      "requirement": "assertProductionSafety refuses mock flags in production or on Lambda; /__dev/storage is 404 in production mode; network guard records zero violations.",
+      "evidenceRequired": ["DS-3", "DS-4", "HX-1..6", "networkViolations empty", "no __e2e in dist/"],
+      "tests": ["DS-3", "DS-4", "HX-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-25",
+      "title": "Migration dry-run",
+      "decisionRef": "A3",
+      "requirement": "scripts/migrations/2026-10-verification-automation.js is dry-run by default and refuses --apply on mongodb+srv; Atlas is touched read-only only.",
+      "evidenceRequired": ["MGA-1..4", "dry-run report"],
+      "tests": ["MGA-1", "MGA-2", "MGA-3", "MGA-4"],
+      "liveValidation": {
+        "status": "OWNER_APPROVAL",
+        "label": "Owner-approved read-only",
+        "reason": "Production read needs explicit owner approval and stays out of the automated acceptance run (critique C1)."
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-26",
+      "title": "Farm-first header location",
+      "decisionRef": "B6",
+      "requirement": "The header and LoginScreen show the farm district, never the device location or 'Outside Tamil Nadu'.",
+      "evidenceRequired": ["LOC-1..13", "E2E header spec"],
+      "tests": ["LOC-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-27",
+      "title": "Hash routing and reopen",
+      "decisionRef": "B2",
+      "requirement": "#/claims/:id deep link survives reload and Cognito login (returnTo).",
+      "evidenceRequired": ["RT-1..8", "E2E-22"],
+      "tests": ["RT-*", "E2E-22"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-28",
+      "title": "Claim tracker without a verify button",
+      "decisionRef": "B4",
+      "requirement": "Tracker renders only backend stages; no 'Run AI verification' button and verifyClaimRequest is never called; selector contract matches the API strings.",
+      "evidenceRequired": ["TRK-*", "E2E-01", "E2E-02", "E2E-24"],
+      "tests": ["TRK-*", "E2E-01", "E2E-02", "E2E-24"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-29",
+      "title": "Polling behaviour",
+      "decisionRef": "B5",
+      "requirement": "Minimum 10 s, idle back-off, nextCheckAt honoured, stop on terminal/401/403/404, pause while hidden.",
+      "evidenceRequired": ["POLL-1..17"],
+      "tests": ["POLL-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-30",
+      "title": "Five-step wizard and submission orchestrator",
+      "decisionRef": "B3",
+      "requirement": "Parcel, Your land, Event, Evidence, Review; orchestrator create -> photos -> documents -> submit with one retry; draft persistence.",
+      "evidenceRequired": ["WZ-*", "SUB-*", "DRF-*"],
+      "tests": ["WZ-*", "SUB-*", "DRF-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-31",
+      "title": "Design system primitives",
+      "decisionRef": "B1",
+      "requirement": "Tokens and shared UI primitives; no window.confirm; accessible nav names.",
+      "evidenceRequired": ["UI-1..14"],
+      "tests": ["UI-*"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-32",
+      "title": "Tamil copy native-speaker review",
+      "decisionRef": "B8",
+      "requirement": "About 200 new keys in en and ta with parity; Tamil copy flagged for native review.",
+      "evidenceRequired": ["I18N-*", "I18N-P1..3", "native-speaker review record"],
+      "tests": ["I18N-*"],
+      "liveValidation": {
+        "status": "EXTERNAL",
+        "label": "External review pending",
+        "reason": "Native-speaker review of the Tamil copy is an external dependency."
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-33",
+      "title": "Scenario S01: Valid submission and automatic job",
+      "decisionRef": "D1, D5, D7",
+      "requirement": "All tests mapped to S01 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S01"
+    },
+    {
+      "id": "ACC-34",
+      "title": "Scenario S02: Claim persisted when AI fails",
+      "decisionRef": "D2, D7",
+      "requirement": "All tests mapped to S02 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S02"
+    },
+    {
+      "id": "ACC-35",
+      "title": "Scenario S03: Duplicate submit and idempotent retries",
+      "decisionRef": "D7",
+      "requirement": "All tests mapped to S03 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S03"
+    },
+    {
+      "id": "ACC-36",
+      "title": "Scenario S04: Worker crash recovery",
+      "decisionRef": "D7",
+      "requirement": "All tests mapped to S04 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S04"
+    },
+    {
+      "id": "ACC-37",
+      "title": "Scenario S05: Concurrent verification",
+      "decisionRef": "D7",
+      "requirement": "All tests mapped to S05 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S05"
+    },
+    {
+      "id": "ACC-38",
+      "title": "Scenario S06: Gemini 429 (quota)",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S06 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S06"
+    },
+    {
+      "id": "ACC-39",
+      "title": "Scenario S07: Gemini 503 (overload)",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S07 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S07"
+    },
+    {
+      "id": "ACC-40",
+      "title": "Scenario S08: AI timeout and malformed output",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S08 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S08"
+    },
+    {
+      "id": "ACC-41",
+      "title": "Scenario S09: Missing or invalid land documents",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S09 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S09"
+    },
+    {
+      "id": "ACC-42",
+      "title": "Scenario S10: Missing claimant-rights evidence",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S10 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S10"
+    },
+    {
+      "id": "ACC-43",
+      "title": "Scenario S11: Invalid geometry and area limits",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S11 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S11"
+    },
+    {
+      "id": "ACC-44",
+      "title": "Scenario S12: Duplicate or overlapping claims",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S12 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S12"
+    },
+    {
+      "id": "ACC-45",
+      "title": "Scenario S13: Suitable satellite imagery",
+      "decisionRef": "D1",
+      "requirement": "All tests mapped to S13 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S13"
+    },
+    {
+      "id": "ACC-46",
+      "title": "Scenario S14: Cloudy or insufficient imagery",
+      "decisionRef": "D1",
+      "requirement": "All tests mapped to S14 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": false,
+      "scenario": "S14"
+    },
+    {
+      "id": "ACC-47",
+      "title": "Scenario S15: Satellite false support or inconclusive",
+      "decisionRef": "D1",
+      "requirement": "All tests mapped to S15 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S15"
+    },
+    {
+      "id": "ACC-48",
+      "title": "Scenario S16: Missing weather",
+      "decisionRef": "D1",
+      "requirement": "All tests mapped to S16 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": false,
+      "scenario": "S16"
+    },
+    {
+      "id": "ACC-49",
+      "title": "Scenario S17: Unauthorized access to another farmer's claim or evidence",
+      "decisionRef": "D9",
+      "requirement": "All tests mapped to S17 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S17"
+    },
+    {
+      "id": "ACC-50",
+      "title": "Scenario S18: Human review and appeal",
+      "decisionRef": "D8, D9",
+      "requirement": "All tests mapped to S18 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S18"
+    },
+    {
+      "id": "ACC-51",
+      "title": "Scenario S19: Tamil and English statuses",
+      "decisionRef": null,
+      "requirement": "All tests mapped to S19 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S19"
+    },
+    {
+      "id": "ACC-52",
+      "title": "Scenario S20: Mobile and desktop tracker",
+      "decisionRef": "D4",
+      "requirement": "All tests mapped to S20 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S20"
+    },
+    {
+      "id": "ACC-53",
+      "title": "Scenario S21: Refresh or reopen while processing",
+      "decisionRef": "D7",
+      "requirement": "All tests mapped to S21 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S21"
+    },
+    {
+      "id": "ACC-54",
+      "title": "Scenario S22: API failure and status recovery",
+      "decisionRef": null,
+      "requirement": "All tests mapped to S22 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S22"
+    },
+    {
+      "id": "ACC-55",
+      "title": "Scenario S23: No fake progress and no premature completion",
+      "decisionRef": "D1",
+      "requirement": "All tests mapped to S23 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S23"
+    },
+    {
+      "id": "ACC-56",
+      "title": "Scenario S24: Final decision matches the deterministic policy",
+      "decisionRef": "D2",
+      "requirement": "All tests mapped to S24 in scripts/acceptance/matrix.json pass.",
+      "evidenceRequired": ["results-<runId>.json scenarios[] entry with status pass"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A (hermetic tests only)"
+      },
+      "releaseBlocking": true,
+      "scenario": "S24"
+    },
+    {
+      "id": "ACC-57",
+      "title": "Write-once outputs and frozen hashes",
+      "decisionRef": "Part D (4a)",
+      "requirement": "Every live script writes with wx; FROZEN_HASHES.json pins the 2026-10-16 artifacts.",
+      "evidenceRequired": ["LW-1..2", "FH-1", "frozen-hashes suite passed"],
+      "tests": ["LW-1", "LW-2", "FH-1"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-58",
+      "title": "Satellite case-study provenance",
+      "decisionRef": "Part D (4b)",
+      "requirement": "Provenance block, per-case thresholds and scenesByWindow; the 10-16 run is not rewritten (sidecar labelled reconstructed).",
+      "evidenceRequired": ["SC-1..3", "PC-7", "satellite_case_studies_2026-10-16.provenance.md"],
+      "tests": ["SC-1", "SC-2", "SC-3", "PC-7"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-59",
+      "title": "LIVE_RESULTS errata",
+      "decisionRef": "Part D (4c)",
+      "requirement": "Dated errata for the gazette claim, '100 valid samples', smoke-test wording and unsaved values.",
+      "evidenceRequired": ["docs/research/evaluation/live/LIVE_RESULTS_2026-10-16.md Errata section"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-60",
+      "title": "venue_selection corrections",
+      "decisionRef": "Part D (4d)",
+      "requirement": "[journal], threshold 0.15, commit wording.",
+      "evidenceRequired": ["docs/research/venue_selection.md diff"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-61",
+      "title": "Traceable manuscript numbers",
+      "decisionRef": "Part D (4e)",
+      "requirement": "generated_numbers.{tex,json}; checkManuscriptNumbers.js fails on any literal not on the allowlist and on a stale PDF.",
+      "evidenceRequired": ["MN-1..4", "manuscript-numbers suite passed"],
+      "tests": ["MN-1", "MN-2", "MN-3", "MN-4"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-62",
+      "title": "Source ledger replaces '74 verified sources'",
+      "decisionRef": "Part D (4f)",
+      "requirement": "source_ledger.json with honest counts (45 verified plus 3 web, N bibliography entries).",
+      "evidenceRequired": ["docs/research/source_ledger.json", "\\GapSources macros"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-63",
+      "title": "Manuscript aligned with D1/D2",
+      "decisionRef": "Part D (4g)",
+      "requirement": "Three policies described; v1.1 row in fusion.eval.js computed, existing rows byte-identical; hermetic v1.1 acceptance run labelled mock AI.",
+      "evidenceRequired": ["EV-16", "fusion v1.1 row", "acceptance_v1.1-safe-ai_<date>.json"],
+      "tests": ["EV-16"],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-64",
+      "title": "IEEE Access template port",
+      "decisionRef": "Part D (4h)",
+      "requirement": "Ported to the IEEE Access template, compiled without shell-escape, marked NOT SUBMISSION-READY.",
+      "evidenceRequired": ["vendor SOURCE.md with sha256 and licence", "compiled PDF", "NOT SUBMISSION-READY marker"],
+      "tests": [],
+      "liveValidation": {
+        "status": "EXTERNAL",
+        "label": "External review pending",
+        "reason": "Authors, biographies, live LLM evaluations (D6), expert ratings and real-claim data are outstanding."
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-65",
+      "title": "Documentation set",
+      "decisionRef": "Part E",
+      "requirement": "CLAIM_FLOW, PROGRESS_CONTRACT_v1 (+json), JOB_ORCHESTRATION, WORKER_RUNBOOK, ENVIRONMENT_VARIABLES, LIVE_PROVIDER_REQUIREMENTS, KNOWN_ISSUES, SATELLITE_LIMITATIONS, REPRODUCTION, ADR-022..024; stale statements corrected with dated notes.",
+      "evidenceRequired": ["docs auditor: stale-phrase sweep, link check, env table diff, documented commands executed"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-66",
+      "title": "Nothing committed, pushed or deployed",
+      "decisionRef": "Constraints",
+      "requirement": "Both repos keep HEAD at the baseline (6dbe6b8 / 56f26eb) with no new refs or stashes; the work is uncommitted in the working tree.",
+      "evidenceRequired": ["repos.*.git.baseline.headUnchanged true", "newRefs empty", "stash.count 0", "diffHeadSha256 and untracked list recorded"],
+      "tests": [],
+      "liveValidation": {
+        "status": "N/A",
+        "label": "N/A"
+      },
+      "releaseBlocking": true,
+      "gitCheck": true
+    }
+  ]
+}

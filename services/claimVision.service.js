@@ -1,9 +1,9 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import logger from "../utils/logger.js";
-import ApiError from "../utils/ApiError.js";
 import { env } from "../config/env.js";
 import { model } from "./chat.service.js";
 import { withAiTimeout, AiTimeoutError, getDefaultTimeoutMs } from "../utils/aiTimeout.js";
+import { ProviderError, toProviderError, logProviderError, PROVIDER_ERROR_KINDS } from "../utils/providerErrors.js";
 import {
   CLAIM_LOSS_VISION_INSTRUCTIONS,
   CLAIM_LOSS_OBSERVATION_FIELDS,
@@ -24,8 +24,13 @@ import {
 // Failure handling (mirrors services/vision.service.js):
 //  - Provider/API/timeout errors are REAL failures: rethrown as sanitized 500 — the assessment
 //    service then marks the assessment failed (retryable). Never downgraded into a fake result.
+//    The error is a ProviderError (utils/providerErrors.js) whose `kind` says why (quota, timeout,
+//    …); the HTTP status and message are unchanged.
 //  - A successful call returning unparseable output degrades to a conservative UNSURE
-//    observation: uncertainty is explicit, nothing is invented.
+//    observation (`onUnparseable: "unsure"`, the default): uncertainty is explicit, nothing is
+//    invented. With `onUnparseable: "throw"` (policy v1.1-safe-ai, `aiMalformedOutput:
+//    "unavailable"`) it is instead a retryable `malformed_response` failure, so an unreadable
+//    answer can never become a request for more evidence.
 //
 // IMAGE_AI_MODE=mock is the existing dev/test-only seam (.env.example) returning a deterministic
 // canned claim observation so regression suites never depend on external AI.
@@ -143,10 +148,14 @@ export const normalizeClaimObservation = (raw) => {
   };
 };
 
+const VISION_FAILURE_MESSAGE = "Failed to analyze claim evidence image";
+const VISION_CONTEXT = { provider: "gemini", operation: "claim.vision_analyze" };
+
 // `timeoutMs` lets the caller (claimAssessment) shrink a single call to whatever remains of the
 // request's overall time budget, so N sequential evidence images can never accumulate past the
-// API Gateway / Lambda ceiling. Omitted -> the shared GEMINI default.
-export const analyzeClaimImage = async ({ imageBuffer, mediaType, timeoutMs }) => {
+// API Gateway / Lambda ceiling. Omitted -> the shared GEMINI default. `onUnparseable` ("unsure" |
+// "throw") decides what an answer that is not the observation JSON becomes (see above).
+export const analyzeClaimImage = async ({ imageBuffer, mediaType, timeoutMs, onUnparseable = "unsure" }) => {
   if (env.imageAiMode === "mock") {
     return { ...MOCK_CLAIM_OBSERVATION };
   }
@@ -184,23 +193,34 @@ export const analyzeClaimImage = async ({ imageBuffer, mediaType, timeoutMs }) =
       effectiveTimeoutMs,
     ).catch((err) => {
       if (err instanceof AiTimeoutError) {
-        throw ApiError.internal("AI service did not respond in time");
+        throw new ProviderError({ kind: PROVIDER_ERROR_KINDS.TIMEOUT, ...VISION_CONTEXT, statusCode: 500, message: "AI service did not respond in time" });
       }
       throw err;
     });
     const text = result.generations?.[0]?.[0]?.text || "";
 
     const parsed = extractJson(text);
-    if (!parsed) {
+    const normalized = parsed ? normalizeClaimObservation(parsed) : null;
+    if (!normalized) {
+      if (onUnparseable === "throw") {
+        throw new ProviderError({ kind: PROVIDER_ERROR_KINDS.MALFORMED, ...VISION_CONTEXT, statusCode: 500, message: VISION_FAILURE_MESSAGE });
+      }
       logger.warn("Claim evidence vision output was not parseable as JSON; marking image as unclear");
       return { ...UNSURE_CLAIM_OBSERVATION };
     }
-
-    const normalized = normalizeClaimObservation(parsed);
-    return normalized || { ...UNSURE_CLAIM_OBSERVATION };
+    return normalized;
   } catch (error) {
-    logger.error({ err: error }, "Claim evidence vision analysis failed");
-    throw ApiError.internal("Failed to analyze claim evidence image");
+    // Codes only: never the provider's message body, the prompt or the image.
+    const providerError = toProviderError(error, VISION_CONTEXT);
+    logProviderError(logger, providerError);
+    // Same sanitized 500 envelope as before, now carrying the failure kind for the queue.
+    throw new ProviderError({
+      kind: providerError.kind,
+      ...VISION_CONTEXT,
+      httpStatus: providerError.httpStatus,
+      statusCode: 500,
+      message: VISION_FAILURE_MESSAGE,
+    });
   }
 };
 

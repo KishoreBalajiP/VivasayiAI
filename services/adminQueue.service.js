@@ -5,6 +5,8 @@
 //     more_evidence_required (normal VERIFIED claims are NOT in the queue — the verification
 //     engine is the primary decision-maker, P7/ADR-019);
 //   • AI-failure cases (claim stuck in `processing` with a failed assessment);
+//   • HELD claims (still `submitted`, the engine is waiting for a person, D8) — without this leg a
+//     held claim had no visible way out;
 //   • any claim with an active farmer appeal (farmers appeal ONLY eligible engine decisions).
 //
 // Everything here is deterministic and DB-free: filter normalization, claim-match construction,
@@ -45,6 +47,7 @@ export const normalizeQueueFilters = (raw = {}) => {
     search: typeof raw.search === "string" ? raw.search.trim().slice(0, 200) || null : null,
     withAppeal: toBool(raw.withAppeal),
     aiFailed: toBool(raw.aiFailed),
+    held: toBool(raw.held),
     page: toPositiveInt(raw.page, QUEUE_DEFAULT_PAGE, 10000),
     limit: toPositiveInt(raw.limit, QUEUE_DEFAULT_LIMIT, QUEUE_MAX_LIMIT),
   };
@@ -81,6 +84,14 @@ export const aiFailedExpression = {
   ],
 };
 
+// A claim the engine is HOLDING for a person: still submitted, no decision, verification "held".
+export const heldExpression = {
+  $and: [
+    { $eq: ["$state", "submitted"] },
+    { $eq: ["$assessment.verification.status", "held"] },
+  ],
+};
+
 // Deterministic queue sort: recently decided first, then most recently created.
 export const compareQueueRows = (a, b) => {
   const at = a.decidedAt ? new Date(a.decidedAt).getTime() : 0;
@@ -96,12 +107,24 @@ export const compareQueueRows = (a, b) => {
 //   - status filter   = narrow to one engine state (drops the default UNION);
 //   - aiFailed=true   = show only AI-failed claims;
 //   - aiFailed=false  = exclude AI failures (engine-review states only);
+//   - held=true       = show only held claims (submitted, waiting for a person); the default
+//                       queue includes them as a third leg. With held=true, status and aiFailed
+//                       NARROW the held set (AND): a technical hold is also aiFailed, so
+//                       held=true&aiFailed=true lists technical holds and aiFailed=false the
+//                       AI "no damage" holds; a decision-state status matches nothing;
+//   - held=false      = the same queue as without it, minus every held claim;
 //   - withAppeal      = true/false narrows to active-appeal presence;
 //   - eventType/search = additive claim-level filters (AND).
 // The return value is a Mongo query document (pure, DB-free, unit-testable).
 export const buildPostMatch = (filters) => {
   const legs = [];
-  if (filters.aiFailed === true && !filters.status) {
+  const clauses = [];
+  if (filters.held === true) {
+    legs.push({ $and: [{ held: true }] });
+    if (filters.status) clauses.push({ state: filters.status });
+    if (filters.aiFailed === true) clauses.push({ aiFailed: true });
+    else if (filters.aiFailed === false) clauses.push({ aiFailed: { $ne: true } });
+  } else if (filters.aiFailed === true && !filters.status) {
     legs.push({ $and: [{ aiFailed: true }] });
   } else if (filters.aiFailed === true && filters.status) {
     legs.push({ state: filters.status }, { $and: [{ aiFailed: true }] });
@@ -112,10 +135,12 @@ export const buildPostMatch = (filters) => {
   } else {
     legs.push({ state: { $in: QUEUE_STATES } });
     legs.push({ $and: [{ aiFailed: true }] });
+    if (filters.held !== false) legs.push({ $and: [{ held: true }] });
   }
+  // held=false removes held claims from every leg (a technical hold also counts as aiFailed).
+  if (filters.held === false) clauses.push({ held: { $ne: true } });
 
   let match = { $or: legs };
-  const clauses = [];
   if (filters.withAppeal === true) clauses.push({ hasActiveAppeal: true });
   else if (filters.withAppeal === false) clauses.push({ hasActiveAppeal: { $ne: true } });
   if (filters.eventType) clauses.push({ eventType: filters.eventType });
@@ -154,6 +179,7 @@ export const serializeQueueEntry = (row) => {
     decidedAt: claim.decidedAt ?? null,
     submittedAt: claim.submittedAt ?? null,
     createdAt: claim.createdAt ?? null,
+    held: Boolean(row.held),
     hasAppeal: Boolean(appeal),
     appealId: appeal ? String(appeal._id) : null,
     appealStatus: appeal?.status ?? null,
@@ -177,6 +203,7 @@ export default {
   normalizeQueueFilters,
   buildQueueClaimMatch,
   aiFailedExpression,
+  heldExpression,
   buildPostMatch,
   compareQueueRows,
   serializeQueueEntry,

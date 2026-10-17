@@ -1,0 +1,47 @@
+State_Name,District_Name,Crop_Year,Season,Crop,Area,Production
+Tamil Nadu,ARIYALUR,2008,Kharif,Rice,7919,6699
+Tamil Nadu,ARIYALUR,2008,Whole Year,Groundnut,2274,5213
+Tamil Nadu,ARIYALUR,2008,Whole Year,Ragi,2872,7464
+Tamil Nadu,ARIYALUR,2008,Whole Year,Sesamum,6074,6364
+Tamil Nadu,ARIYALUR,2008,Whole Year,Banana,1264,2616
+Tamil Nadu,ARIYALUR,2008,Whole Year,Cashewnut,1614,2327
+Tamil Nadu,ARIYALUR,2008,Whole Year,Cotton(lint),4626,7674
+Tamil Nadu,ARIYALUR,2008,Whole Year,Onion,7902,
+Tamil Nadu,ARIYALUR,2009,Kharif,Rice,2167,8475
+Tamil Nadu,ARIYALUR,2009,Whole Year,Groundnut,6583,4314
+Tamil Nadu,ARIYALUR,2009,Whole Year,Ragi,8675,9277
+Tamil Nadu,ARIYALUR,2009,Whole Year,Sesamum,3176,3153
+Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,1142,7177
+Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,4910,5095
+Tamil Nadu,ARIYALUR,2009,Whole Year,Cotton(lint),9088,7535
+Tamil Nadu,ARIYALUR,2009,Whole Year,Onion,7931,1657
+Tamil Nadu,ARIYALUR,2010,Kharif,Rice,2606,2480
+Tamil Nadu,ARIYALUR,2010,Whole Year,Groundnut,5386,1900
+Tamil Nadu,ARIYALUR,2010,Whole Year,Ragi,5579,9203
+Tamil Nadu,ARIYALUR,2010,Whole Year,Sesamum,7583,7777
+Tamil Nadu,ARIYALUR,2010,Whole Year,Banana,2985,1681
+Tamil Nadu,ARIYALUR,2010,Whole Year,Cashewnut,2529,3144
+Tamil Nadu,ARIYALUR,2010,Whole Year,Cotton(lint),9927,6928
+Tamil Nadu,ARIYALUR,2010,Whole Year,Onion,4458,8213
+Tamil Nadu,ERODE,2009,Whole Year,Sugarcane,3254,401
+Tamil Nadu,ERODE,2009,Whole Year,Turmeric,3300,4423
+Tamil Nadu,ERODE,2009,Whole Year,Maize,1237,8957
+Tamil Nadu,ERODE,2009,Whole Year,Rice,867,971
+Tamil Nadu,ERODE,2009,Whole Year,Banana,3973,179
+Tamil Nadu,ERODE,2010,Whole Year,Sugarcane,6514,8288
+Tamil Nadu,ERODE,2010,Whole Year,Turmeric,6766,2476
+Tamil Nadu,ERODE,2010,Whole Year,Maize,3731,5125
+Tamil Nadu,ERODE,2010,Whole Year,Rice,6490,8365
+Tamil Nadu,ERODE,2010,Whole Year,Banana,6102,7942
+Tamil Nadu,SALEM,2010,Whole Year,Rice,8710,6246
+Tamil Nadu,SALEM,2010,Whole Year,Tapioca,7480,2687
+Tamil Nadu,SALEM,2010,Whole Year,Sugarcane,3471,7627
+Tamil Nadu,THANJAVUR,2010,Kharif,Rice,5968,7538
+Tamil Nadu,THANJAVUR,2010,Kharif,Black gram,1667,1740
+Tamil Nadu,THANJAVUR,2010,Kharif,Coconut ,9428,8112
+Tamil Nadu,KARUR,2010,Whole Year,Banana,3995,4278
+Tamil Nadu,KARUR,2010,Whole Year,Rice,3787,8281
+Tamil Nadu,MADURAI,2010,Rabi,Rice,1368,5618
+Tamil Nadu,MADURAI,2010,Rabi,Cotton(lint),7827,8662
+Tamil Nadu,ERODE,2011,Whole Year,Sugarcane,6400,6152
+Tamil Nadu,ERODE,2011,Whole Year,Turmeric,3612,3422

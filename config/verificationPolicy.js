@@ -69,7 +69,8 @@ const SHARED_TUNING = {
 
 const POLICY_DEFINITIONS = {
   // Reproduces the historical engine decisions exactly: the gate is a no-op, components are only
-  // recorded. This is the default so enabling the new code changes no decision.
+  // recorded. It was the default until 2026-10-16; the default is now v1.1-safe-ai (ADR-022), and
+  // this definition stays unchanged so stored decisions replay byte for byte.
   "v1-legacy": {
     id: "v1-legacy",
     description: "Historical behaviour. Component statuses are recorded; none can block a decision.",
@@ -99,7 +100,60 @@ const POLICY_DEFINITIONS = {
     },
     ...SHARED_TUNING,
   },
+  // ADR-022 (owner decisions D1, D2). The v1-legacy rules with every component optional, except
+  // that a technical failure or a language model alone can never cause an adverse decision:
+  //   - a confident AI "no damage" reading, when nothing else would reject the claim, holds it for a
+  //     reviewer (one review case) instead of rejecting it;
+  //   - a provider failure or an unreadable model answer makes the photo check `unavailable`: the
+  //     queue retries it, and the engine holds instead of asking the farmer for more evidence;
+  //   - the claim window is measured at the claim's FIRST submission, so waiting for checks, a
+  //     resubmission or a later review can never turn into a late-claim rejection;
+  //   - the engine waits only for the listed steps; satellite is supporting evidence and never
+  //     delays a decision.
+  // The keys below exist only in this definition. The v1-legacy and v2 blocks above are frozen
+  // (their hash covers every key); code reads POLICY_KEY_DEFAULTS when a key is absent.
+  "v1.1-safe-ai": {
+    id: "v1.1-safe-ai",
+    description:
+      "v1-legacy rules, except: an AI-only 'no damage' reading and technical failures hold for human review (never reject or ask for more evidence); the claim window is measured at first submission; satellite is never waited for.",
+    gateEnabled: false,
+    aiNoDamage: "review",
+    aiNoDamageScope: "ai_only",
+    technicalFailure: "hold",
+    aiMalformedOutput: "unavailable",
+    claimWindowReference: "firstSubmittedAt",
+    engineWaitsFor: ["ai_assessment", "land_documents", "official_land_record", "weather"],
+    reviewCaseOnHold: true,
+    maxHoldHours: null,
+    components: allOptional,
+    ...SHARED_TUNING,
+  },
 };
+
+// What a policy that does not define one of the v1.1 keys means by it: the historical behaviour.
+//   aiNoDamageScope       null: the "review" hold applies to any rejection with a no-damage reading
+//                         (v2 as shipped); "ai_only": only when the AI rule produced the rejection.
+//   technicalFailure      "legacy": an unavailable assessment is an internal error (service) and
+//                         `more_evidence_required` (engine); "hold": hold for retry or review.
+//   aiMalformedOutput     "unsure": an unreadable answer is an uncertain photo; "unavailable": a
+//                         retryable provider failure.
+//   claimWindowReference  "decisionTime" or "firstSubmittedAt".
+//   engineWaitsFor        null: every other queued step of the claim.
+//   reviewCaseOnHold      false: a hold opens no review case by itself.
+export const POLICY_KEY_DEFAULTS = Object.freeze({
+  aiNoDamageScope: null,
+  technicalFailure: "legacy",
+  aiMalformedOutput: "unsure",
+  claimWindowReference: "decisionTime",
+  engineWaitsFor: null,
+  reviewCaseOnHold: false,
+});
+
+// A policy setting with the legacy default applied. Works on any object shaped like a policy.
+export const policySetting = (policy, key) =>
+  policy && Object.prototype.hasOwnProperty.call(policy, key) && policy[key] !== undefined
+    ? policy[key]
+    : POLICY_KEY_DEFAULTS[key];
 
 // Stable JSON: object keys sorted recursively so the hash never depends on key order.
 const canonical = (value) => {
@@ -134,4 +188,4 @@ export const resolvePolicy = (id = env.claimVerificationPolicy) => {
 // Fail at startup (not at the first claim) when the configured policy id is unknown.
 export const assertPolicyConfigured = () => resolvePolicy();
 
-export default { COMPONENTS, COMPONENT_OUTCOMES, POLICY_IDS, resolvePolicy, assertPolicyConfigured };
+export default { COMPONENTS, COMPONENT_OUTCOMES, POLICY_IDS, POLICY_KEY_DEFAULTS, resolvePolicy, policySetting, assertPolicyConfigured };

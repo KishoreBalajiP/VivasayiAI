@@ -1,0 +1,46 @@
+{
+  "schema": "vivasayi-acceptance-items/v1",
+  "items": [
+    {
+      "id": "ACC-01",
+      "title": "Live Gemini evaluations",
+      "decisionRef": "D6",
+      "requirement": "Live evaluations wait for the billed key.",
+      "evidenceRequired": ["call cap present"],
+      "tests": [],
+      "liveValidation": { "status": "BLOCKED", "label": "BLOCKED (D6)", "reason": "Live Gemini evaluations wait for the owner's billed key (D6)." },
+      "releaseBlocking": false
+    },
+    {
+      "id": "ACC-02",
+      "title": "Durable enqueue",
+      "decisionRef": "D7",
+      "requirement": "Submit enqueues durably.",
+      "evidenceRequired": ["EQ-*"],
+      "tests": ["EQ-1", "EQ-4"],
+      "liveValidation": { "status": "N/A", "label": "N/A" },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-03",
+      "title": "Scenario S01",
+      "decisionRef": "D1",
+      "requirement": "All S01 tests pass.",
+      "evidenceRequired": [],
+      "tests": [],
+      "scenario": "S01",
+      "liveValidation": { "status": "N/A", "label": "N/A" },
+      "releaseBlocking": true
+    },
+    {
+      "id": "ACC-04",
+      "title": "EventBridge template",
+      "decisionRef": "D7",
+      "requirement": "Template exists, rule disabled.",
+      "evidenceRequired": ["WK-6"],
+      "tests": ["WK-6"],
+      "liveValidation": { "status": "NOT_DEPLOYED", "label": "Not deployed", "reason": "Nothing is deployed in this work (D7)." },
+      "releaseBlocking": true
+    }
+  ]
+}

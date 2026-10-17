@@ -19,7 +19,7 @@ import User from "../models/User.js";
 import VerificationEvidence from "../models/VerificationEvidence.js";
 import logger from "../utils/logger.js";
 import { putObject } from "../services/s3.service.js";
-import { compareContext, examineOwnershipDocument, extentToAcres, looksLikeInstruction, normalizeExtraction } from "../services/landDocumentExamination.service.js";
+import { compareContext, examineOwnershipDocument, examineOwnershipDocumentsForClaim, extentToAcres, looksLikeInstruction, normalizeExtraction } from "../services/landDocumentExamination.service.js";
 import { api, authHeader, clearTestDatabase, seedProfile, squareGeometry, startTestDatabase, stopTestDatabase } from "./helpers.js";
 
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
@@ -188,5 +188,44 @@ describe("examineOwnershipDocument (live path, model mocked)", () => {
     spies.forEach((spy) => spy.mockRestore());
     expect(logged).not.toContain("Rajeswari");
     expect(logged).not.toContain("999/ZZ-SECRET");
+  });
+
+  it("LD-15: a per-document failure records its kind and whether it is retryable, and the document is not marked examined", async () => {
+    const forClaim = ({ user, claimId }) => examineOwnershipDocumentsForClaim({ claimId, cognitoSub: user });
+    const failureOf = async (ctx) => {
+      const { count, results } = await forClaim(ctx);
+      expect(count).toBe(1);
+      expect(results).toHaveLength(1);
+      expect(results[0].evidenceId).toBe(ctx.evidenceId);
+      expect(results[0].error).toBe("Failed to examine land document");
+      // A failed examination leaves the ownership row as it was.
+      const row = await VerificationEvidence.findById(ctx.evidenceId).lean();
+      expect(row.metadata?.landDocumentExaminationAvailable).toBeUndefined();
+      expect(row.result?.aiLandDocumentExamination).toBeUndefined();
+      return results[0];
+    };
+
+    mockGenerate.mockRejectedValue(Object.assign(new Error("[429 Too Many Requests] quota exceeded"), { status: 429 }));
+    expect(await failureOf(await seed("quota"))).toMatchObject({ kind: "quota", retryable: true });
+
+    mockGenerate.mockReset();
+    mockGenerate.mockRejectedValue(Object.assign(new Error("[503 Service Unavailable] overloaded"), { status: 503 }));
+    expect(await failureOf(await seed("overload"))).toMatchObject({ kind: "overload", retryable: true });
+
+    const previousTimeout = process.env.GEMINI_TIMEOUT_MS;
+    process.env.GEMINI_TIMEOUT_MS = "50";
+    try {
+      mockGenerate.mockReset();
+      mockGenerate.mockImplementation(() => new Promise(() => {}));
+      expect(await failureOf(await seed("timeout"))).toMatchObject({ kind: "timeout", retryable: true });
+    } finally {
+      if (previousTimeout === undefined) delete process.env.GEMINI_TIMEOUT_MS;
+      else process.env.GEMINI_TIMEOUT_MS = previousTimeout;
+    }
+
+    // Anything unrecognised is a defect: recorded, but not retried as if it were transient.
+    mockGenerate.mockReset();
+    mockGenerate.mockRejectedValue(new TypeError("Cannot read properties of undefined"));
+    expect(await failureOf(await seed("defect"))).toMatchObject({ kind: "application_defect", retryable: false });
   });
 });

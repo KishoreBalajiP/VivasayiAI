@@ -147,3 +147,17 @@ describe("verification components migration", () => {
     expect((await LossClaim.findById(decided._id)).state).toBe("verified");
   });
 });
+
+describe("components migration — remote write guard (audit B-D2)", () => {
+  it("MG-9: a write run against a database not on this machine is refused; dry runs and local writes are allowed", async () => {
+    const { assertWriteAllowed } = await import("../scripts/migrations/2026-10-verification-components.js");
+    const atlas = "mongodb+srv://user:secret@cluster0.example.invalid/vivasayi";
+    const remote = "mongodb://db.example.invalid:27017/vivasayi";
+    const local = "mongodb://127.0.0.1:27017/vivasayi";
+    expect(() => assertWriteAllowed({ dryRun: false, mongoUri: atlas, environment: {} })).toThrow(/Refusing to write/);
+    expect(() => assertWriteAllowed({ dryRun: false, mongoUri: remote, environment: {} })).toThrow(/Refusing to write/);
+    expect(() => assertWriteAllowed({ dryRun: true, mongoUri: atlas, environment: {} })).not.toThrow();
+    expect(() => assertWriteAllowed({ dryRun: false, mongoUri: local, environment: {} })).not.toThrow();
+    expect(() => assertWriteAllowed({ dryRun: false, mongoUri: atlas, environment: { MIGRATION_ALLOW_REMOTE_APPLY: "true" } })).not.toThrow();
+  });
+});

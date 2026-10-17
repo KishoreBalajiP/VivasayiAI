@@ -23,6 +23,7 @@ import {
   deleteEvidence,
   getEvidenceUrl,
   getClaimVerification,
+  getClaimProgress,
   examineClaimLandDocuments,
   runClaimSatelliteVerification,
   verifyClaimOfficialLandRecords,
@@ -47,6 +48,8 @@ router.get("/", claimReadLimiter, listClaims);
 router.post("/", claimLimiter, validate(createClaimBody), createClaim);
 router.get("/:claimId", claimReadLimiter, validate(claimParams, "params"), getClaim);
 router.get("/:claimId/verification", claimReadLimiter, validate(claimParams, "params"), getClaimVerification);
+// ADR-022 — farmer progress contract (progress-v1). A read: the read bucket, owner-scoped.
+router.get("/:claimId/progress", claimReadLimiter, validate(claimParams, "params"), getClaimProgress);
 router.post("/:claimId/verification/land-documents", claimLimiter, validate(claimParams, "params"), examineClaimLandDocuments);
 router.post("/:claimId/verification/satellite", claimLimiter, validate(claimParams, "params"), runClaimSatelliteVerification);
 router.post("/:claimId/verification/official-land-record", claimLimiter, validate(claimParams, "params"), verifyClaimOfficialLandRecords);

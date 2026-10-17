@@ -31,9 +31,16 @@ export default defineConfig({
       ADMIN_RATE_LIMIT_MAX: "1000",
       ADMIN_OVERRIDE_APPROVER_ACRE_THRESHOLD: "0",
       CLAIM_AUTOMATED_VERIFICATION_ENABLED: "false",
-      // config/env.js loads the developer's .env, and dotenv never overrides a variable that is
-      // already set. Blanking every live credential here keeps a local .env from routing a test to
-      // a real provider (Atlas, S3, Copernicus, a land-record service, Cognito).
+      // Pinned so the existing suites stay the v1-legacy regression suite whatever the code default
+      // becomes (ADR-022). Suites that test another policy set it themselves in vi.hoisted.
+      CLAIM_VERIFICATION_POLICY: "v1-legacy",
+      // config/env.js must not load the developer's .env at all in tests (and in the worker child
+      // processes the worker suites spawn, which inherit this environment): a key that exists only in
+      // .env could otherwise route a test to a live provider.
+      VIVASAYI_SKIP_DOTENV: "1",
+      // Belt and braces for a process that loads .env anyway (dotenv never overrides a variable that
+      // is already set): every live credential is blanked, so no test reaches a real provider (Atlas,
+      // S3, Copernicus, a land-record service, Cognito).
       MONGO_URI: "",
       MY_AWS_ACCESS_KEY_ID: "",
       MY_AWS_SECRET_ACCESS_KEY: "",

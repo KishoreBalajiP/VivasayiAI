@@ -242,6 +242,10 @@ export const toVerificationEvidence = ({
     indicator: analyzed ? "NDVI" : null,
     analysisExecuted: analyzed,
     processingStatus: processing?.status || null,
+    // ADR-022 (additive): the adapter outcome itself. The evidence status alone cannot tell "no
+    // imagery for the window" from a provider failure (both are UNAVAILABLE), and the farmer's
+    // satellite status must. Not part of any fingerprint (evidenceVersion or the run's input key).
+    outcome: outcome || null,
     correlationId,
     // Explicit honesty flag persisted WITH the evidence so no consumer can mistake a foundation
     // record for a live-validated result.
@@ -456,6 +460,8 @@ export const runSatelliteAnalysis = async ({
 
   // 5) Discover optical imagery (one bounded request per window).
   const opticalScenes = [];
+  // The scenes of each window searched, in window order (pre, then post for a pre/post pair).
+  const scenesPerWindow = [];
   let discoveryMeta = null;
   try {
     for (const w of windowCheck.windows) {
@@ -466,6 +472,7 @@ export const runSatelliteAnalysis = async ({
         correlationId,
       });
       opticalScenes.push(...result.scenes);
+      scenesPerWindow.push([...result.scenes]);
       if (!discoveryMeta) {
         discoveryMeta = result;
       } else {
@@ -491,6 +498,13 @@ export const runSatelliteAnalysis = async ({
   const discovery = {
     ...discoveryMeta,
     sceneCount: opticalScenes.length,
+    // Additive (plan Part D): the scenes found in EACH window. `scenes` above keeps its historical
+    // content (the first window's search only) because the evidence fingerprint is built from it.
+    // A single-window run has no pre/post split.
+    scenesByWindow:
+      windowCheck.mode === "prepost"
+        ? { pre: scenesPerWindow[0] || [], post: scenesPerWindow[1] || [] }
+        : { pre: null, post: null, single: scenesPerWindow[0] || [] },
   };
 
   // 6) SAR discovery (best-effort, cloud-independent mitigation; never blocks optical).

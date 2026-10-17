@@ -1,8 +1,9 @@
-import { writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
 import { isolateSharedInfrastructure, instrumentModel, readUsage, redact, stats, gitInfo, PRICING, isQuotaError } from "./lib/liveCommon.js";
+import { ResultExistsError, writeJsonOnce, writeResultOnce } from "./lib/writeOnce.js";
 
 // Live SYNTHETIC land-document extraction. Renders 12 synthetic Patta/Chitta-style images (watermarked
 // "SYNTHETIC — NOT A REAL RECORD", fictional names and numbers; 3 carry prompt-injection text) and runs
@@ -14,6 +15,8 @@ import { isolateSharedInfrastructure, instrumentModel, readUsage, redact, stats,
 // This measures FIELD READING on clean synthetic images. It is NOT ownership-verification accuracy:
 // a perfectly read document can be forged or belong to someone else.
 // Usage: node scripts/live/landDocExtraction.live.js --date=2026-10-16 [--only=D01,D02] [--save-images=<dir>]
+// Results are write-once (scripts/live/lib/writeOnce.js): the run refuses to start when its result
+// files for that date already exist. --save-images writes rendered inputs, not results.
 
 isolateSharedInfrastructure({
   IMAGE_AI_MODE: "live",
@@ -31,6 +34,17 @@ const arg = (name) => { const a = process.argv.find((x) => x.startsWith(`--${nam
 const date = arg("date") || new Date().toISOString().slice(0, 10);
 const only = arg("only") ? arg("only").split(",") : null;
 const saveImages = arg("save-images");
+const outDir = join(root, "docs", "research", "evaluation", "live");
+const suffix = only ? `_only${only.join("-")}` : "";
+const resultPaths = [`landdoc_extraction_synthetic_${date}${suffix}.json`, `landdoc_extraction_synthetic_${date}${suffix}.md`].map((name) => join(outDir, name));
+// Checked before any model call so a duplicate run spends no quota.
+for (const path of resultPaths) {
+  if (existsSync(path)) {
+    const error = new ResultExistsError(path);
+    console.error(error.message);
+    process.exit(error.exitCode);
+  }
+}
 
 const { DOC_SPECS, renderPng } = await import("./lib/syntheticLandDocs.js");
 const { scoreExtraction, SCORED_FIELDS } = await import("../eval/docExtraction.score.js");
@@ -200,10 +214,7 @@ const result = {
   ],
 };
 
-const outDir = join(root, "docs", "research", "evaluation", "live");
-mkdirSync(outDir, { recursive: true });
-const suffix = only ? `_only${only.join("-")}` : "";
-writeFileSync(join(outDir, `landdoc_extraction_synthetic_${date}${suffix}.json`), `${JSON.stringify(result, null, 2)}\n`);
+writeJsonOnce(resultPaths[0], result);
 
 const pct = (k, nn) => (nn ? `${((k / nn) * 100).toFixed(1)}% (${k}/${nn})` : "n/a");
 const fieldRows = SCORED_FIELDS.map((f) => `| ${f} | ${pct(result.fieldsClean[f].exactMatch, result.fieldsClean[f].n)} | ${pct(result.fieldsClean[f].lenientMatch, result.fieldsClean[f].n)} | ${result.strictScorerClean.perField[f].f1 ?? "n/a"} | ${pct(result.fieldsAll[f].lenientMatch, result.fieldsAll[f].n)} |`).join("\n");
@@ -233,7 +244,7 @@ Scoring: strict = ${result.scoring.strict} Lenient = ${result.scoring.lenient}
 
 Limitations: ${result.limitations.join(" ")}
 `;
-writeFileSync(join(outDir, `landdoc_extraction_synthetic_${date}${suffix}.md`), md);
+writeResultOnce(resultPaths[1], md);
 console.log(md);
 await stopTestDatabase(mongo);
 process.exit(0);

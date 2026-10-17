@@ -1,0 +1,520 @@
+{
+  "FusionLegacyInvalidApprovals": {
+    "value": "10",
+    "source": "docs/research/evaluation/results/fusion.json",
+    "pointer": "/policies/photo-only (v1-legacy)/invalidApprovalRate/k",
+    "formatter": "integer",
+    "raw": 10
+  },
+  "FusionInvalidApprovalDenominator": {
+    "value": "190",
+    "source": "docs/research/evaluation/results/fusion.json",
+    "pointer": "/policies/photo-only (v1-legacy)/invalidApprovalRate/n",
+    "formatter": "integer",
+    "raw": 190
+  },
+  "FusionComparisonsPerPolicy": {
+    "value": "1,536",
+    "source": "docs/research/evaluation/results/fusion.json",
+    "pointer": "/supportingEvidenceChangedOutcome/*/n (equal for every policy, every k = 0)",
+    "formatter": "thousands",
+    "raw": 1536
+  },
+  "FusionLegacyRejectedOnAiAlone": {
+    "value": "2",
+    "source": "docs/research/evaluation/results/fusion.json",
+    "pointer": "/policies/photo-only (v1-legacy)/adverseOnAiAlone/k",
+    "formatter": "integer",
+    "raw": 2
+  },
+  "FusionAiAloneScenarios": {
+    "value": "2",
+    "source": "docs/research/evaluation/results/fusion.json",
+    "pointer": "/policies/photo-only (v1-legacy)/adverseOnAiAlone/n",
+    "formatter": "integer",
+    "raw": 2
+  },
+  "FusionSafeAiInvalidApprovals": {
+    "value": "10",
+    "source": "docs/research/evaluation/results/fusion_v1.1_2026-10-16.json",
+    "pointer": "/row/invalidApprovalRate/k",
+    "formatter": "integer",
+    "raw": 10
+  },
+  "FusionSafeAiRejectedOnAiAlone": {
+    "value": "0",
+    "source": "docs/research/evaluation/results/fusion_v1.1_2026-10-16.json",
+    "pointer": "/row/adverseOnAiAlone/k",
+    "formatter": "integer",
+    "raw": 0
+  },
+  "FusionSafeAiHeld": {
+    "value": "12",
+    "source": "docs/research/evaluation/results/fusion_v1.1_2026-10-16.json",
+    "pointer": "/row/heldForReview",
+    "formatter": "integer",
+    "raw": 12
+  },
+  "FusionSafeAiChangedDecisions": {
+    "value": "12",
+    "source": "docs/research/evaluation/results/fusion_v1.1_2026-10-16.json",
+    "pointer": "/comparedWithLegacy/decisionsChanged/\"rejected/decide -> null/hold\" (the only transition)",
+    "formatter": "integer",
+    "raw": 12
+  },
+  "GeometryAreaBiasPercent": {
+    "value": "0.6",
+    "source": "docs/research/evaluation/results/geometry.json",
+    "pointer": "/area/relativeError/p50 (x100)",
+    "formatter": "fixed1",
+    "raw": 0.6273443566636234
+  },
+  "NamesPairs": {
+    "value": "60",
+    "source": "docs/research/evaluation/results/names.json",
+    "pointer": "/n",
+    "formatter": "integer",
+    "raw": 60
+  },
+  "NamesCorrectBeforeTuning": {
+    "value": "55",
+    "source": "docs/research/evaluation/results/names.json",
+    "pointer": "/tuningHistory/0 (free text, regex 'k of n correct')",
+    "formatter": "integer",
+    "raw": 55
+  },
+  "NamesCorrectAfterTuning": {
+    "value": "60",
+    "source": "docs/research/evaluation/results/names.json",
+    "pointer": "/accuracy/k",
+    "formatter": "integer",
+    "raw": 60
+  },
+  "StudyDate": {
+    "value": "16 October 2026",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/runDate",
+    "formatter": "longDate",
+    "raw": "2026-10-16"
+  },
+  "SatLiveSquares": {
+    "value": "12",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/cases (count)",
+    "formatter": "integer",
+    "raw": 12
+  },
+  "SatEventCountWord": {
+    "value": "three",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/events[kind=\"event\"] (count)",
+    "formatter": "word",
+    "raw": 3
+  },
+  "SatSquaresPerEventWord": {
+    "value": "three",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/cases grouped by event (count, equal for every event)",
+    "formatter": "word",
+    "raw": 3
+  },
+  "SatSquareSideMetres": {
+    "value": "100",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/cases/*/areaSideMetres (equal for every case)",
+    "formatter": "integer",
+    "raw": 100
+  },
+  "SatEventSquares": {
+    "value": "9",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/cases where event kind = \"event\" (count)",
+    "formatter": "integer",
+    "raw": 9
+  },
+  "SatEventNoChange": {
+    "value": "5",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "event cases with analysis.analysisOutcome NO_CHANGE (count)",
+    "formatter": "integer",
+    "raw": 5
+  },
+  "SatEventTooFewValid": {
+    "value": "1",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "event cases with analysisOutcome INCONCLUSIVE, reason post_event_too_few_valid_pixels (count)",
+    "formatter": "integer",
+    "raw": 1
+  },
+  "SatEventNoPostData": {
+    "value": "3",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "event cases not analysed, note 'post-event window: no valid statistics' (count)",
+    "formatter": "integer",
+    "raw": 3
+  },
+  "SatLowPreNdviCountCapWord": {
+    "value": "Three",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "analysed event cases with analysis.before.ndvi < 0.2 (count)",
+    "formatter": "capitalWord",
+    "raw": 3
+  },
+  "SatLowPreNdviMin": {
+    "value": "-0.04",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "min analysis.before.ndvi of those cases, rounded down to 0.01",
+    "formatter": "fixed2",
+    "raw": -0.04
+  },
+  "SatLowPreNdviMax": {
+    "value": "0.10",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "max analysis.before.ndvi of those cases, rounded up to 0.01",
+    "formatter": "fixed2",
+    "raw": 0.1
+  },
+  "SatControlSquares": {
+    "value": "3",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/cases where event kind = \"control\" (count)",
+    "formatter": "integer",
+    "raw": 3
+  },
+  "SatControlSupports": {
+    "value": "1",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "control cases with analysisOutcome SUPPORTS_LOSS (count)",
+    "formatter": "integer",
+    "raw": 1
+  },
+  "SatControlSupportsWord": {
+    "value": "one",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "control cases with analysisOutcome SUPPORTS_LOSS (count)",
+    "formatter": "word",
+    "raw": 1
+  },
+  "SatControlSupportDelta": {
+    "value": "-0.25",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "that case's analysis.deltaNdvi",
+    "formatter": "fixed2",
+    "raw": -0.24500926900827735
+  },
+  "SatControlSupportPreNdvi": {
+    "value": "0.74",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "that case's analysis.before.ndvi",
+    "formatter": "fixed2",
+    "raw": 0.736515929663418
+  },
+  "SatControlSupportPostNdvi": {
+    "value": "0.49",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "that case's analysis.after.ndvi",
+    "formatter": "fixed2",
+    "raw": 0.4915066606551406
+  },
+  "SatLatencyMedianSeconds": {
+    "value": "2.5",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "median of /cases/*/latencyMs, in seconds",
+    "formatter": "fixed1",
+    "raw": 2.489
+  },
+  "SatLatencyMaxSeconds": {
+    "value": "11.8",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "max of /cases/*/latencyMs, in seconds",
+    "formatter": "fixed1",
+    "raw": 11.843
+  },
+  "SatPocHttpStatus": {
+    "value": "400",
+    "source": "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json",
+    "pointer": "/resolutionCheck/pocRequest/httpStatus",
+    "formatter": "integer",
+    "raw": 400
+  },
+  "RagQueries": {
+    "value": "22",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/queries/total",
+    "formatter": "integer",
+    "raw": 22
+  },
+  "RagAnswerableQueries": {
+    "value": "13",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/queries/answerable",
+    "formatter": "integer",
+    "raw": 13
+  },
+  "RagAdvisoryQueries": {
+    "value": "9",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/queries/advisory",
+    "formatter": "integer",
+    "raw": 9
+  },
+  "RagCorpusChunks": {
+    "value": "450",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/corpus/chunks",
+    "formatter": "integer",
+    "raw": 450
+  },
+  "RagCorpusFiles": {
+    "value": "60",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/corpus/files",
+    "formatter": "integer",
+    "raw": 60
+  },
+  "RagPestTableChunks": {
+    "value": "13",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/corpus/chunksByFile/RICE_PestPredictionKnowledgeBase.csv",
+    "formatter": "integer",
+    "raw": 13
+  },
+  "RagAnswerableRelevantHits": {
+    "value": "2",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/summaryAtProductionTopK/answerable/hitRateAnyRelevant/k",
+    "formatter": "integer",
+    "raw": 2
+  },
+  "RagAnswerableExpectedFile": {
+    "value": "10",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/summaryAtProductionTopK/answerable/anyExpectedFile/k",
+    "formatter": "integer",
+    "raw": 10
+  },
+  "RagHeaderOnlyHits": {
+    "value": "9",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/summaryAtProductionTopK/answerableExpectedFileHitsThatAreHeaderOnly/k",
+    "formatter": "integer",
+    "raw": 9
+  },
+  "RagExpectedFileHits": {
+    "value": "11",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/summaryAtProductionTopK/answerableExpectedFileHitsThatAreHeaderOnly/n",
+    "formatter": "integer",
+    "raw": 11
+  },
+  "RagAdvisoryAnswerBearing": {
+    "value": "0",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/summaryAtProductionTopK/advisory/answerBearingChunks/k",
+    "formatter": "integer",
+    "raw": 0
+  },
+  "RagAdvisoryChunks": {
+    "value": "27",
+    "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "pointer": "/summaryAtProductionTopK/advisory/answerBearingChunks/n",
+    "formatter": "integer",
+    "raw": 27
+  },
+  "AcceptanceLegacyPassed": {
+    "value": "24",
+    "source": "docs/research/evaluation/live/acceptance_v1-legacy_2026-10-16.json",
+    "pointer": "/passed",
+    "formatter": "integer",
+    "raw": 24
+  },
+  "AcceptanceLegacyTotal": {
+    "value": "26",
+    "source": "docs/research/evaluation/live/acceptance_v1-legacy_2026-10-16.json",
+    "pointer": "/total",
+    "formatter": "integer",
+    "raw": 26
+  },
+  "AcceptanceGatedPassed": {
+    "value": "25",
+    "source": "docs/research/evaluation/live/acceptance_v2-components_2026-10-16.json",
+    "pointer": "/passed",
+    "formatter": "integer",
+    "raw": 25
+  },
+  "AcceptanceGatedTotal": {
+    "value": "27",
+    "source": "docs/research/evaluation/live/acceptance_v2-components_2026-10-16.json",
+    "pointer": "/total",
+    "formatter": "integer",
+    "raw": 27
+  },
+  "ChatLiveItems": {
+    "value": "46",
+    "source": "docs/research/evaluation/live/live_eval_status_2026-10-16.json",
+    "pointer": "/chatContextLive/detail (free text, regex 'n planned items')",
+    "formatter": "integer",
+    "raw": 46
+  },
+  "LandDocsSynthetic": {
+    "value": "12",
+    "source": "scripts/live/lib/syntheticLandDocs.js",
+    "pointer": "DOC_SPECS.length",
+    "formatter": "integer",
+    "raw": 12
+  },
+  "LandDocsInjected": {
+    "value": "3",
+    "source": "scripts/live/lib/syntheticLandDocs.js",
+    "pointer": "DOC_SPECS with an adversarial field (count)",
+    "formatter": "integer",
+    "raw": 3
+  },
+  "PolicyCountWord": {
+    "value": "three",
+    "source": "config/verificationPolicy.js",
+    "pointer": "POLICY_IDS.length",
+    "formatter": "word",
+    "raw": 3
+  },
+  "PolicySafeAiDate": {
+    "value": "16 October 2026",
+    "source": "docs/decisions/18_DECISIONS.md",
+    "pointer": "'## ADR-022' status line date (owner decisions D1, D2: v1.1-safe-ai becomes the default)",
+    "formatter": "longDate",
+    "raw": "2026-10-16"
+  },
+  "PolicyComponentsCapWord": {
+    "value": "Ten",
+    "source": "config/verificationPolicy.js",
+    "pointer": "COMPONENTS.length",
+    "formatter": "capitalWord",
+    "raw": 10
+  },
+  "PolicyOutcomesWord": {
+    "value": "seven",
+    "source": "config/verificationPolicy.js",
+    "pointer": "COMPONENT_OUTCOMES.length",
+    "formatter": "word",
+    "raw": 7
+  },
+  "SatPreWindowFarDays": {
+    "value": "40",
+    "source": "config/verificationPolicy.js",
+    "pointer": "resolvePolicy(id).satellite, equal for v1-legacy, v2-components, v1.1-safe-ai: preWindowDays[0]",
+    "formatter": "integer",
+    "raw": 40
+  },
+  "SatPreWindowNearDays": {
+    "value": "5",
+    "source": "config/verificationPolicy.js",
+    "pointer": "resolvePolicy(id).satellite, equal for v1-legacy, v2-components, v1.1-safe-ai: preWindowDays[1]",
+    "formatter": "integer",
+    "raw": 5
+  },
+  "SatPostWindowNearDays": {
+    "value": "1",
+    "source": "config/verificationPolicy.js",
+    "pointer": "resolvePolicy(id).satellite, equal for v1-legacy, v2-components, v1.1-safe-ai: postWindowDays[0]",
+    "formatter": "integer",
+    "raw": 1
+  },
+  "SatPostWindowFarDays": {
+    "value": "20",
+    "source": "config/verificationPolicy.js",
+    "pointer": "resolvePolicy(id).satellite, equal for v1-legacy, v2-components, v1.1-safe-ai: postWindowDays[1]",
+    "formatter": "integer",
+    "raw": 20
+  },
+  "SatNdviDropSupport": {
+    "value": "0.15",
+    "source": "config/verificationPolicy.js",
+    "pointer": "resolvePolicy(id).satellite, equal for v1-legacy, v2-components, v1.1-safe-ai: ndviDropSupport",
+    "formatter": "fixed2",
+    "raw": 0.15
+  },
+  "SatMinValidPixelFraction": {
+    "value": "0.6",
+    "source": "config/verificationPolicy.js",
+    "pointer": "resolvePolicy(id).satellite, equal for v1-legacy, v2-components, v1.1-safe-ai: minValidPixelFraction",
+    "formatter": "fixed1",
+    "raw": 0.6
+  },
+  "SatSceneCloudMaxPercent": {
+    "value": "30",
+    "source": "services/satellite/config.js",
+    "pointer": "resolveSatelliteConfig({}).cloudMaxFraction (x100)",
+    "formatter": "integer",
+    "raw": 30
+  },
+  "SatProcessingSceneCloudMaxPercent": {
+    "value": "90",
+    "source": "services/satellite/config.js",
+    "pointer": "resolveSatelliteConfig({}).processingSceneCloudMax (x100)",
+    "formatter": "integer",
+    "raw": 90
+  },
+  "AiTimeoutSeconds": {
+    "value": "25",
+    "source": "utils/aiTimeout.js",
+    "pointer": "getDefaultTimeoutMs() with GEMINI_TIMEOUT_MS unset (ms / 1000)",
+    "formatter": "integer",
+    "raw": 25
+  },
+  "ClaimWritesPerHourAtStudyWord": {
+    "value": "five",
+    "source": "docs/research/evaluation/live/study_code_defaults_2026-10-16.json",
+    "pointer": "/values/CLAIM_RATE_LIMIT_MAX/value (default in config/env.js at commit 6dbe6b8, in force during the 16 October 2026 study)",
+    "formatter": "word",
+    "raw": 5
+  },
+  "ClaimWritesPerHourWord": {
+    "value": "fifteen",
+    "source": "config/env.js",
+    "pointer": "RATE_LIMIT_DEFAULTS.claimWrites (current default, owner decision D5)",
+    "formatter": "word",
+    "raw": 15
+  },
+  "EvidenceRequestsPerHour": {
+    "value": "60",
+    "source": "config/env.js",
+    "pointer": "RATE_LIMIT_DEFAULTS.evidence (current default, owner decision D5)",
+    "formatter": "integer",
+    "raw": 60
+  },
+  "BibEntries": {
+    "value": "74",
+    "source": "docs/research/references.bib",
+    "pointer": "@entries (count, scripts/eval/bibStats.js)",
+    "formatter": "integer",
+    "raw": 74
+  },
+  "GapFirstPassVerified": {
+    "value": "45",
+    "source": "docs/research/source_ledger.json",
+    "pointer": "entries with pass 1 and verification other than web_page (count)",
+    "formatter": "integer",
+    "raw": 45
+  },
+  "GapFirstPassWeb": {
+    "value": "3",
+    "source": "docs/research/source_ledger.json",
+    "pointer": "entries with pass 1 and verification web_page (count)",
+    "formatter": "integer",
+    "raw": 3
+  },
+  "GapSecondPassAdded": {
+    "value": "26",
+    "source": "docs/research/source_ledger.json",
+    "pointer": "entries with pass 2 (count)",
+    "formatter": "integer",
+    "raw": 26
+  },
+  "LiteratureSearchDate": {
+    "value": "16 October 2026",
+    "source": "docs/research/literature_review.md",
+    "pointer": "'**Search date:**' line",
+    "formatter": "longDate",
+    "raw": "2026-10-16"
+  }
+}

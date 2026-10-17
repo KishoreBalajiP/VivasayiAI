@@ -1,0 +1,76 @@
+{
+  "name": "ragEvalSpecProvenance",
+  "description": "Pins the frozen RAG relevance rule. Each block is a verbatim copy of the listed lines of the source file at the source commit; sha256 is over the block's lines joined with \\n, without a trailing newline. specSha256 is the sha256 of the whole spec file and is recorded in every RAG result.",
+  "source": {
+    "commit": "6dbe6b8",
+    "commitFull": "6dbe6b8497cedef558fb912072787935d5565d19",
+    "path": "scripts/live/ragRetrieval.live.js",
+    "fileSha256": "07569cc54e7d7650434f94364a344fc8f9dcc5817c86916d6c206c133072884e"
+  },
+  "blocks": [
+    {
+      "name": "T",
+      "lines": [
+        32,
+        44
+      ],
+      "sha256": "cfa9815052d9be57345ef967e3f5caea4eefa1c2b005bd70b1eb61b0e69bad6d"
+    },
+    {
+      "name": "QUERIES",
+      "lines": [
+        46,
+        71
+      ],
+      "sha256": "16cb86f4c6d231b0f8b4f52def7594cf9c50ed0002fafc2f3b29da5437474e1f"
+    },
+    {
+      "name": "helpers",
+      "lines": [
+        73,
+        74
+      ],
+      "sha256": "ab1c8576d0280e149115612441c73acdf99ab75f201b3eb3a41d744db8024754"
+    },
+    {
+      "name": "kind",
+      "lines": [
+        87,
+        87
+      ],
+      "sha256": "d41b887039b88507dadfb68366d413259430078bb345197da1b43b85c79fa5ab"
+    },
+    {
+      "name": "labelHits",
+      "lines": [
+        102,
+        120
+      ],
+      "sha256": "e5bf772c753423d3bf4a9a46c413b574918d35aeb3da47fed416238881a745b7"
+    },
+    {
+      "name": "partition",
+      "lines": [
+        127,
+        129
+      ],
+      "sha256": "ecde0261fcfc3851d0dab6747fcda7427aff0a9f56b79ba45ec70fa51dafd1e1"
+    },
+    {
+      "name": "summarize",
+      "lines": [
+        130,
+        147
+      ],
+      "sha256": "3a3504a6cae1299f86b1d1e55f0f934addca46feb62980890614ab7f2ad3802b"
+    }
+  ],
+  "spec": {
+    "path": "scripts/live/lib/ragEvalSpec.js",
+    "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55"
+  },
+  "baseline": {
+    "path": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "sha256": "7572a51b53a46e97f55a858f32f5f47bcc9ea5b28ad24f182d6335e8a05d0d22"
+  }
+}

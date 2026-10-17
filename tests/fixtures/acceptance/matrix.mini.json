@@ -1,0 +1,40 @@
+{
+  "schema": "vivasayi-acceptance-matrix/v1",
+  "$comment": "Small matrix for tests/acceptance.report.unit.test.js; scenario IDs are reused with fixture meanings.",
+  "idPattern": "^([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+[a-z]?):",
+  "levelSuites": { "U": "backend-vitest", "I/API": "backend-vitest", "FE-U": "frontend-vitest", "E2E": "e2e-playwright" },
+  "defaults": { "unmappedFailure": { "severity": "S2", "releaseBlocking": true } },
+  "suiteDefaults": {
+    "frontend-lint": { "severity": "S3", "releaseBlocking": true },
+    "manuscript-numbers": { "severity": "S4", "releaseBlocking": false }
+  },
+  "fileLevels": {
+    "files": { "backend": { "tests/claims.api.test.js": "I/API" }, "frontend": {} },
+    "patterns": [
+      { "repo": "backend", "glob": "tests/**/*.unit.test.js", "level": "U" },
+      { "repo": "backend", "glob": "tests/**/*.test.js", "level": "I/API" },
+      { "repo": "frontend", "glob": "e2e/**/*.spec.ts", "level": "E2E" },
+      { "repo": "frontend", "glob": "src/**/*.test.ts", "level": "FE-U" },
+      { "repo": "frontend", "glob": "src/**/*.test.tsx", "level": "FE-U" }
+    ]
+  },
+  "registry": [
+    { "prefix": "E2E", "suite": "e2e-playwright" },
+    { "prefix": "TRK", "suite": "frontend-vitest" },
+    { "prefix": "POLL", "suite": "frontend-vitest" },
+    { "prefix": "I18N", "suite": "frontend-vitest" },
+    { "prefix": "VJ", "suite": "backend-vitest" }
+  ],
+  "knownCollisions": [{ "id": "CR-1", "files": ["tests/chat.regressions.test.js", "tests/verificationComponents.unit.test.js"] }],
+  "scenarios": [
+    { "id": "S01", "name": "All required tests pass", "tests": { "U": ["VJ-2", "VJ-20"], "I/API": ["EQ-1"], "FE-U": ["TRK-6"], "E2E": ["E2E-01"] }, "mocks": ["FG"], "severity": "S1", "releaseBlocking": true, "decisionRefs": ["D1"] },
+    { "id": "S02", "name": "A required test fails", "tests": { "I/API": ["EQ-4"] }, "mocks": [], "severity": "S1", "releaseBlocking": true, "decisionRefs": [] },
+    { "id": "S03", "name": "A required test is absent", "tests": { "I/API": ["EQ-1", "EQ-2"] }, "mocks": [], "severity": "S1", "releaseBlocking": true, "decisionRefs": [] },
+    { "id": "S04", "name": "A required test is skipped", "tests": { "I/API": ["PRG-7"] }, "mocks": [], "severity": "S2", "releaseBlocking": true, "decisionRefs": [] },
+    { "id": "S05", "name": "A required Playwright test", "tests": { "E2E": ["E2E-25"] }, "mocks": ["PR"], "severity": "S1", "releaseBlocking": true, "decisionRefs": [] },
+    { "id": "S06", "name": "Wildcard and file selectors", "tests": { "I/API": ["PRG-1", "PRG-2", "VC-*", { "repo": "backend", "file": "tests/claims.api.test.js", "title": "p6-22b" }] }, "mocks": [], "severity": "S3", "releaseBlocking": false, "decisionRefs": [] },
+    { "id": "S07", "name": "Wildcard with no tests", "tests": { "U": ["SD-*"] }, "mocks": [], "severity": "S2", "releaseBlocking": false, "decisionRefs": [] },
+    { "id": "S08", "name": "Fails in one Playwright project", "tests": { "E2E": ["E2E-02"], "FE-U": [{ "repo": "frontend", "file": "src/utils/progressPolling.test.ts" }] }, "mocks": [], "severity": "S3", "releaseBlocking": true, "decisionRefs": [] },
+    { "id": "S09", "name": "Flaky Playwright test", "tests": { "E2E": ["E2E-24"] }, "mocks": [], "severity": "S1", "releaseBlocking": true, "decisionRefs": [] }
+  ]
+}
