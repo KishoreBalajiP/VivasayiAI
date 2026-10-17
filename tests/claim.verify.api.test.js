@@ -3,6 +3,7 @@ import LossClaim from "../models/LossClaim.js";
 import ClaimEvidence from "../models/ClaimEvidence.js";
 import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
+import VerificationJob from "../models/VerificationJob.js";
 import ApiError from "../utils/ApiError.js";
 import { putObject } from "../services/s3.service.js";
 import claimAssessmentService from "../services/claimAssessment.service.js";
@@ -247,6 +248,17 @@ describe("agricultural loss claim — Phase 6 verification API (POST /claims/:cl
       const user = sub("a4");
       const response = await verify(user, "000000000000000000000000");
       expect(response.status).toBe(404);
+    });
+
+    // ADR-022: with automated verification OFF (as in this whole suite) the endpoint keeps its
+    // historical behaviour: no job row is planned, nothing is drained, and the claim is decided inline.
+    it("VF-5: with automated verification off, verify plans and drains nothing and decides inline as before", async () => {
+      const { user, claim } = await seedSubmittedVerified("vf5");
+      const response = await verify(user, claim.id);
+      expect(response.status).toBe(200);
+      expect(response.body.data.verification).toMatchObject({ inProgress: false, claimState: "verified", outcome: "verified" });
+      expect(await VerificationJob.countDocuments({ claimId: claim.id })).toBe(0);
+      expect(await VerificationJob.countDocuments({})).toBe(0);
     });
   });
 

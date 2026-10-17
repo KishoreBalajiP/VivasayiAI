@@ -23,7 +23,8 @@ const chatKeyGenerator = (req) =>
 
 // F-49 (ADR-019 — 15_Security §5): per-user claim and claim-evidence rate limits, keyed by the
 // authenticated cognitoSub (same pattern as the chat/session/upload limiters — runs after
-// requireAuth). Defaults match .env.example: 5 claims/hour, 20 evidence uploads/hour per user.
+// requireAuth). Defaults (config/env.js RATE_LIMIT_DEFAULTS, owner decision D5) match .env.example:
+// 15 claim writes/hour and 60 evidence calls/hour per user; reads have their own 600/hour bucket.
 const claimLimiter = rateLimit({
   windowMs: env.claimRateLimitWindowMs,
   limit: env.claimRateLimitMax,

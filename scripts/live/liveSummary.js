@@ -1,9 +1,11 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { writeResultOnce } from "./lib/writeOnce.js";
 
 // Combines the live-evaluation result files of one date into a single key-metrics table. Reads only the
-// JSON the live scripts wrote; computes nothing new except formatting.
+// JSON the live scripts wrote; computes nothing new except formatting. The summary is write-once
+// (scripts/live/lib/writeOnce.js): an existing SUMMARY_<date>.md is never replaced.
 // Usage: node scripts/live/liveSummary.js --date=2026-10-16
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -67,5 +69,10 @@ if (!doc && status && status.landDocExtractionSynthetic) lines.push(`| Synthetic
 const geminiCalls = (chat ? chat.geminiCalls.generation + chat.geminiCalls.judge : 0) + (doc ? doc.geminiCalls.total : 0);
 lines.push("", `Gemini calls recorded in these result files: ${geminiCalls}.${status ? " Calls made during development and in interrupted runs are listed in live_eval_status_" + date + ".json." : ""}`);
 lines.push("", "Price source: " + ((chat && chat.pricing.source) || (doc && doc.pricing.source) || "n/a"));
-writeFileSync(join(dir, `SUMMARY_${date}.md`), `${lines.join("\n")}\n`);
 console.log(lines.join("\n"));
+try {
+  writeResultOnce(join(dir, `SUMMARY_${date}.md`), `${lines.join("\n")}\n`);
+} catch (error) {
+  console.error(error.message);
+  process.exit(error.exitCode || 1);
+}

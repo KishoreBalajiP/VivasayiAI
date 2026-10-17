@@ -15,7 +15,7 @@
 ## 1. Repository layout
 
 ```
-tn-farming-assistant/                 ← PRODUCT REPOSITORY (backend + docs)
+VivasayiAI/                           ← PRODUCT REPOSITORY (backend + docs; package name tn-farming-assistant)
 ├── docs/                             ← all documentation (see docs/README.md)
 ├── .github/workflows/                ← CI/CD
 ├── config/                           ← db connection, (vectorstore planned)
@@ -28,7 +28,7 @@ tn-farming-assistant/                 ← PRODUCT REPOSITORY (backend + docs)
 ├── Dockerfile
 └── package.json
 
-tn-farming-assistant-frontend/        ← FRONTEND REPOSITORY (code only)
+VivasayiAI-Frontend/                  ← FRONTEND REPOSITORY (code, README, e2e/)
 ├── src/
 │   ├── components/
 │   ├── context/

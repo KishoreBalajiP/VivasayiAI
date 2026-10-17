@@ -4,6 +4,8 @@ import {
   evaluateOverrideTransition,
   overridesRequireApprover,
   approverIsValid,
+  isHeldAssessment,
+  isOverrideableFrom,
 } from "../services/adminOverrideRules.service.js";
 import {
   QUEUE_STATES,
@@ -73,6 +75,32 @@ describe("adminOverrideRules", () => {
     expect(evaluateOverrideTransition({ fromState: "processing", toState: "rejected" }).ok).toBe(true);
   });
 
+  it("SA-1d: a submitted claim may be overridden only while the engine holds it (D8)", () => {
+    // Held: still submitted, no decision on the assessment, verification "held".
+    expect(isHeldAssessment({ state: null, verification: { status: "held" } })).toBe(true);
+    expect(isHeldAssessment({ verification: { status: "held" } })).toBe(true);
+    expect(isHeldAssessment(null)).toBe(false);
+    expect(isHeldAssessment({ state: null, verification: null })).toBe(false);
+    expect(isHeldAssessment({ state: null, verification: { status: "completed" } })).toBe(false);
+    expect(isHeldAssessment({ state: null, verification: { status: "failed" } })).toBe(false);
+    expect(isHeldAssessment({ state: "verified", verification: { status: "held" } })).toBe(false);
+
+    expect(evaluateOverrideTransition({ fromState: "submitted", toState: "verified", held: true })).toEqual({ ok: true, reason: null });
+    expect(evaluateOverrideTransition({ fromState: "submitted", toState: "rejected", held: true }).ok).toBe(true);
+    const notHeld = evaluateOverrideTransition({ fromState: "submitted", toState: "verified", held: false });
+    expect(notHeld.ok).toBe(false);
+    expect(notHeld.reason).toMatch(/submitted state cannot be overridden/);
+    expect(evaluateOverrideTransition({ fromState: "submitted", toState: "verified" }).ok).toBe(false);
+    // `held` widens nothing else: draft and withdrawn stay closed, the target must be a decision.
+    expect(evaluateOverrideTransition({ fromState: "draft", toState: "verified", held: true }).ok).toBe(false);
+    expect(evaluateOverrideTransition({ fromState: "withdrawn", toState: "verified", held: true }).ok).toBe(false);
+    expect(evaluateOverrideTransition({ fromState: "submitted", toState: "processing", held: true }).ok).toBe(false);
+    // Only a real `true` counts.
+    expect(isOverrideableFrom("submitted", { held: "true" })).toBe(false);
+    expect(isOverrideableFrom("submitted", { held: true })).toBe(true);
+    expect(isOverrideableFrom("submitted")).toBe(false);
+  });
+
   it("overridesRequireApprover: disabled at threshold 0 and below", () => {
     expect(overridesRequireApprover({ overriddenAcres: 9999, threshold: 0 })).toBe(false);
     expect(overridesRequireApprover({ overriddenAcres: 9999, threshold: -3 })).toBe(false);
@@ -114,6 +142,7 @@ describe("adminQueue — constants + normalization", () => {
       search: null,
       withAppeal: null,
       aiFailed: null,
+      held: null,
       page: 1,
       limit: 20,
     });
@@ -200,6 +229,42 @@ describe("adminQueue — post-match (queue membership)", () => {
   it("aiFailed=true shows only AI-failed claims", () => {
     const match = buildPostMatch(normalizeQueueFilters({ aiFailed: "true" }));
     expect(match).toEqual({ $or: [{ $and: [{ aiFailed: true }] }] });
+  });
+
+  it("SA-1c: the held filter — absent keeps held claims as a third leg, true lists only them (other filters narrow), false removes them", () => {
+    const heldLeg = { $and: [{ held: true }] };
+    expect(normalizeQueueFilters({ held: "true" }).held).toBe(true);
+    expect(normalizeQueueFilters({ held: "false" }).held).toBe(false);
+    expect(normalizeQueueFilters({ held: "yes" }).held).toBeNull();
+
+    // Absent: engine-review states OR AI failures OR held claims.
+    expect(buildPostMatch(normalizeQueueFilters({}))).toEqual({
+      $or: [{ state: { $in: QUEUE_STATES } }, { $and: [{ aiFailed: true }] }, heldLeg],
+    });
+
+    // held=true: only held claims; status / aiFailed narrow the held set instead of being ignored.
+    expect(buildPostMatch(normalizeQueueFilters({ held: "true" }))).toEqual({ $or: [heldLeg] });
+    expect(buildPostMatch(normalizeQueueFilters({ held: "true", status: "rejected" }))).toEqual({
+      $and: [{ $or: [heldLeg] }, { state: "rejected" }],
+    });
+    expect(buildPostMatch(normalizeQueueFilters({ held: "true", aiFailed: "true" }))).toEqual({
+      $and: [{ $or: [heldLeg] }, { aiFailed: true }],
+    });
+    expect(buildPostMatch(normalizeQueueFilters({ held: "true", aiFailed: "false", withAppeal: "true" }))).toEqual({
+      $and: [{ $or: [heldLeg] }, { aiFailed: { $ne: true } }, { hasActiveAppeal: true }],
+    });
+
+    // held=false: the default queue without the held leg, and held claims excluded from every leg
+    // (a technical hold is also flagged aiFailed).
+    expect(buildPostMatch(normalizeQueueFilters({ held: "false" }))).toEqual({
+      $and: [{ $or: [{ state: { $in: QUEUE_STATES } }, { $and: [{ aiFailed: true }] }] }, { held: { $ne: true } }],
+    });
+    expect(buildPostMatch(normalizeQueueFilters({ held: "false", aiFailed: "true" }))).toEqual({
+      $and: [{ $or: [{ $and: [{ aiFailed: true }] }] }, { held: { $ne: true } }],
+    });
+    expect(buildPostMatch(normalizeQueueFilters({ held: "false", status: "submitted" }))).toEqual({
+      $and: [{ $or: [{ state: "submitted" }] }, { held: { $ne: true } }],
+    });
   });
 
   it("eventType + search compose into a single $and document", () => {

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { env } from "../config/env.js";
 import { validateParcelGeometry } from "../services/parcelGeometry.service.js";
 import { CLAIMANT_RELATIONSHIPS } from "../config/claimantEvidence.js";
+import { JOB_STEPS } from "../models/VerificationJob.js";
 import {
   DECISION_STATES,
   hasReservedActionKeyPrefix,
@@ -353,6 +354,8 @@ const adminQueueQuery = z
     aiFailed: z
       .enum(["true", "false"], { message: "aiFailed must be true or false" })
       .optional(),
+    // D8: only claims the engine is holding for a person.
+    held: z.enum(["true", "false"], { message: "held must be true or false" }).optional(),
     page: z.coerce.number({ message: "Invalid page" }).int().positive().max(10000).optional(),
     limit: z.coerce.number({ message: "Invalid limit" }).int().positive().max(100).optional(),
   })
@@ -415,7 +418,25 @@ const reviewCaseDecisionBody = z.object({
     .max(2000, "Review reason exceeds 2000 characters"),
 });
 
+// ADR-022 (D9) — an admin re-queues a claim's dead verification jobs. `steps` limits it to those
+// steps (all dead steps when absent); the reason is mandatory, like every admin action.
+const requeueJobsBody = z
+  .object({
+    steps: z
+      .array(z.enum(JOB_STEPS, { message: "Unknown verification step" }), { message: "steps must be a list of verification steps" })
+      .min(1, "steps must not be empty")
+      .max(JOB_STEPS.length, "Too many steps")
+      .optional(),
+    reason: z
+      .string({ message: "Requeue reason is required" })
+      .trim()
+      .min(10, "Requeue reason must be at least 10 characters")
+      .max(2000, "Requeue reason exceeds 2000 characters"),
+  })
+  .strict();
+
 export {
+  requeueJobsBody,
   reviewCaseParams,
   reviewCaseDecisionBody,
   googleLoginBody,

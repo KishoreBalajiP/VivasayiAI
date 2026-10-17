@@ -1,0 +1,374 @@
+{
+  "contractVersion": "progress-v1",
+  "$comment": "Generated from services/claimProgress.js (progressContractDocument). Every value the progress-v1 builder can emit, and nothing else; the PRG-10 suite checks both directions. Unknown values must get generic copy in a client, never be rendered raw.",
+  "overallStatuses": [
+    "draft",
+    "in_progress",
+    "waiting_for_review",
+    "action_required",
+    "decided",
+    "withdrawn"
+  ],
+  "decisionValues": [
+    "verified",
+    "partially_verified",
+    "rejected",
+    "out_of_limit",
+    "duplicate_area",
+    "more_evidence_required"
+  ],
+  "stageIds": [
+    "received",
+    "photos",
+    "land_documents",
+    "weather",
+    "area_checks",
+    "decision"
+  ],
+  "stageStatuses": [
+    "pending",
+    "active",
+    "complete",
+    "waiting",
+    "blocked",
+    "not_applicable",
+    "failed_technical"
+  ],
+  "stages": {
+    "received": [
+      {
+        "status": "pending",
+        "explanationKey": "progress.received.waiting_for_submit"
+      },
+      {
+        "status": "complete",
+        "explanationKey": "progress.received.complete"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.received.not_submitted"
+      }
+    ],
+    "photos": [
+      {
+        "status": "blocked",
+        "explanationKey": "progress.photos.missing"
+      },
+      {
+        "status": "pending",
+        "explanationKey": "progress.photos.waiting_for_submit"
+      },
+      {
+        "status": "pending",
+        "explanationKey": "progress.photos.queued"
+      },
+      {
+        "status": "active",
+        "explanationKey": "progress.photos.checking"
+      },
+      {
+        "status": "waiting",
+        "explanationKey": "progress.photos.retrying_technical"
+      },
+      {
+        "status": "failed_technical",
+        "explanationKey": "progress.photos.technical_issue_reviewer"
+      },
+      {
+        "status": "complete",
+        "explanationKey": "progress.photos.complete"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.photos.not_checked"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.photos.claim_withdrawn"
+      }
+    ],
+    "land_documents": [
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.land_documents.none_attached"
+      },
+      {
+        "status": "pending",
+        "explanationKey": "progress.land_documents.waiting_for_submit"
+      },
+      {
+        "status": "pending",
+        "explanationKey": "progress.land_documents.queued"
+      },
+      {
+        "status": "active",
+        "explanationKey": "progress.land_documents.checking"
+      },
+      {
+        "status": "waiting",
+        "explanationKey": "progress.land_documents.retrying_technical"
+      },
+      {
+        "status": "failed_technical",
+        "explanationKey": "progress.land_documents.technical_issue_reviewer"
+      },
+      {
+        "status": "complete",
+        "explanationKey": "progress.land_documents.complete"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.land_documents.not_checked"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.land_documents.claim_withdrawn"
+      }
+    ],
+    "weather": [
+      {
+        "status": "pending",
+        "explanationKey": "progress.weather.waiting_for_submit"
+      },
+      {
+        "status": "pending",
+        "explanationKey": "progress.weather.queued"
+      },
+      {
+        "status": "active",
+        "explanationKey": "progress.weather.checking"
+      },
+      {
+        "status": "waiting",
+        "explanationKey": "progress.weather.retrying_technical"
+      },
+      {
+        "status": "complete",
+        "explanationKey": "progress.weather.complete"
+      },
+      {
+        "status": "complete",
+        "explanationKey": "progress.weather.unavailable_supporting_only"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.weather.not_checked"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.weather.claim_withdrawn"
+      }
+    ],
+    "area_checks": [
+      {
+        "status": "pending",
+        "explanationKey": "progress.area_checks.waiting_for_submit"
+      },
+      {
+        "status": "pending",
+        "explanationKey": "progress.area_checks.queued"
+      },
+      {
+        "status": "active",
+        "explanationKey": "progress.area_checks.checking"
+      },
+      {
+        "status": "failed_technical",
+        "explanationKey": "progress.area_checks.technical_issue_reviewer"
+      },
+      {
+        "status": "complete",
+        "explanationKey": "progress.area_checks.complete"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.area_checks.not_checked"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.area_checks.claim_withdrawn"
+      }
+    ],
+    "decision": [
+      {
+        "status": "pending",
+        "explanationKey": "progress.decision.waiting_for_submit"
+      },
+      {
+        "status": "pending",
+        "explanationKey": "progress.decision.waiting_for_checks"
+      },
+      {
+        "status": "active",
+        "explanationKey": "progress.decision.deciding"
+      },
+      {
+        "status": "waiting",
+        "explanationKey": "progress.decision.ai_no_damage_review"
+      },
+      {
+        "status": "waiting",
+        "explanationKey": "progress.decision.held_retrying_checks"
+      },
+      {
+        "status": "waiting",
+        "explanationKey": "progress.decision.technical_issue_reviewer"
+      },
+      {
+        "status": "waiting",
+        "explanationKey": "progress.decision.waiting_for_reviewer"
+      },
+      {
+        "status": "failed_technical",
+        "explanationKey": "progress.decision.technical_issue"
+      },
+      {
+        "status": "blocked",
+        "explanationKey": "progress.decision.needs_more_evidence"
+      },
+      {
+        "status": "complete",
+        "explanationKey": "progress.decision.complete"
+      },
+      {
+        "status": "not_applicable",
+        "explanationKey": "progress.decision.claim_withdrawn"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "code": "submit_claim",
+      "stage": "received",
+      "explanationKey": "action.submit_claim",
+      "params": []
+    },
+    {
+      "code": "add_photos",
+      "stage": "photos",
+      "explanationKey": "action.add_photos",
+      "params": []
+    },
+    {
+      "code": "upload_land_documents",
+      "stage": "land_documents",
+      "explanationKey": "action.upload_land_documents",
+      "params": [
+        "categoryGroups"
+      ]
+    },
+    {
+      "code": "resubmit_with_evidence",
+      "stage": "decision",
+      "explanationKey": "action.resubmit_with_evidence",
+      "params": []
+    }
+  ],
+  "documentCategories": [
+    "land_record",
+    "ownership_deed",
+    "lease_agreement",
+    "authorization_letter",
+    "tax_receipt",
+    "identity_proof",
+    "other"
+  ],
+  "satellite": {
+    "statuses": [
+      "pending",
+      "processing",
+      "passed",
+      "not_supported",
+      "inconclusive",
+      "unavailable",
+      "failed"
+    ],
+    "reasonCodes": [
+      {
+        "status": "unavailable",
+        "reasonCode": "claim_withdrawn"
+      },
+      {
+        "status": "processing",
+        "reasonCode": "checking_imagery"
+      },
+      {
+        "status": "failed",
+        "reasonCode": "technical_issue"
+      },
+      {
+        "status": "unavailable",
+        "reasonCode": "not_enabled"
+      },
+      {
+        "status": "pending",
+        "reasonCode": "waiting_for_post_event_imagery"
+      },
+      {
+        "status": "pending",
+        "reasonCode": "queued"
+      },
+      {
+        "status": "pending",
+        "reasonCode": "not_started"
+      },
+      {
+        "status": "not_supported",
+        "reasonCode": "area_not_supported"
+      },
+      {
+        "status": "unavailable",
+        "reasonCode": "analysis_not_enabled"
+      },
+      {
+        "status": "unavailable",
+        "reasonCode": "provider_unavailable"
+      },
+      {
+        "status": "inconclusive",
+        "reasonCode": "no_imagery_for_window"
+      },
+      {
+        "status": "inconclusive",
+        "reasonCode": "cloud_cover"
+      },
+      {
+        "status": "inconclusive",
+        "reasonCode": "not_enough_images"
+      },
+      {
+        "status": "inconclusive",
+        "reasonCode": "analysis_inconclusive"
+      },
+      {
+        "status": "passed",
+        "reasonCode": "vegetation_drop_consistent_with_damage"
+      },
+      {
+        "status": "inconclusive",
+        "reasonCode": "no_clear_vegetation_change"
+      }
+    ],
+    "noteCodes": [
+      "latest_check_failed"
+    ],
+    "supportingOnly": true
+  },
+  "forbiddenFarmerKeys": [
+    "jobId",
+    "attempts",
+    "maxAttempts",
+    "attemptLog",
+    "lastError",
+    "leaseOwner",
+    "errorCode",
+    "errorKind",
+    "failedStep",
+    "reviewCases",
+    "deltaNdvi",
+    "provider",
+    "policyHash",
+    "hash",
+    "cognitoSub"
+  ]
+}

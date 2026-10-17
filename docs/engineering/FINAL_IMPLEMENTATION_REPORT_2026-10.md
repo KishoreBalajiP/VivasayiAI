@@ -1,9 +1,11 @@
 # Final implementation report — 16 October 2026
 
+> **Status correction (2026-10-17).** This document's branch and commit statements describe the state when it was written. The October hardening work it describes was later committed to `develop` as `b760596` and `6dbe6b8` (both "initial commit", 16 October 2026) and pushed to `origin/develop`. `git branch -a --contains 6dbe6b8` lists only `develop` and `origin/develop`: it is **not on `main`, so CI has not deployed it**. The local branch `feat/verification-hardening-2026-10` still exists but is not the working branch. The later 2026-10 completion work (policy `v1.1-safe-ai` as the default, the durable enqueue, the scheduled worker, the progress contract, the tracker, the hermetic e2e harness) is **uncommitted in the working trees** of both repositories on `develop`, pending owner review; nothing is deployed. Current status: [ACCEPTANCE_MATRIX_2026-10-17.md](ACCEPTANCE_MATRIX_2026-10-17.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
 **Scope:**
 - The backend in this repository and the farmer-facing frontend in `VivasayiAI-Frontend`.
 - The admin panel is a separate, future task and was not changed.
-- Nothing has been committed, pushed or deployed.
+- At the time of writing nothing had been committed, pushed or deployed (superseded: see the status correction above; the work is now in `b760596` and `6dbe6b8` on `origin/develop`, still not deployed).
 - The verification-components migration has been **dry-run only** against Atlas.
 
 ## Status legend
@@ -21,7 +23,7 @@
 |---|---|---|---|---|
 | Profile, parcels, polygon validation, area | yes | yes | yes, via HTTP journey on a local DB | no |
 | Claim lifecycle (create, idempotent replay, evidence upload, submit, withdraw, resubmit) | yes | yes | yes, via HTTP journey on a local DB with mock storage | no |
-| Deterministic engine plus v1-legacy policy (default) | yes | yes | yes, via HTTP journey | no |
+| Deterministic engine plus v1-legacy policy (default on 16 October; since superseded by `v1.1-safe-ai`, ADR-022) | yes | yes | yes, via HTTP journey | no |
 | v2-components gate with hold semantics | yes, **not enabled**: needs `CLAIM_VERIFICATION_POLICY=v2-components` and sign-off | yes (HD-1 to HD-9) | yes, via HTTP journey: the claim is held with claimant rights pending | no |
 | Cross-farmer overlap as a review signal | yes | yes | no | no |
 | Land-document AI extraction (advisory only) | yes | yes, with a mocked model | **blocked** by the Gemini quota | no |

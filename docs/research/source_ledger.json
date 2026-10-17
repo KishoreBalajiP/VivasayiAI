@@ -1,0 +1,1897 @@
+{
+  "schema": "vivasayi-source-ledger/v1",
+  "description": "One row per references.bib entry, with how much of the source was actually read. Levels are taken ONLY from explicit statements in docs/research/literature_review.md (the 'Read:' tag of each entry, or the stated reading for the section-10 web documents); a source with no explicit statement is 'unknown - author to confirm'. Generated 2026-10-16 from those statements; the author must confirm each row (confirmedByAuthor). Manuscript counts (\\GapFirstPassVerified, \\GapFirstPassWeb, \\GapSecondPassAdded, \\BibEntries) are computed from this file by scripts/eval/manuscriptTables.js and checked by scripts/eval/checkManuscriptNumbers.js.",
+  "levels": {
+    "full_text": "literature_review.md 'Read: full text' (including 'full text, partial'; see readTag and partial)",
+    "abstract_metadata": "literature_review.md 'Read: abstract ...' (abstract retrieved; bibliographic record matched)",
+    "title_only": "literature_review.md 'Read: metadata' (only the bibliographic record; literature_review.md:11 says such papers are described only at the level of their title)",
+    "web_page": "a web page or document, not a paper: the three first-pass web documents (literature_review.md:13) and pages tagged 'page reachable only' or 'full article' (news)",
+    "unknown - author to confirm": "no explicit statement found"
+  },
+  "generatedOn": "2026-10-16",
+  "sources": {
+    "literatureReview": "docs/research/literature_review.md",
+    "researchGap": "docs/research/research_gap.md",
+    "bibliography": "docs/research/references.bib"
+  },
+  "entries": [
+    {
+      "key": "drusch2012",
+      "bibType": "article",
+      "bibLine": 1,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 32,
+          "text": "**1.1 Drusch et al. (2012), Sentinel-2 mission** [drusch2012]. *Read: metadata.* Remote Sensing of Environment 120. Describes ESA's Sentinel-2 optical mission (title). Relevance: the standard citation for the sensor whose L2A products an..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "tucker1979",
+      "bibType": "article",
+      "bibLine": 3,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 34,
+          "text": "**1.2 Tucker (1979), red/near-infrared linear combinations** [tucker1979]. *Read: metadata.* RSE 8. Classic reference for vegetation monitoring with red/NIR band combinations (title). Relevance: background for NDVI. Limitation (inferred)..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "zhu2012",
+      "bibType": "article",
+      "bibLine": 5,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 36,
+          "text": "**1.3 Zhu and Woodcock (2012), Fmask** [zhu2012]. *Read: metadata.* RSE 118. Object-based cloud and cloud-shadow detection for Landsat (title). Relevance: lineage of cloud masking; Vivasayi AI uses the Sentinel-2 SCL instead, not Fmask."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "mainknorn2017",
+      "bibType": "inproceedings",
+      "bibLine": 7,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 38,
+          "text": "**1.4 Main-Knorn et al. (2017), Sen2Cor** [mainknorn2017]. *Read: metadata.* SPIE Image and Signal Processing for Remote Sensing XXI. Describes the Sen2Cor processor (title). Relevance: Sen2Cor produces the Level-2A scene classification ..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "baetens2019",
+      "bibType": "article",
+      "bibLine": 9,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 40,
+          "text": "**1.5 Baetens, Desjardins, Hagolle (2019), validation of S2 cloud masks** [baetens2019]. *Read: abstract.* Remote Sensing 11(4):433."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "raiyani2021",
+      "bibType": "article",
+      "bibLine": 11,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 45,
+          "text": "**1.6 Raiyani et al. (2021), Sen2Cor vs ML scene classification** [raiyani2021]. *Read: abstract.* Remote Sensing 13(2):300. Manually labelled Sentinel-2 dataset, six classes; ML model Micro-F1 0.84 versus Sen2Cor 0.59 (abstract). Limita..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "aybar2022",
+      "bibType": "article",
+      "bibLine": 13,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 47,
+          "text": "**1.7 Aybar et al. (2022), CloudSEN12** [aybar2022]. *Read: abstract.* Scientific Data 9. Global dataset of 49,400 image patches with cloud and shadow annotations and results of eight cloud detection algorithms (abstract). Relevance: a r..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "weiss2020",
+      "bibType": "article",
+      "bibLine": 15,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract (partial)",
+      "partial": true,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 49,
+          "text": "**1.8 Weiss, Jacob, Duveiller (2020), RS for agriculture meta-review** [weiss2020]. *Read: abstract (partial).* RSE 236. Overview of remote sensing techniques, retrievable agronomic variables and approaches. Relevance: background framing..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "sishodia2020",
+      "bibType": "article",
+      "bibLine": 17,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 51,
+          "text": "**1.9 Sishodia, Ray, Singh (2020), RS in precision agriculture** [sishodia2020]. *Read: abstract.* Remote Sensing 12(19):3136. Review covering monitoring, irrigation, nutrients, pests and yield prediction. Relevance: background; precisio..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "gorelick2017",
+      "bibType": "article",
+      "bibLine": 19,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 53,
+          "text": "**1.10 Gorelick et al. (2017), Google Earth Engine** [gorelick2017]. *Read: metadata.* RSE 202. Platform paper. Relevance: an alternative processing route; Vivasayi AI uses CDSE Statistical API instead."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "kussul2017",
+      "bibType": "article",
+      "bibLine": 21,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 55,
+          "text": "**1.11 Kussul et al. (2017), DL land cover and crop types** [kussul2017]. *Read: metadata.* IEEE GRSL. Deep learning classification of land cover and crop types (title). Relevance: crop-type mapping that could, in future work, check a cl..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "burke2017",
+      "bibType": "article",
+      "bibLine": 23,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 97,
+          "text": "**2.11 Burke and Lobell (2017), satellite yield variation, Kenya** [burke2017]. *Read: abstract.* PNAS 114. High-resolution imagery with field data from thousands of smallholder plots shows field-scale yield variation can be estimated (a..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "lobell2020",
+      "bibType": "article",
+      "bibLine": 25,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 95,
+          "text": "**2.10 Lobell et al. (2020), eyes in the sky, boots on the ground** [lobell2020]. *Read: abstract.* AJAE. Uganda maize: farmer-reported, sub-plot and full-plot crop-cut yields differ widely; satellite yield measures explained as much or ..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "ursu2025",
+      "bibType": "article",
+      "bibLine": 27,
+      "bibPass": 1,
+      "literatureReviewSection": 1,
+      "pass": 1,
+      "verification": "full_text",
+      "readTag": "full text",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 57,
+          "text": "**1.12 Ursu, Istrate, Jitariu, Lazăr (2025), hail damage with Sentinel-2 and radar** [ursu2025]. *Read: full text* (PDF from https://mdpi-res.com/d_attachment/remotesensing/remotesensing-17-03850/article_deploy/remotesensing-17-03850.pdf..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "sitokonstantinou2018",
+      "bibType": "article",
+      "bibLine": 29,
+      "bibPass": 1,
+      "literatureReviewSection": 3,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 101,
+          "text": "**3.1 Sitokonstantinou, Papoutsis, Kontoes et al. (2018)** [sitokonstantinou2018]. *Read: abstract.* Remote Sensing 10(6):911. Parcel-based Sentinel-2 crop identification for monitoring EU CAP obligations in a smallholder zone in Navarra..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "murthy2022",
+      "bibType": "article",
+      "bibLine": 31,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 72,
+          "text": "**2.3 Murthy, Poddar, Choudhary et al. (2022), RS-based crop insurance for jute, India** [murthy2022]. *Read: metadata.* RSASE 26:100717. Title indicates remote-sensing-based insurance for jute in India. Relevance: Indian precedent; no r..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "murmu2025",
+      "bibType": "article",
+      "bibLine": 33,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 70,
+          "text": "**2.2 Murmu and Mahadik (2025), remote sensing data in crop insurance, India** [murmu2025]. *Read: abstract.* Asia-Pacific J. of Risk and Insurance 19. Proposes a framework combining crop details, satellite data and an actuarial yield mo..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "okeyo2020",
+      "bibType": "article",
+      "bibLine": 35,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract only",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 74,
+          "text": "**2.4 Okeyo and Mulaku (2020), satellite crop insurance, Migori, Kenya** [okeyo2020]. *Read: abstract only.* Full text not obtained: https://www.scirp.org/journal/PaperDownload.aspx?paperID=99104 and the SCIRP HTML page both returned HTT..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "masiza2022",
+      "bibType": "article",
+      "bibLine": 37,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 81,
+          "text": "**2.5 Masiza, Chirima, Hamandawana (2022), satellite-based insurance for smallholder maize** [masiza2022]. *Read: abstract.* Remote Sensing 14(6):1512. Compares TAMSAT and CHIRPS rainfall estimates; CHIRPS better at 20-day and monthly st..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "kolle2021",
+      "bibType": "article",
+      "bibLine": 39,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 83,
+          "text": "**2.6 Kolle, Buchholz, Musshoff (2021), field-level satellite indices and basis risk** [kolle2021]. *Read: abstract.* Agricultural Finance Review 82. MODIS (250 m) vs Landsat (30 m) NDVI for winter wheat, three German farms; higher resol..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "dalhaus2016",
+      "bibType": "article",
+      "bibLine": 41,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 85,
+          "text": "**2.7 Dalhaus and Finger (2016), gridded data and phenology in weather index insurance** [dalhaus2016]. *Read: abstract.* Weather, Climate, and Society 8. German wheat; no difference between gridded and station precipitation; phenologica..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "carter2017",
+      "bibType": "article",
+      "bibLine": 43,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract only (paywalled)",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 87,
+          "text": "**2.8 Carter, de Janvry, Sadoulet, Sarris (2017), index insurance reassessment** [carter2017]. *Read: abstract only (paywalled).* Annual Review of Resource Economics 9:421-438. OpenAlex marks it closed access. The FERDI page (https://fer..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "cole2013",
+      "bibType": "article",
+      "bibLine": 45,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 93,
+          "text": "**2.9 Cole, Gine, Tobacman et al. (2013), barriers to risk management, India** [cole2013]. *Read: abstract.* AEJ: Applied 5(1). Randomised experiments on rainfall insurance in rural India; demand is price-sensitive, but trust, liquidity ..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "kamilaris2018",
+      "bibType": "article",
+      "bibLine": 47,
+      "bibPass": 1,
+      "literatureReviewSection": 5,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 121,
+          "text": "**5.3 Mohanty, Hughes, Salathe (2016), DL plant disease detection** [mohanty2016]. *Read: metadata.* Frontiers in Plant Science 7. Title indicates image-based disease detection with deep learning. **5.4 Kamilaris and Prenafeta-Boldu (201..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "mohanty2016",
+      "bibType": "article",
+      "bibLine": 49,
+      "bibPass": 1,
+      "literatureReviewSection": 5,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 121,
+          "text": "**5.3 Mohanty, Hughes, Salathe (2016), DL plant disease detection** [mohanty2016]. *Read: metadata.* Frontiers in Plant Science 7. Title indicates image-based disease detection with deep learning. **5.4 Kamilaris and Prenafeta-Boldu (201..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "xu2020",
+      "bibType": "inproceedings",
+      "bibLine": 51,
+      "bibPass": 1,
+      "literatureReviewSection": 4,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract (arXiv version)",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 107,
+          "text": "**4.1 Xu et al. (2020), LayoutLM** [xu2020]. *Read: abstract (arXiv version).* KDD 2020. Joint modelling of text and layout for document image understanding, applicable to information extraction from scanned documents (abstract)."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "kim2022",
+      "bibType": "inbook",
+      "bibLine": 53,
+      "bibPass": 1,
+      "literatureReviewSection": 4,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 109,
+          "text": "**4.2 Kim et al. (2022), Donut** [kim2022]. *Read: abstract.* ECCV 2022 (LNCS). OCR-free document understanding; motivated by OCR cost, inflexibility across languages and error propagation (abstract). Relevance: the OCR-free framing rese..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "mathew2021",
+      "bibType": "inproceedings",
+      "bibLine": 55,
+      "bibPass": 1,
+      "literatureReviewSection": 4,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 111,
+          "text": "**4.3 Mathew, Karatzas, Jawahar (2021), DocVQA** [mathew2021]. *Read: metadata.* WACV 2021. Dataset for visual question answering on document images (title). Relevance: a candidate benchmark style; no Tamil land-record content is implied."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "shinoda2025",
+      "bibType": "inproceedings",
+      "bibLine": 57,
+      "bibPass": 1,
+      "literatureReviewSection": 5,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 117,
+          "text": "**5.1 Shinoda, Inoue, Kataoka et al. (2025), AgroBench** [shinoda2025]. *Read: abstract.* ICCV 2025. Expert-annotated benchmark across seven agricultural topics, 203 crop and 682 disease categories; VLMs show room for improvement in fine..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "gemini2023",
+      "bibType": "misc",
+      "bibLine": 59,
+      "bibPass": 1,
+      "literatureReviewSection": 5,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 119,
+          "text": "**5.2 Gemini Team (2023), Gemini technical report** [gemini2023]. *Read: abstract.* arXiv:2312.11805. General multimodal model family. Relevance: the model family used by the platform; reported benchmarks are general, not agricultural or..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "lewis2020",
+      "bibType": "misc",
+      "bibLine": 70,
+      "bibPass": 1,
+      "literatureReviewSection": 6,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 125,
+          "text": "**6.1 Lewis et al. (2020), RAG** [lewis2020]. *Read: abstract.* arXiv:2005.11401. Combines parametric and non-parametric memory; notes provenance and updating knowledge as open problems (abstract)."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "gao2023",
+      "bibType": "misc",
+      "bibLine": 81,
+      "bibPass": 1,
+      "literatureReviewSection": 6,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 127,
+          "text": "**6.2 Gao et al. (2023), RAG survey** [gao2023]. *Read: abstract.* arXiv:2312.10997. Reviews naive, advanced and modular RAG; names hallucination, outdated knowledge and untraceable reasoning as motivators (abstract)."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "ravindran2026",
+      "bibType": "article",
+      "bibLine": 92,
+      "bibPass": 1,
+      "literatureReviewSection": 6,
+      "pass": 1,
+      "verification": "full_text",
+      "readTag": "full text",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 129,
+          "text": "**6.3 Ravindran et al. (2026), AgroLLM** [ravindran2026]. *Read: full text* (PDF from https://mdpi-res.com/d_attachment/agriengineering/agriengineering-08-00038/article_deploy/agriengineering-08-00038.pdf; the www.mdpi.com page returned ..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "singh2024",
+      "bibType": "misc",
+      "bibLine": 94,
+      "bibPass": 1,
+      "literatureReviewSection": 6,
+      "pass": 1,
+      "verification": "full_text",
+      "readTag": "full text",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 138,
+          "text": "**6.4 Singh et al. (2024), Farmer.Chat** [singh2024]. *Read: full text* (arXiv:2409.08916v2, 8 Oct 2024, https://arxiv.org/pdf/2409.08916; Digital Green and Microsoft Research India). Preprint, not peer reviewed."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "adomavicius2011",
+      "bibType": "inbook",
+      "bibLine": 105,
+      "bibPass": 1,
+      "literatureReviewSection": 7,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 148,
+          "text": "**7.1 Adomavicius and Tuzhilin (2011), context-aware recommender systems** [adomavicius2011]. *Read: metadata.* In Recommender Systems Handbook. General background on context in recommendation."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "cole2021",
+      "bibType": "article",
+      "bibLine": 107,
+      "bibPass": 1,
+      "literatureReviewSection": 7,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 150,
+          "text": "**7.2 Cole and Fernando (2021), 'Mobile'izing agricultural advice** [cole2021]. *Read: abstract.* Economic Journal 131. Two-year study of a voice-based advisory service for smallholder cotton farmers in India; demand and trust were signi..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "patel2010",
+      "bibType": "inproceedings",
+      "bibLine": 109,
+      "bibPass": 1,
+      "literatureReviewSection": 7,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 152,
+          "text": "**7.3 Patel et al. (2010), Avaaj Otalo** [patel2010]. *Read: metadata.* CHI 2010. Field study of an interactive voice forum for small farmers in rural India (title)."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "kakwani2020",
+      "bibType": "inproceedings",
+      "bibLine": 111,
+      "bibPass": 1,
+      "literatureReviewSection": 7,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 154,
+          "text": "**7.4 Kakwani et al. (2020), IndicNLPSuite** [kakwani2020]. *Read: metadata.* Findings of EMNLP 2020. Monolingual corpora, benchmarks and pretrained models for Indic languages (title). **7.5 Radford et al. (2022), Whisper** [radford2022]..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "radford2022",
+      "bibType": "misc",
+      "bibLine": 113,
+      "bibPass": 1,
+      "literatureReviewSection": 7,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 154,
+          "text": "**7.4 Kakwani et al. (2020), IndicNLPSuite** [kakwani2020]. *Read: metadata.* Findings of EMNLP 2020. Monolingual corpora, benchmarks and pretrained models for Indic languages (title). **7.5 Radford et al. (2022), Whisper** [radford2022]..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "rudin2019",
+      "bibType": "article",
+      "bibLine": 124,
+      "bibPass": 1,
+      "literatureReviewSection": 8,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 160,
+          "text": "**8.1 Rudin (2019)** [rudin2019]. *Read: metadata.* Nature Machine Intelligence. Title argues for interpretable models over post-hoc explanation of black boxes in high-stakes decisions. Supports a deterministic, inspectable rule engine."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "doshivelez2017",
+      "bibType": "misc",
+      "bibLine": 126,
+      "bibPass": 1,
+      "literatureReviewSection": 8,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 161,
+          "text": "**8.2 Doshi-Velez and Kim (2017)** [doshivelez2017]. *Read: metadata.* arXiv:1702.08608. Rigorous science of interpretability (title)."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "ribeiro2016",
+      "bibType": "inproceedings",
+      "bibLine": 137,
+      "bibPass": 1,
+      "literatureReviewSection": 8,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 162,
+          "text": "**8.3 Ribeiro, Singh, Guestrin (2016), LIME** [ribeiro2016]. *Read: metadata.* KDD 2016. Post-hoc explanation method."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "ji2023",
+      "bibType": "article",
+      "bibLine": 139,
+      "bibPass": 1,
+      "literatureReviewSection": 8,
+      "pass": 1,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 163,
+          "text": "**8.4 Ji et al. (2023), hallucination survey** [ji2023]. *Read: abstract.* ACM Computing Surveys. Reviews measurement and mitigation of hallucination in natural language generation (abstract). Relevance: justification for keeping model o..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "hilal2022",
+      "bibType": "article",
+      "bibLine": 141,
+      "bibPass": 1,
+      "literatureReviewSection": 9,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 167,
+          "text": "**9.1 Hilal, Gadsden, Yawney (2022)** [hilal2022]. *Read: metadata.* Expert Systems with Applications 193. Review of anomaly detection for financial fraud (title). **9.2 Ngai et al. (2011)** [ngai2011]. *Read: metadata.* Decision Support..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "ngai2011",
+      "bibType": "article",
+      "bibLine": 143,
+      "bibPass": 1,
+      "literatureReviewSection": 9,
+      "pass": 1,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 167,
+          "text": "**9.1 Hilal, Gadsden, Yawney (2022)** [hilal2022]. *Read: metadata.* Expert Systems with Applications 193. Review of anomaly detection for financial fraud (title). **9.2 Ngai et al. (2011)** [ngai2011]. *Read: metadata.* Decision Support..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "cdse_statistical",
+      "bibType": "misc",
+      "bibLine": 145,
+      "bibPass": 1,
+      "literatureReviewSection": 10,
+      "pass": 1,
+      "verification": "web_page",
+      "readTag": "CDSE Statistical API documentation: page and section headings read (Statistical API, evalscript, histogram).",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 172,
+          "text": "- [cdse_statistical] CDSE Statistical API documentation: page and section headings read (Statistical API, evalscript, histogram)."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 13,
+          "text": "- Three web documents (CDSE Statistical API, Open-Meteo Historical API, PMFBY portal) were fetched, but only page titles, headings or short statements were read. The PMFBY portal fetch did not yield scheme guidelines, so I make no claim ..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "openmeteo_hist",
+      "bibType": "misc",
+      "bibLine": 151,
+      "bibPass": 1,
+      "literatureReviewSection": 10,
+      "pass": 1,
+      "verification": "web_page",
+      "readTag": "Open-Meteo Historical Weather API: states ERA5 0.25 deg from 1940 and ERA5-Land 0.1 deg from 1950. Reanalysis grid cells are far coarser than a parcel, so rainfall is regional context.",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 173,
+          "text": "- [openmeteo_hist] Open-Meteo Historical Weather API: states ERA5 0.25 deg from 1940 and ERA5-Land 0.1 deg from 1950. Reanalysis grid cells are far coarser than a parcel, so rainfall is regional context."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 13,
+          "text": "- Three web documents (CDSE Statistical API, Open-Meteo Historical API, PMFBY portal) were fetched, but only page titles, headings or short statements were read. The PMFBY portal fetch did not yield scheme guidelines, so I make no claim ..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "pmfby_portal",
+      "bibType": "misc",
+      "bibLine": 157,
+      "bibPass": 1,
+      "literatureReviewSection": 2,
+      "pass": 1,
+      "verification": "web_page",
+      "readTag": "page reachable only",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:3 bases the gap analysis on '45 verified sources plus three web documents'; literature_review.md:17 places the second pass in sections 11-15, so sections 1-10 are that first pass",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 68,
+          "text": "**2.1 PMFBY portal** [pmfby_portal]. *Read: page reachable only.* Government of India scheme site. I did not retrieve guideline text, so I make no statement on its technology provisions. See Unverified leads."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 13,
+          "text": "- Three web documents (CDSE Statistical API, Open-Meteo Historical API, PMFBY portal) were fetched, but only page titles, headings or short statements were read. The PMFBY portal fetch did not yield scheme guidelines, so I make no claim ..."
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "ceballos2019",
+      "bibType": "article",
+      "bibLine": 165,
+      "bibPass": 2,
+      "literatureReviewSection": 11,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract only",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 196,
+          "text": "**11.4 Ceballos, Kramer, Robles (2019), Picture-Based Insurance** [ceballos2019]. *Read: abstract only* (OpenAlex abstract; the ScienceDirect PDF returned 403). Development Engineering 4:100042. https://doi.org/10.1016/j.deveng.2019.100042"
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "hufkens2019",
+      "bibType": "article",
+      "bibLine": 167,
+      "bibPass": 2,
+      "literatureReviewSection": 11,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 202,
+          "text": "**11.5 Hufkens et al. (2019), smartphone near-surface remote sensing, NW India** [hufkens2019]. *Read: abstract.* Agricultural and Forest Meteorology 265:327-337. https://doi.org/10.1016/j.agrformet.2018.11.002. Streams of smallholder sm..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "ha2022",
+      "bibType": "article",
+      "bibLine": 169,
+      "bibPass": 2,
+      "literatureReviewSection": 12,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 208,
+          "text": "**12.1 Ha, Shen, Duddu, Johnson, Shirtliffe (2022), hail damage with Sentinel-2** [ha2022]. *Read: abstract.* Remote Sensing 14(4):951. https://doi.org/10.3390/rs14040951"
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "chakraborty2021",
+      "bibType": "article",
+      "bibLine": 171,
+      "bibPass": 2,
+      "literatureReviewSection": 12,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 213,
+          "text": "**12.2 Chakraborty, Srikanth, Murthy, Rao, Chowdhury (2021), Cyclone Amphan jute lodging** [chakraborty2021]. *Read: abstract* (via Europe PMC; Springer redirected to login). Environmental Monitoring and Assessment 193:464. https://doi.o..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "bhatt2026",
+      "bibType": "article",
+      "bibLine": 173,
+      "bibPass": 2,
+      "literatureReviewSection": 12,
+      "pass": 2,
+      "verification": "title_only",
+      "readTag": "metadata only",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 218,
+          "text": "**12.3 Bhatt, Charavande, Pandey, Singh, Chauhan (2026), Cyclone Remal** [bhatt2026]. *Read: metadata only* (Springer login redirect; no abstract via Crossref, OpenAlex or Europe PMC). Journal of the Indian Society of Remote Sensing 54(1..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "digra2025",
+      "bibType": "article",
+      "bibLine": 175,
+      "bibPass": 2,
+      "literatureReviewSection": 12,
+      "pass": 2,
+      "verification": "title_only",
+      "readTag": "metadata only",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 220,
+          "text": "**12.4 Digra, Goyal, Guha, Saran, Srivastav (2025), hail crop damage in Haryana** [digra2025]. *Read: metadata only.* JISRS 53(12):4157-4170. https://doi.org/10.1007/s12524-025-02216-w. An Indian satellite-based hail-damage study (title)..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "bocchino2025",
+      "bibType": "article",
+      "bibLine": 177,
+      "bibPass": 2,
+      "literatureReviewSection": 12,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 222,
+          "text": "**12.5 Bocchino et al. (2025/2026), flood crop damage with Sentinel-2 and in situ data, Emilia-Romagna** [bocchino2025]. *Read: abstract* (OpenAlex). Remote Sensing Applications: Society and Environment 41:101852 (Crossref issue date Jan..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "kanjir2018",
+      "bibType": "article",
+      "bibLine": 179,
+      "bibPass": 2,
+      "literatureReviewSection": 12,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 227,
+          "text": "**12.6 Kanjir, Đurić, Veljanovski (2018), Sentinel-2 anomaly detection for CAP monitoring** [kanjir2018]. *Read: abstract.* ISPRS IJGI 7(10):405. https://doi.org/10.3390/ijgi7100405. BFAST Monitor and NDVI parcel profiles detect land-use..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "sani2024",
+      "bibType": "inproceedings",
+      "bibLine": 181,
+      "bibPass": 2,
+      "literatureReviewSection": 12,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 229,
+          "text": "**12.7 Sani et al. (2024), SICKLE dataset, Cauvery Delta, Tamil Nadu** [sani2024]. *Read: abstract.* WACV 2024, pp. 5983-5992. https://doi.org/10.1109/wacv57701.2024.00589 (arXiv:2312.00069)"
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "kpodo2024",
+      "bibType": "article",
+      "bibLine": 183,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "title_only",
+      "readTag": "metadata only",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 239,
+          "text": "**13.3 Kpodo, Kordjamshidi, Nejadhashemi (2024), AgXQA** [kpodo2024]. *Read: metadata only* (Elsevier, not open access; no abstract via APIs). Computers and Electronics in Agriculture 225:109349. https://doi.org/10.1016/j.compag.2024.109..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "rehman2023",
+      "bibType": "article",
+      "bibLine": 185,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 245,
+          "text": "**13.6 Rehman, Raghuvanshi, Kumar (2023), KisanQRS** [rehman2023]. *Read: abstract* (via arXiv:2411.08883). Computers and Electronics in Agriculture 213:108180. https://doi.org/10.1016/j.compag.2023.108180. Retrieval over a subset of 34 ..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "silva2023",
+      "bibType": "misc",
+      "bibLine": 187,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 235,
+          "text": "**13.1 Silva et al. (2023), GPT-4 as an agronomist assistant?** [silva2023]. *Read: abstract.* arXiv:2310.06225 (Microsoft). https://arxiv.org/abs/2310.06225. Agriculture exams from Brazil, India and the USA, with RAG and Ensemble Refine..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "balaguer2024",
+      "bibType": "misc",
+      "bibLine": 198,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 237,
+          "text": "**13.2 Balaguer et al. (2024), RAG vs fine-tuning, agriculture case study** [balaguer2024]. *Read: abstract.* arXiv:2401.08406 (Microsoft). https://arxiv.org/abs/2401.08406. Pipeline: PDF extraction, then Q&A generation, then fine-tuning..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "agreason2025",
+      "bibType": "misc",
+      "bibLine": 209,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 241,
+          "text": "**13.4 Zaremehrjerdi et al. (2025), AgReason / AgThoughts** [agreason2025]. *Read: abstract.* arXiv:2505.19259. https://arxiv.org/abs/2505.19259. A 100-question expert-curated open-ended agricultural *reasoning* benchmark. Across 13 mode..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "agriregion2025",
+      "bibType": "misc",
+      "bibLine": 220,
+      "bibPass": 2,
+      "literatureReviewSection": 14,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 266,
+          "text": "**14.3 Fanuel et al. (2025), AgriRegion** [agriregion2025]. *Read: abstract.* arXiv:2512.10114. https://arxiv.org/abs/2512.10114. Region-aware RAG with geospatial metadata injection and region-prioritised re-ranking, restricted to verifi..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "krishisathi2025",
+      "bibType": "misc",
+      "bibLine": 231,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 253,
+          "text": "**13.8 Vijayvargia et al. (2025), Krishi Sathi: intent-aware multi-turn agricultural QA** [krishisathi2025]. *Read: abstract.* arXiv:2508.03719. https://arxiv.org/abs/2508.03719. An English/Hindi chatbot with speech I/O that follows a st..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "krishokbondhu2026",
+      "bibType": "inproceedings",
+      "bibLine": 242,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 255,
+          "text": "**13.9 Ameen, Islam, Aktar, Rafat (2026), KrishokBondhu** [krishokbondhu2026]. *Read: abstract* (arXiv:2510.18355). IEEE QPAIN 2026, pp. 1-6. https://doi.org/10.1109/qpain69676.2026.11546653. A Bengali voice call-centre RAG with OCR'd ha..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "didwania2024",
+      "bibType": "inproceedings",
+      "bibLine": 244,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "full_text",
+      "readTag": "full text",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 247,
+          "text": "**13.7 Didwania, Seth, Kasliwal, Agarwal (2024), AgriLLM: Tamil Nadu KCC queries** [didwania2024]. *Read: full text* (https://aclanthology.org/2024.nlp4pi-1.16.pdf). NLP4PI workshop at EMNLP 2024, pp. 179-187. The printed title has the t..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "joren2025",
+      "bibType": "misc",
+      "bibLine": 246,
+      "bibPass": 2,
+      "literatureReviewSection": 14,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 259,
+          "text": "**14.1 Joren, Zhang, Ferng, Juan, Taly, Rashtchian (2025), Sufficient Context** [joren2025]. *Read: abstract.* ICLR 2025 (arXiv:2411.06037). https://arxiv.org/abs/2411.06037"
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "es2024",
+      "bibType": "inproceedings",
+      "bibLine": 258,
+      "bibPass": 2,
+      "literatureReviewSection": 14,
+      "pass": 2,
+      "verification": "title_only",
+      "readTag": "metadata",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 264,
+          "text": "**14.2 Es, James, Espinosa-Anke, Schockaert (2024), RAGAS** [es2024]. *Read: metadata* (ACL Anthology entry). EACL 2024 System Demonstrations, pp. 150-158. https://doi.org/10.18653/v1/2024.eacl-demo.16. The reference-free RAG evaluation ..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 11,
+          "text": "  - `metadata`: only the bibliographic record was retrieved. For these I describe the paper only at the level its title supports and give no results."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "raji2020",
+      "bibType": "inproceedings",
+      "bibLine": 260,
+      "bibPass": 2,
+      "literatureReviewSection": 15,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 270,
+          "text": "**15.1 Raji et al. (2020), internal algorithmic auditing** [raji2020]. *Read: abstract.* FAT* 2020, pp. 33-44. https://doi.org/10.1145/3351095.3372873. An end-to-end internal audit framework in which each development stage produces docum..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "agmmu2025",
+      "bibType": "misc",
+      "bibLine": 262,
+      "bibPass": 2,
+      "literatureReviewSection": 13,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 243,
+          "text": "**13.5 Gauba et al. (2025), AgMMU** [agmmu2025]. *Read: abstract.* arXiv:2504.10568 (Semantic Scholar lists it as NeurIPS 2025; the proceedings page was not checked). The benchmark is built from 116,231 grower to Cooperative Extension ex..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "murthy2019smart",
+      "bibType": "techreport",
+      "bibLine": 273,
+      "bibPass": 2,
+      "literatureReviewSection": 11,
+      "pass": 2,
+      "verification": "full_text",
+      "readTag": "full text, partial",
+      "partial": true,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 187,
+          "text": "**11.2 Murthy, Das, Choudhary, Pandey, Srikanth, Rao (2019), Smart sampling for CCEs, Odisha** [murthy2019smart]. *Read: full text, partial* (front matter, abstract, contents). URL: https://pmfby.gov.in/compendium/Technology/2019%20-%20S..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "murthy2021replace",
+      "bibType": "techreport",
+      "bibLine": 283,
+      "bibPass": 2,
+      "literatureReviewSection": 11,
+      "pass": 2,
+      "verification": "abstract_metadata",
+      "readTag": "abstract and executive summary",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": false,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 192,
+          "text": "**11.3 Murthy, Poddar, Pandey, Biswal, Choudhary (2021), Replacing CCE yields with modelled yields** [murthy2021replace]. *Read: abstract and executive summary.* URL: https://pmfby.gov.in/compendium/Technology/2021%20-%20Replacing%20CCE-..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "mncfc2023yestech",
+      "bibType": "manual",
+      "bibLine": 293,
+      "bibPass": 2,
+      "literatureReviewSection": 11,
+      "pass": 2,
+      "verification": "full_text",
+      "readTag": "full text, partial",
+      "partial": true,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 181,
+          "text": "**11.1 MNCFC / DA&FW (2023), YES-TECH Manual for Implementation** [mncfc2023yestech]. *Read: full text, partial* (preface and Sections 3.2 and 4.3.6). URL: https://apsac.ap.gov.in/wp-content/uploads/2023/01/Document2.pdf. This is a copy ..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    },
+    {
+      "key": "tribune2023cotton",
+      "bibType": "misc",
+      "bibLine": 301,
+      "bibPass": 2,
+      "literatureReviewSection": 11,
+      "pass": 2,
+      "verification": "web_page",
+      "readTag": "full article",
+      "partial": false,
+      "inGapSearch": true,
+      "inGapSearchBasis": "research_gap.md:49 (Second-pass update): 'After full-text reading and 26 added sources (see literature_review.md sections 11-15)'",
+      "citedInManuscript": true,
+      "evidence": [
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 204,
+          "text": "**11.6 Grey literature: duplicate insurance of the same land (news).** [tribune2023cotton] *Read: full article.* The Tribune, 15 Dec 2023. https://www.tribuneindia.com/news/haryana/insurance-claims-technical-panel-to-look-into-mismatch-o..."
+        },
+        {
+          "file": "docs/research/literature_review.md",
+          "line": 17,
+          "text": "A second pass read original papers where they could be obtained and added 26 sources (sections 11-15 below). What changed:"
+        }
+      ],
+      "confirmedByAuthor": false
+    }
+  ]
+}

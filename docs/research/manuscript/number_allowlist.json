@@ -1,0 +1,37 @@
+{
+  "description": "Number literals that may stay in main.tex prose because they are names or identifiers, not quantities. Every other number in main.tex must be a macro from generated_numbers.tex (scripts/eval/checkManuscriptNumbers.js). Each entry needs a justification; add an entry only for a phrase whose digits are not a measured, computed or configured value.",
+  "entries": [
+    {
+      "text": "v1.1-safe-ai",
+      "justification": "Identifier of a verification policy (a name), defined in config/verificationPolicy.js POLICY_IDS; the digits are a version label, not a quantity. Added 2026-10-16 when the manuscript was aligned with ADR-022."
+    },
+    {
+      "text": "Sentinel-2",
+      "justification": "Name of the ESA satellite mission (a proper noun), not a quantity."
+    },
+    {
+      "text": "Sentinel-1",
+      "justification": "Name of the ESA radar satellite mission (a proper noun), not a quantity."
+    },
+    {
+      "text": "2023--2024",
+      "justification": "Years of the documented events, which identify the events studied, not a result. Source: events[].eventDate in docs/research/evaluation/live/satellite_case_studies_2026-10-16.json (2023-12-18, 2023-12-04, 2024-12-01)."
+    },
+    {
+      "text": "17--18 December 2023",
+      "justification": "Dates of the south Tamil Nadu floods, as in the event label and its Sphere India situation report. Event identity, not a measurement. Source: events[id=south_tn_floods_2023].label in satellite_case_studies_2026-10-16.json."
+    },
+    {
+      "text": "4 December 2023",
+      "justification": "Date of Cyclone Michaung, the event identity. Source: events[id=cyclone_michaung_2023].eventDate (2023-12-04) in satellite_case_studies_2026-10-16.json."
+    },
+    {
+      "text": "30 November--1 December 2024",
+      "justification": "Landfall dates of Cyclone Fengal, the event identity. Source: events[id=cyclone_fengal_2024].label in satellite_case_studies_2026-10-16.json."
+    },
+    {
+      "text": "15 February 2024",
+      "justification": "Pseudo-event date of the harvest control, chosen inside the samba harvest season. A study design choice, not a result. Source: events[id=thanjavur_harvest_control_2024].eventDate (2024-02-15) in satellite_case_studies_2026-10-16.json."
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
 import VerificationEvidence from "../models/VerificationEvidence.js";
 import { findOwned } from "./claim.service.js";
+import { isReviewCase } from "./verificationComponents.js";
 import {
   EVIDENCE_FOUNDATION_VERSION,
   EVIDENCE_SOURCES,
@@ -80,6 +81,36 @@ const serialize = (doc) => {
     reference: record.reference ?? null,
     metadata: record.metadata || {},
     result: record.result ?? null,
+    operative: isOperativeEvidenceSource(record.source),
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+  };
+};
+
+// ADR-022 (plan A6, leak fix): what a FARMER may see of a stored evidence row. Review cases are not
+// evidence (they are questions for a person, and carry failed steps and error codes), so they are
+// dropped entirely. Everything else keeps the row shape the frontend reads, with the result, the
+// provider and the internal versions and references projected away; only a few harmless metadata
+// fields remain.
+const FARMER_METADATA_KEYS = ["documentCategory", "processingStatus", "analysisExecuted"];
+const serializeForFarmer = (doc) => {
+  const record = typeof doc.toObject === "function" ? doc.toObject() : doc;
+  const metadata = record.metadata || {};
+  return {
+    id: String(record._id),
+    claimId: String(record.claimId),
+    source: record.source,
+    component: record.component ?? null,
+    status: record.status,
+    confidence: record.confidence ?? null,
+    observedAt: record.observedAt ?? null,
+    provider: null,
+    providerVersion: null,
+    evidenceVersion: null,
+    evaluationVersion: null,
+    reference: null,
+    metadata: Object.fromEntries(FARMER_METADATA_KEYS.filter((key) => metadata[key] !== undefined).map((key) => [key, metadata[key]])),
+    result: null,
     operative: isOperativeEvidenceSource(record.source),
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
@@ -339,7 +370,9 @@ export const listVerificationEvidenceForClaim = async ({ claimId, cognitoSub, so
 // Unified, owner-scoped view: the persisted foundation rows PLUS a read-only projection of the
 // evidence the existing system already produces (GEOMETRY / AI_IMAGE / WEATHER). No migration,
 // no fabrication — existing claims simply project from data they already have.
-export const getVerificationEvidenceView = async ({ claimId, cognitoSub } = {}) => {
+// `audience: "farmer"` (the farmer API) drops review cases and internal fields from `persisted`;
+// the default "internal" view is unchanged.
+export const getVerificationEvidenceView = async ({ claimId, cognitoSub, audience = "internal" } = {}) => {
   assertValidClaimId(claimId);
   assertValidCognitoSub(cognitoSub);
 
@@ -352,17 +385,23 @@ export const getVerificationEvidenceView = async ({ claimId, cognitoSub } = {}) 
     ClaimEvidence.find({ claimId: claim._id }).lean(),
   ]);
 
-  const existing = projectExistingEvidence({
+  const projected = projectExistingEvidence({
     claim,
     assessment,
     evidenceDocs,
     weatherCorrelation: assessment ? assessment.weatherCorrelation : null,
   });
+  // ADR-022 (farmer audience): no provider or model names (for example the AI model behind the photo
+  // check) and no provider versions reach the farmer; the reviewer's view keeps them.
+  const existing = audience === "farmer" ? projected.map((record) => ({ ...record, provider: null, providerVersion: null })) : projected;
 
   return {
     claimId: String(claim._id),
     foundationVersion: EVIDENCE_FOUNDATION_VERSION,
-    persisted: persisted.map(serialize),
+    persisted:
+      audience === "farmer"
+        ? persisted.filter((row) => !isReviewCase(typeof row.toObject === "function" ? row.toObject() : row)).map(serializeForFarmer)
+        : persisted.map(serialize),
     existing,
     operativeSources: [...OPERATIVE_EVIDENCE_SOURCES],
     futureSources: [...FUTURE_EVIDENCE_SOURCES],

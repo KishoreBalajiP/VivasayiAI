@@ -17,6 +17,7 @@ import {
   normalizeQueueFilters,
   buildPostMatch,
   aiFailedExpression,
+  heldExpression,
   serializeQueueEntry,
 } from "./adminQueue.service.js";
 import { computeDashboardMetrics } from "./adminDashboard.service.js";
@@ -25,7 +26,9 @@ import {
   evaluateOverrideTransition,
   overridesRequireApprover,
   approverIsValid,
+  isHeldAssessment,
 } from "./adminOverrideRules.service.js";
+import { cancelJobsForClaim } from "./verificationJobs.service.js";
 import {
   getActiveAppeal,
   allAppealsForClaim,
@@ -44,7 +47,7 @@ import {
 // Admin claim detail (queued claims + an owning farmer lookup for review context)
 // ---------------------------------------------------------------------------
 
-const serializeAssessmentDoc = (assessment) => {
+export const serializeAssessmentDoc = (assessment) => {
   if (!assessment) return null;
   const doc = assessment.toObject ? assessment.toObject() : assessment;
   return {
@@ -80,7 +83,7 @@ const serializeAssessmentDoc = (assessment) => {
   };
 };
 
-const serializeAudit = (row) => ({
+export const serializeAudit = (row) => ({
   actor: row.actor,
   action: row.action,
   fromState: row.fromState,
@@ -91,7 +94,7 @@ const serializeAudit = (row) => ({
   createdAt: row.createdAt,
 });
 
-const serializeAdminAction = (row) => ({
+export const serializeAdminAction = (row) => ({
   id: row._id,
   claimId: row.claimId,
   action: row.action,
@@ -243,6 +246,7 @@ export const listReviewQueue = async ({ actorSub, rawFilters = {} }) => {
         appeal: { $arrayElemAt: ["$appeals", 0] },
         hasActiveAppeal: { $gt: [{ $size: "$appeals" }, 0] },
         aiFailed: aiFailedExpression,
+        held: heldExpression,
       },
     },
     {
@@ -278,6 +282,7 @@ export const listReviewQueue = async ({ actorSub, rawFilters = {} }) => {
       search: filters.search,
       withAppeal: filters.withAppeal,
       aiFailed: filters.aiFailed,
+      held: filters.held,
     },
   };
 };
@@ -381,7 +386,9 @@ export const overrideClaim = async ({
     if (prior) return replayResult(prior);
   }
 
-  const transition = evaluateOverrideTransition({ fromState: claim.state, toState });
+  // D8: a `submitted` claim may be overridden only while the engine is holding it for a person.
+  const held = claim.state === "submitted" && isHeldAssessment(await ClaimAssessment.findOne({ claimId: claim._id }).lean());
+  const transition = evaluateOverrideTransition({ fromState: claim.state, toState, held });
   if (!transition.ok) throw ApiError.conflict(transition.reason);
 
   if (approverSub != null && !approverIsValid({ actorSub, approverSub })) {
@@ -503,6 +510,8 @@ export const overrideClaim = async ({
     assessment.decidedAt = decidedAt;
     assessment.reason = reason;
     assessment.adminNote = adminNote ?? null;
+    // A decision ends the hold (the reason stays on the verification_held audit row).
+    if (held) assessment.hold = null;
     if (assessment.verification) {
       assessment.verification = {
         ...assessment.verification.toObject ? assessment.verification.toObject() : assessment.verification,
@@ -519,6 +528,16 @@ export const overrideClaim = async ({
     });
   }
   const adminAssessment = serializeAssessmentDoc(assessment);
+
+  // The claim is decided: queued decision work (AI assessment, documents, engine) must not run and
+  // spend provider calls. Satellite and weather are supporting evidence only (D1) and keep running.
+  if (held) {
+    await cancelJobsForClaim({
+      claimId: claim._id,
+      reason: "admin_override",
+      steps: ["ai_assessment", "land_documents", "official_land_record", "engine"],
+    }).catch((error) => logger.warn({ claimId: String(claim._id), err: error?.message }, "override job cancellation failed"));
+  }
 
   // Resolve every active appeal with the override decision (kind: overridden).
   const resolvedAppeals = await resolveActiveAppealsForClaim({

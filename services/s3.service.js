@@ -6,9 +6,13 @@ import {
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createHash, randomBytes } from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 import ApiError from "../utils/ApiError.js";
 import logger from "../utils/logger.js";
-import { env, validateEnv, S3_REQUIRED } from "../config/env.js";
+import { env, validateEnv, isDevStorageReceiverEnabled, S3_REQUIRED } from "../config/env.js";
+import { buildDevStorageUrl } from "../utils/devStorageSignature.js";
 
 // E3 (D-22 Option 1 / D-23): private image storage. Mirrors the S3 client shape already
 // used by rag/ingest.js (same region/credentials/bucket). Three hard rules:
@@ -32,6 +36,86 @@ const isMock = () => env.imageStorageMode === "mock";
 // Dev/test-only seam: in-memory bucket map (bucket -> Map(s3Key -> { buffer, mediaType })).
 const mockBuckets = new Map();
 
+// ADR-024 (plan A8, critique B3): with IMAGE_STORAGE_MOCK_DIR set, the mock bucket lives in files
+// instead, so a SEPARATE process (`npm run worker`, the e2e harness's process worker) reads the objects
+// the API process stored. Each object is two files named by a hash of bucket + key (never the key
+// itself, so no key can reach outside the directory): `<hash>.bin` (bytes) and `<hash>.json`
+// ({ key, mediaType, size }). Both are written to a temporary name and renamed, so a reader in another
+// process never sees half an object. assertProductionSafety() refuses this setting in production.
+const mockDir = () => env.imageStorageMockDir;
+const mockFileBase = (key) =>
+  path.join(path.resolve(mockDir()), createHash("sha256").update(`${env.s3Bucket ?? ""}\u0000${key}`).digest("hex"));
+const writeAtomic = async (target, data) => {
+  const temp = `${target}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
+  await fs.writeFile(temp, data);
+  await fs.rename(temp, target);
+};
+const fileStore = {
+  put: async (key, buffer, mediaType) => {
+    await fs.mkdir(path.resolve(mockDir()), { recursive: true });
+    const base = mockFileBase(key);
+    await writeAtomic(`${base}.bin`, buffer);
+    await writeAtomic(`${base}.json`, JSON.stringify({ key, mediaType: mediaType ?? null, size: buffer.length }));
+  },
+  meta: async (key) => {
+    try {
+      return JSON.parse(await fs.readFile(`${mockFileBase(key)}.json`, "utf8"));
+    } catch (error) {
+      if (error && error.code === "ENOENT") return null;
+      throw error;
+    }
+  },
+  get: async (key) => {
+    const meta = await fileStore.meta(key);
+    if (!meta || meta.key !== key) return null;
+    try {
+      return { buffer: await fs.readFile(`${mockFileBase(key)}.bin`), mediaType: meta.mediaType };
+    } catch (error) {
+      if (error && error.code === "ENOENT") return null;
+      throw error;
+    }
+  },
+  remove: async (key) => {
+    const base = mockFileBase(key);
+    await fs.rm(`${base}.json`, { force: true });
+    await fs.rm(`${base}.bin`, { force: true });
+  },
+};
+
+// Mock-mode object access: the file store when IMAGE_STORAGE_MOCK_DIR is set, the in-memory map otherwise.
+const mockStore = {
+  put: async (key, buffer, mediaType) => {
+    if (mockDir()) return fileStore.put(key, Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer), mediaType);
+    if (!mockBuckets.has(env.s3Bucket)) mockBuckets.set(env.s3Bucket, new Map());
+    mockBuckets.get(env.s3Bucket).set(key, { buffer, mediaType });
+    return undefined;
+  },
+  get: async (key) => {
+    if (mockDir()) return fileStore.get(key);
+    const found = mockBuckets.get(env.s3Bucket)?.get(key);
+    return found ? { buffer: found.buffer, mediaType: found.mediaType } : null;
+  },
+  head: async (key) => {
+    if (mockDir()) {
+      const meta = await fileStore.meta(key);
+      return meta && meta.key === key ? { size: Number(meta.size) || 0, mediaType: meta.mediaType } : null;
+    }
+    const found = mockBuckets.get(env.s3Bucket)?.get(key);
+    return found ? { size: found.buffer.length, mediaType: found.mediaType } : null;
+  },
+  remove: async (key) => {
+    if (mockDir()) return fileStore.remove(key);
+    const bucket = mockBuckets.get(env.s3Bucket);
+    if (bucket) bucket.delete(key);
+    return undefined;
+  },
+};
+
+// ADR-024: in mock mode a presigned URL normally points at a placeholder host that nothing answers
+// (the suites write to the mock bucket directly). With the dev upload receiver enabled it points at
+// /__dev/storage on this API instead, signed like an S3 URL, so a real browser can PUT and GET it.
+const devReceiverBaseUrl = () => (isDevStorageReceiverEnabled() && env.devStoragePublicBaseUrl ? env.devStoragePublicBaseUrl : null);
+
 let s3Client = null;
 const getS3Client = () => {
   if (s3Client) return s3Client;
@@ -49,8 +133,7 @@ const getS3Client = () => {
 export const putObject = async ({ key, buffer, mediaType }) => {
   try {
     if (isMock()) {
-      if (!mockBuckets.has(env.s3Bucket)) mockBuckets.set(env.s3Bucket, new Map());
-      mockBuckets.get(env.s3Bucket).set(key, { buffer, mediaType });
+      await mockStore.put(key, buffer, mediaType);
       return;
     }
     await getS3Client().send(
@@ -71,8 +154,7 @@ export const putObject = async ({ key, buffer, mediaType }) => {
 export const getObject = async (key) => {
   try {
     if (isMock()) {
-      const found = mockBuckets.get(env.s3Bucket)?.get(key);
-      return found ? { buffer: found.buffer, mediaType: found.mediaType } : null;
+      return await mockStore.get(key);
     }
     const response = await getS3Client().send(
       new GetObjectCommand({ Bucket: env.s3Bucket, Key: key })
@@ -91,8 +173,7 @@ export const getObject = async (key) => {
 export const headObject = async (key) => {
   try {
     if (isMock()) {
-      const found = mockBuckets.get(env.s3Bucket)?.get(key);
-      return found ? { size: found.buffer.length, mediaType: found.mediaType } : null;
+      return await mockStore.head(key);
     }
     const response = await getS3Client().send(
       new HeadObjectCommand({ Bucket: env.s3Bucket, Key: key })
@@ -123,6 +204,9 @@ export const headObject = async (key) => {
 export const getSignedPutUrl = async ({ key, mediaType, expiresInSeconds }) => {
   try {
     if (isMock()) {
+      // Dev/e2e: the signed dev receiver URL (a real browser PUTs the image there, ADR-024).
+      const receiver = devReceiverBaseUrl();
+      if (receiver) return buildDevStorageUrl({ baseUrl: receiver, method: "PUT", key, contentType: mediaType, expiresInSeconds });
       // Dev/test-only deterministic stand-in (no real AWS). The frontend never consumes this
       // in tests — suites simulate the browser's PUT via the mock bucket directly.
       return `https://mock-bucket.local/${key}?X-Amz-Mock=1&Expires=${expiresInSeconds}`;
@@ -146,6 +230,8 @@ export const getSignedPutUrl = async ({ key, mediaType, expiresInSeconds }) => {
 export const getSignedGetUrl = async ({ key, expiresInSeconds }) => {
   try {
     if (isMock()) {
+      const receiver = devReceiverBaseUrl();
+      if (receiver) return buildDevStorageUrl({ baseUrl: receiver, method: "GET", key, expiresInSeconds });
       // Dev/test-only deterministic stand-in (no real AWS). `expiresInSeconds` mirrors the
       // real handler so regression suites can assert the TTL contract.
       return `https://mock-bucket.local/${key}?X-Amz-Mock=1&Expires=${expiresInSeconds}`;
@@ -163,8 +249,7 @@ export const getSignedGetUrl = async ({ key, expiresInSeconds }) => {
 export const deleteObject = async (key) => {
   try {
     if (isMock()) {
-      const bucket = mockBuckets.get(env.s3Bucket);
-      if (bucket) bucket.delete(key);
+      await mockStore.remove(key);
       return true;
     }
     await getS3Client().send(

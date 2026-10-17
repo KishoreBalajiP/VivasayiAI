@@ -86,6 +86,13 @@ const lossClaimSchema = new mongoose.Schema(
       maxLat: { type: Number, default: undefined },
     },
     submittedAt: { type: Date, default: null },
+    // ADR-022 (additive). `submittedAt` is overwritten by every resubmission, so the claim window
+    // (policy v1.1 `claimWindowReference: "firstSubmittedAt"`) needs the FIRST submission time on its
+    // own. `submissionRound` counts submit + resubmits (1 after the first submit) and scopes the
+    // verification plan of each round. Claims written before these fields existed have null / 0;
+    // the verification service then falls back to the earliest `submitted` audit row.
+    firstSubmittedAt: { type: Date, default: null },
+    submissionRound: { type: Number, default: 0, min: 0 },
     processedAt: { type: Date, default: null },
     decidedAt: { type: Date, default: null },
   },
