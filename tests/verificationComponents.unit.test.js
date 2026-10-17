@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolvePolicy } from "../config/verificationPolicy.js";
-import { resolveComponents } from "../services/verificationComponents.js";
+import { groupEvidence, isReviewCase, resolveComponents } from "../services/verificationComponents.js";
 
 // ADR-020 resolver. PURE unit tests: evidence in, per-component outcomes out.
 
@@ -277,5 +277,42 @@ describe("claimant relationship", () => {
     const result = rights("tenant", []);
     expect(result.outcome).toBe("unverified");
     expect(result.reasonCodes.filter((code) => code.startsWith("missing_document_category")).length).toBe(2);
+  });
+});
+
+describe("review cases are never read as supporting evidence", () => {
+  it("VC-26: a SATELLITE- or WEATHER-labelled review case is ignored by the satellite and weather components", () => {
+    const reviewCase = (source) =>
+      row({
+        source,
+        status: "PENDING",
+        idempotencyKey: `rv_c1_${source}_0123456789abcdef`,
+        metadata: { component: "manual_review", kind: "review_case", reviewRequired: true, failedStep: source.toLowerCase() },
+        createdAt: new Date(NOW.getTime() - 1000),
+      });
+    const satCase = reviewCase("SATELLITE");
+    const wxCase = reviewCase("WEATHER");
+
+    const groups = groupEvidence([satCase, wxCase]);
+    expect(groups.satelliteRows).toHaveLength(0);
+    expect(groups.weatherRows).toHaveLength(0);
+    expect(groups.reviewRows).toHaveLength(2);
+    expect(isReviewCase(satCase)).toBe(true);
+
+    const result = resolve({ evidenceRows: [satCase, wxCase] });
+    expect(result.satellite.outcome).toBe("unverified");
+    expect(result.satellite.reasonCodes).toEqual(["satellite_not_run"]);
+    expect(result.weather.reasonCodes).toEqual(["weather_not_retrieved"]);
+    expect(result.manual_review.outcome).toBe("requires_review");
+
+    // A real (older) satellite reading next to a newer case still decides the satellite component.
+    const reading = row({
+      source: "SATELLITE",
+      status: "AVAILABLE",
+      idempotencyKey: "sat2_c1_real",
+      result: { analysisOutcome: "SUPPORTS_LOSS" },
+      createdAt: new Date(NOW.getTime() - 5000),
+    });
+    expect(resolve({ evidenceRows: [satCase, reading] }).satellite.outcome).toBe("verified");
   });
 });

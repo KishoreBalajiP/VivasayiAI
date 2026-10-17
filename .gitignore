@@ -9,3 +9,12 @@ docs/planning/todo.md
 t*-verify.mjs
 t*-live.mjs
 t*-probe.mjs
+
+# Local test and evaluation output (acceptance reports, Playwright traces, local RAG indexes).
+test-results/
+.rag-local/
+
+# Vendored IEEE Access LaTeX template (docs/research/manuscript/vendor/SOURCE.md). The zip has no
+# licence file and bundles commercial Type 1 fonts, so it is kept locally and not committed until its
+# redistribution terms are confirmed. Its source URL and sha256 are recorded in SOURCE.md.
+docs/research/manuscript/vendor/ieee-access-*/

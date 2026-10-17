@@ -26,6 +26,11 @@ export const DECISION_STATE_SET = new Set(DECISION_STATES);
 // claims (E9-S5 leaves the claim in processing when a gate fails); the decision/rejected family
 // covers engine decisions. Excluded: draft/submitted (not yet decided), withdrawn (closed —
 // the farmer must file a fresh claim).
+//
+// Exception (owner decision D8): a `submitted` claim that the engine is HOLDING for a person (no
+// decision exists and none will be made automatically, for example an AI-only "no damage" reading
+// under v1.1) may be overridden. `submitted` stays out of this list; evaluateOverrideTransition
+// admits it only with `held: true`, which the admin service derives from the stored assessment.
 export const OVERRIDEABLE_STATES = [
   "processing",
   "more_evidence_required",
@@ -38,18 +43,27 @@ export const OVERRIDEABLE_STATES = [
 
 export const OVERRIDEABLE_STATE_SET = new Set(OVERRIDEABLE_STATES);
 
-export const isOverrideableFrom = (fromState) => OVERRIDEABLE_STATE_SET.has(fromState);
+export const isOverrideableFrom = (fromState, { held = false } = {}) =>
+  OVERRIDEABLE_STATE_SET.has(fromState) || (fromState === "submitted" && held === true);
 
 export const isDecisionState = (state) => DECISION_STATE_SET.has(state);
+
+// A claim is held when it is still `submitted`, its assessment carries no decision and the engine
+// recorded a hold (ADR-020). Pure; accepts a mongoose document or a plain object.
+export const isHeldAssessment = (assessment) =>
+  Boolean(assessment) &&
+  !assessment.state &&
+  Boolean(assessment.verification) &&
+  assessment.verification.status === "held";
 
 // Pure transition validation for an override (returns { ok: true } or { ok: false, reason }).
 // Mirrors applyTransition's determinism but is the ADMIN path: same to-state checks plus the
 // source-must-be-overrideable rule and the no-op guard (an override must change the state).
-export const evaluateOverrideTransition = ({ fromState, toState }) => {
+export const evaluateOverrideTransition = ({ fromState, toState, held = false }) => {
   if (!DECISION_STATES.includes(toState)) {
     return { ok: false, reason: "Override must target a decision state" };
   }
-  if (!OVERRIDEABLE_STATES.includes(fromState)) {
+  if (!isOverrideableFrom(fromState, { held })) {
     return { ok: false, reason: `Claim in ${fromState} state cannot be overridden` };
   }
   if (fromState === toState) {
@@ -92,6 +106,7 @@ export default {
   OVERRIDEABLE_STATE_SET,
   isOverrideableFrom,
   isDecisionState,
+  isHeldAssessment,
   evaluateOverrideTransition,
   overridesRequireApprover,
   approverIsValid,

@@ -16,9 +16,11 @@ import {
   evaluateClaimVerification,
   VERIFICATION_ENGINE_VERSION,
 } from "./claimVerificationEngine.service.js";
-import { resolvePolicy } from "../config/verificationPolicy.js";
+import { resolvePolicy, policySetting } from "../config/verificationPolicy.js";
 import { resolveComponents } from "./verificationComponents.js";
+import logger from "../utils/logger.js";
 import { findCrossFarmerOverlap } from "./crossFarmerOverlap.service.js";
+import { correlationIdFor, countBlockingActiveJobs, enqueue, retryDelayMs } from "./verificationJobs.service.js";
 
 // E9-S5/E9-S6 (ADR-019) — Claim Verification orchestration. Phase 5 shipped it as an internal
 // service with no public endpoint; Phase 6 (integration) exposes it through the THIN HTTP surface
@@ -236,16 +238,34 @@ const failVerification = async ({ claimId, assessment, stage, message, requestId
   });
 };
 
+// D8: the claim was decided by someone else (an admin override of the held claim) while this run was
+// evaluating it. Return that decision; while it is still being written, report progress, never a hold.
+const decisionAfterRace = async (claim) => {
+  const current = (await LossClaim.findById(claim._id)) || claim;
+  const assessment = await ClaimAssessment.findOne({ claimId: claim._id });
+  if (DECIDED_STATES.has(current.state) && assessment && assessment.state) {
+    return serializeDecision({ claim: current, assessment, idempotent: true, inProgress: false });
+  }
+  return serializeDecision({ claim: current, assessment, idempotent: false, inProgress: true });
+};
+
+// A gate item's reason codes. The engine's AI "no damage" item names its reason in the singular
+// `reasonCode`; every other item uses `reasonCodes`.
+const reasonCodesOf = (item) =>
+  Array.isArray(item.reasonCodes) ? item.reasonCodes : item.reasonCode ? [item.reasonCode] : [];
+
 // ADR-020 — a required component is unresolved, so there is NO decision yet. The claim is left in
 // `submitted` (no lock is held, the farmer can still withdraw) and the reason is recorded on the
 // assessment. The audit row is written only when the SITUATION changes (different blockers or a
 // changed evidence row), so a poller or a retry cannot flood the audit trail.
 const persistHold = async ({ claim, assessment, evaluation, snapshot, fingerprint, now, requestId }) => {
+  // Reason codes are normalised (see reasonCodesOf) so the stored hold always carries the reason.
+  // The hold fingerprint uses only component and outcome, so this cannot make a hold look "new".
   const blocking = evaluation.gate.blocking.map((item) => ({
     component: item.component,
     outcome: item.outcome,
     action: item.action,
-    reasonCodes: item.reasonCodes || [],
+    reasonCodes: reasonCodesOf(item),
   }));
   const holdFingerprint = createHash("sha1")
     .update(
@@ -290,8 +310,16 @@ const persistHold = async ({ claim, assessment, evaluation, snapshot, fingerprin
     },
   };
 
+  // D8: an admin may decide a held claim while this run is evaluating it. The hold is therefore only
+  // written over "no decision" or a decision from an EARLIER round (made before the latest
+  // submission); a decision of this round always has decidedAt >= submittedAt, so it is never
+  // overwritten. A claim without submittedAt has no round boundary and keeps the old behaviour.
+  const holdFilter = claim.submittedAt
+    ? { claimId: claim._id, $or: [{ state: null }, { decidedAt: null }, { decidedAt: { $lt: claim.submittedAt } }] }
+    : { claimId: claim._id };
+  let written = true;
   if (assessment) {
-    await ClaimAssessment.updateOne({ claimId: claim._id }, { $set: write });
+    written = (await ClaimAssessment.updateOne(holdFilter, { $set: write })).matchedCount > 0;
   } else {
     try {
       await ClaimAssessment.create({
@@ -305,9 +333,16 @@ const persistHold = async ({ claim, assessment, evaluation, snapshot, fingerprin
         ...write,
       });
     } catch (error) {
-      if (error?.code === 11000) await ClaimAssessment.updateOne({ claimId: claim._id }, { $set: write });
+      if (error?.code === 11000) written = (await ClaimAssessment.updateOne(holdFilter, { $set: write })).matchedCount > 0;
       else throw error;
     }
+  }
+  // The decision won (the hold was refused), or it moved the claim while the hold was being written
+  // (a decision, or the farmer withdrew it): report what is there now. No hold audit row is written
+  // for a claim that is no longer held.
+  const current = await LossClaim.findById(claim._id).select("state").lean();
+  if (!written || (current && (DECIDED_STATES.has(current.state) || current.state === "withdrawn"))) {
+    return decisionAfterRace(claim);
   }
 
   if (changed) {
@@ -355,6 +390,72 @@ export const releaseProcessingSlot = async ({ claimId, reason, requestId = null 
     requestId: requestId || null,
   });
   return true;
+};
+
+// ADR-022: the claim window is measured at the FIRST submission when the policy says so. Claims
+// submitted before `firstSubmittedAt` existed fall back to the earliest `submitted` audit row, then
+// to `submittedAt` (which a resubmission overwrites, so it is only the last resort).
+const firstSubmittedAtFor = async (claim) => {
+  if (claim.firstSubmittedAt) return claim.firstSubmittedAt;
+  const audit = await ClaimAudit.findOne({ claimId: claim._id, action: "submitted" }).sort({ createdAt: 1 }).select("createdAt").lean();
+  return (audit && audit.createdAt) || claim.submittedAt || null;
+};
+
+const claimFactsFor = async ({ claim, policy }) => {
+  const facts = claim.toObject();
+  if (policySetting(policy, "claimWindowReference") === "firstSubmittedAt") {
+    facts.firstSubmittedAt = await firstSubmittedAtFor(claim);
+  }
+  return facts;
+};
+
+// ADR-022 (`reviewCaseOnHold`). Only the AI "no damage" hold opens its own review case: a technical
+// hold already gets one from the queue when its job dies, so each cause has exactly one case. The
+// case key is deterministic, so re-evaluating a held claim never opens a second one. Returns true
+// only when a NEW case was created.
+const AI_NO_DAMAGE_REVIEW = "ai_no_damage_needs_review";
+const openReviewCaseForHold = async ({ claim, cognitoSub, policy, evaluation, requestId }) => {
+  if (!policySetting(policy, "reviewCaseOnHold")) return false;
+  const blocking = evaluation && evaluation.gate && Array.isArray(evaluation.gate.blocking) ? evaluation.gate.blocking : [];
+  if (!blocking.some((item) => reasonCodesOf(item).includes(AI_NO_DAMAGE_REVIEW))) return false;
+  const { createReviewCase, reviewCaseKey } = await import("./manualReview.service.js");
+  const reasons = [AI_NO_DAMAGE_REVIEW];
+  const key = reviewCaseKey({ claimId: claim._id, source: "AI_IMAGE", reasons });
+  if (await VerificationEvidence.exists({ claimId: claim._id, idempotencyKey: key })) return false;
+  // Withdrawn (or decided) while this run evaluated it: nobody needs to review it any more.
+  if (!(await LossClaim.exists({ _id: claim._id, state: "submitted" }))) return false;
+  await createReviewCase({
+    claimId: claim._id,
+    cognitoSub,
+    source: "AI_IMAGE",
+    reasons,
+    metadata: { component: "manual_review", failedComponent: "photos", reviewReason: AI_NO_DAMAGE_REVIEW },
+    requestId: requestId || null,
+  });
+  return true;
+};
+
+// ADR-022 (D2: a technical failure is retried, then reviewed). Under a technical hold, a photo check
+// that just failed here is handed to the queue: one ai_assessment job per claim (idempotent) retries
+// it after the first backoff delay and, if it keeps failing, dies into a review case. When it
+// succeeds, its executor asks the engine to re-evaluate the hold. Without it, a claim whose photos
+// changed after its last queued check (the late-evidence plan could not be written, or a farmer's
+// verify call came first) would stay held with nothing retrying it and no case for a person.
+const queuePhotoCheckRetry = async ({ claim, cognitoSub, requestId }) => {
+  if (!env.claimAutomatedVerificationEnabled) return;
+  try {
+    await enqueue({
+      claimId: claim._id,
+      cognitoSub,
+      step: "ai_assessment",
+      runAt: new Date(Date.now() + retryDelayMs({ attempts: 1 })),
+      requestId: requestId || null,
+      correlationId: correlationIdFor(claim._id, claim.submissionRound || 0),
+    });
+  } catch (error) {
+    // The hold is still recorded; the reconcile sweep and the next verify call are the safety net.
+    logger.warn({ claimId: String(claim._id), err: error?.message, code: "PLAN_ENQUEUE_FAILED" }, "verification.photo_check_retry_not_queued");
+  }
 };
 
 export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
@@ -407,6 +508,13 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
   const fingerprint = computeEvidenceVersion(evidenceDocs);
   let assessment = await ClaimAssessment.findOne({ claimId: claim._id });
 
+  // ADR-020/022: the policy is resolved once, up front, because it also decides how a failed AI
+  // assessment is handled below.
+  const policy = resolvePolicy();
+  // `technicalFailure: "hold"` (v1.1): a provider failure is never re-run inline and never surfaces
+  // as an error or a request for more evidence. The queue owns the retries; the engine holds.
+  const technicalHold = policySetting(policy, "technicalFailure") === "hold";
+
   // Auto-trigger the AI evidence assessment when the caller has stored evidence but no
   // matching completed assessment exists. The assessment service is concurrency-safe (atomic
   // CAS) and idempotent: concurrent /verify requests share the slot, and a re-run with the
@@ -418,7 +526,11 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
       !assessment ||
       assessment.status !== "completed" ||
       assessment.evidenceVersion !== fingerprint;
-    if (needsAssessment) {
+    // Under a technical hold an assessment that already FAILED for this exact evidence set is not
+    // re-run here: the engine would only call the provider that has just failed. The queue retries it.
+    const failedForThisEvidence =
+      technicalHold && assessment && assessment.status === "failed" && assessment.evidenceVersion === fingerprint;
+    if (needsAssessment && !failedForThisEvidence) {
       try {
         await claimAssessmentService.assessClaimEvidence({
           claimId: claim._id,
@@ -438,13 +550,27 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
               : "Claim evidence assessment could not be completed; verification is retryable after the assessment completes",
           requestId,
         }).catch(() => {});
-        throw error;
+        // v1.1: continue to the engine, which holds the claim with the photo check `unavailable`.
+        if (!technicalHold) throw error;
+        logger.warn({ claimId: String(claim._id), kind: error?.kind || null, code: error?.code || null }, "verification.technical_hold");
+        await queuePhotoCheckRetry({ claim, cognitoSub, requestId });
       }
       assessment = await ClaimAssessment.findOne({ claimId: claim._id });
+      // Another run is assessing these photos right now, or finished on a different evidence set
+      // (the photos changed meanwhile): report progress and decide nothing on someone else's result.
       if (
-        !assessment ||
-        assessment.status !== "completed" ||
-        assessment.evidenceVersion !== fingerprint
+        technicalHold &&
+        assessment &&
+        (assessment.status === "processing" ||
+          (assessment.status === "completed" && assessment.evidenceVersion !== fingerprint))
+      ) {
+        return serializeDecision({ claim, assessment, idempotent: false, inProgress: true });
+      }
+      if (
+        !technicalHold &&
+        (!assessment ||
+          assessment.status !== "completed" ||
+          assessment.evidenceVersion !== fingerprint)
       ) {
         const message =
           "Claim evidence assessment is missing or stale; verification is retryable after the assessment completes";
@@ -463,9 +589,8 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
   // ---- E9-S9: real overlap-prevention facts (owner-scoped siblings + Turf spatial engine) ----
   const { spatial, eligibleContext } = await buildSpatialFacts({ claim, cognitoSub });
 
-  // ---- ADR-020: policy + per-component evidence status (pure, from the rows already stored) ----
-  const policy = resolvePolicy();
-  const evidenceRows = await VerificationEvidence.find({ claimId: claim._id }).lean();
+  // ---- ADR-020: per-component evidence status (pure, from the rows already stored) ----
+  const claimFacts = await claimFactsFor({ claim, policy });
   const crossOverlap = await findCrossFarmerOverlap({ claim, cognitoSub, thresholds: policy.crossFarmer });
   if (crossOverlap.flagged) {
     // Admin-only trail (farmers never read ClaimAudit); written once per distinct set of matches.
@@ -493,31 +618,47 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
       });
     }
   }
-  const components = resolveComponents({
-    claim: claim.toObject(),
-    assessment: assessment ? assessment.toObject() : null,
-    spatial,
-    crossOverlap,
-    evidenceRows,
-    evidenceCount: evidenceDocs.length,
-    policy,
-  });
-  const snapshot = buildDecisionSnapshot({ components, policy });
-
-  // ---- pure deterministic evaluation (no DB/network/LLM) ----
+  // ---- pure deterministic evaluation (no DB/network/LLM) over the evidence rows stored now ----
   const now = new Date();
-  const evaluation = evaluateClaimVerification({
-    claim: claim.toObject(),
-    assessment: assessment ? assessment.toObject() : null,
-    overlap: { status: spatial.overlapStatus, overlapAreaAcres: spatial.overlapAreaAcres },
-    spatial,
-    eligibleContext,
-    weatherCorrelation: null,
-    evidenceCount: evidenceDocs.length,
-    now,
-    components,
-    policy,
-  });
+  const evaluateStoredEvidence = async () => {
+    const evidenceRows = await VerificationEvidence.find({ claimId: claim._id }).lean();
+    const components = resolveComponents({
+      claim: claimFacts,
+      assessment: assessment ? assessment.toObject() : null,
+      spatial,
+      crossOverlap,
+      evidenceRows,
+      evidenceCount: evidenceDocs.length,
+      policy,
+    });
+    const snapshot = buildDecisionSnapshot({ components, policy });
+    const evaluation = evaluateClaimVerification({
+      claim: claimFacts,
+      assessment: assessment ? assessment.toObject() : null,
+      overlap: { status: spatial.overlapStatus, overlapAreaAcres: spatial.overlapAreaAcres },
+      spatial,
+      eligibleContext,
+      weatherCorrelation: null,
+      evidenceCount: evidenceDocs.length,
+      now,
+      components,
+      policy,
+    });
+    return { snapshot, evaluation };
+  };
+  let { snapshot, evaluation } = await evaluateStoredEvidence();
+
+  // ADR-022: a hold that needs a reviewer opens its review case BEFORE the hold is recorded, and the
+  // claim is evaluated once more so the recorded hold already includes the case. Otherwise the next
+  // evaluation would see a "new" evidence row and write a second, identical hold audit row.
+  if (evaluation.disposition === "hold") {
+    // A failure to open the case must not lose the hold; the next evaluation retries it.
+    const opened = await openReviewCaseForHold({ claim, cognitoSub, policy, evaluation, requestId }).catch((error) => {
+      logger.warn({ claimId: String(claim._id), err: error?.message }, "verification.review_case_failed");
+      return false;
+    });
+    if (opened) ({ snapshot, evaluation } = await evaluateStoredEvidence());
+  }
 
   // A required component is unresolved: record why and leave the claim in `submitted`.
   if (evaluation.disposition === "hold") {
@@ -733,4 +874,27 @@ export const verifyClaim = async ({ claimId, cognitoSub, requestId }) => {
   }
 };
 
-export default { verifyClaim, serializeDecision, releaseProcessingSlot };
+// ADR-022 (plan A6) — POST /claims/:id/verify. The queue owns the checks; this endpoint (kept for
+// reviewers and older clients) must not decide a claim on partial evidence while one of its blocking
+// steps is still queued or running. It then reports "in progress" and decides nothing; the engine job
+// decides once those steps finish. Decided, withdrawn and `processing` claims, and every claim while
+// automated verification is off, go through verifyClaim unchanged.
+export const verifyClaimWhenReady = async ({ claimId, cognitoSub, requestId }) => {
+  if (!claimId || !mongoose.isValidObjectId(String(claimId))) {
+    throw ApiError.badRequest("Valid claim id is required");
+  }
+  if (!cognitoSub || typeof cognitoSub !== "string") {
+    throw ApiError.unauthorized("Authentication required");
+  }
+  if (env.claimAutomatedVerificationEnabled) {
+    const claim = await LossClaim.findOne({ _id: String(claimId), cognitoSub });
+    if (!claim) throw ApiError.notFound("Claim not found");
+    if (claim.state === "submitted" && (await countBlockingActiveJobs(claim._id, resolvePolicy())) > 0) {
+      const assessment = await ClaimAssessment.findOne({ claimId: claim._id });
+      return serializeDecision({ claim, assessment, idempotent: false, inProgress: true });
+    }
+  }
+  return verifyClaim({ claimId, cognitoSub, requestId });
+};
+
+export default { verifyClaim, verifyClaimWhenReady, serializeDecision, releaseProcessingSlot };

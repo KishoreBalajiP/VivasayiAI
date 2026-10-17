@@ -66,6 +66,15 @@ const assertEvidenceGate = async (claim) => {
   return appeal;
 };
 
+// ADR-022: a photo added or removed while the claim is `submitted` is checked automatically (the
+// photo check, then the engine). Scheduling never fails the evidence call: the pipeline logs a
+// failure, and a repeated complete call schedules again (idempotent per photo set).
+const scheduleLateEvidence = async ({ claim, cognitoSub, requestId, trigger }) => {
+  if (!env.claimAutomatedVerificationEnabled || claim.state !== "submitted") return;
+  const { scheduleEvidencePlan } = await import("./claimVerificationPipeline.service.js");
+  await scheduleEvidencePlan({ claimId: claim._id, cognitoSub, requestId, trigger });
+};
+
 const serializeEvidence = (evidence) => ({
   uploadId: evidence.uploadId,
   mediaType: evidence.mediaType,
@@ -194,7 +203,9 @@ export const completeEvidence = async ({ claimId, uploadId, cognitoSub, requestI
     const existing = await ClaimEvidence.findOne({ uploadId, claimId: claim._id });
     if (!existing) throw ApiError.notFound("Evidence not found");
     if (existing.status === "stored" || existing.status === "completed") {
-      return serializeEvidence(existing); // idempotent retry after a dropped response
+      // Idempotent retry after a dropped response; it also recovers a check that was not scheduled.
+      await scheduleLateEvidence({ claim, cognitoSub, requestId, trigger: "evidence_completed_retry" });
+      return serializeEvidence(existing);
     }
     if (existing.status === "processing") {
       throw ApiError.badRequest("Evidence is already being processed");
@@ -286,6 +297,7 @@ export const completeEvidence = async ({ claimId, uploadId, cognitoSub, requestI
     });
   }
 
+  await scheduleLateEvidence({ claim, cognitoSub, requestId, trigger: "evidence_completed" });
   return serializeEvidence(evidence);
 };
 
@@ -318,6 +330,7 @@ export const deleteEvidence = async ({ claimId, uploadId, cognitoSub, requestId 
     await removeAppealEvidence({ claimId: claim._id, uploadId });
   }
 
+  await scheduleLateEvidence({ claim, cognitoSub, requestId, trigger: "evidence_deleted" });
   return { removed: true };
 };
 

@@ -615,6 +615,49 @@ describe("Phase C — pre/post NDVI with cloud masking", () => {
     expect(result.analysis).toBeNull();
   });
 
+  // ADR-022 / plan Part D (additive): the run records the scenes of EACH window, and every evidence
+  // payload names the adapter outcome. Neither changes a fingerprint: `discovery.scenes` keeps its
+  // historical content (the first window's search) and the evidence version is computed as before.
+  it("PC-7: discovery.scenesByWindow lists each window's scenes and metadata.outcome is recorded, with the evidence fingerprint unchanged", async () => {
+    const preScenes = [feature("S2-pre-a", "2024-02-10T05:00:00Z", 5), feature("S2-pre-b", "2024-02-20T05:00:00Z", 40)];
+    const postScenes = [feature("S2-post-a", "2024-04-10T05:00:00Z", 3)];
+    const transport = makeTransport({ onSearch: windowAwareSearch(preScenes, postScenes) });
+    const result = await runSatelliteAnalysis(prepostArgs(baseConfig(), transport));
+    expect(result.outcome).toBe(SATELLITE_OUTCOMES.IMAGERY_FOUND);
+    const { scenesByWindow } = result.discovery;
+    expect(scenesByWindow.pre.map((scene) => scene.sceneId)).toEqual(["S2-pre-a", "S2-pre-b"]);
+    expect(scenesByWindow.post.map((scene) => scene.sceneId)).toEqual(["S2-post-a"]);
+    expect(scenesByWindow.pre.map((scene) => scene.cloudCoverFraction)).toEqual([0.05, 0.4]);
+    expect(scenesByWindow.post[0].queryWindow).toEqual({ start: POST.start, end: POST.end });
+    // Historical content kept: `scenes` is the first window's search, `sceneCount` counts both.
+    expect(result.discovery.scenes.map((scene) => scene.sceneId)).toEqual(["S2-pre-a", "S2-pre-b"]);
+    expect(result.discovery.sceneCount).toBe(3);
+    expect(result.evidence.metadata.outcome).toBe("IMAGERY_FOUND");
+    // The evidence version is the same fingerprint as before (first-window scene ids, no outcome).
+    const { createHash } = await import("node:crypto");
+    const expected = createHash("sha1")
+      .update(JSON.stringify({ collection: S2, windows: result.discovery.queryWindows, sceneIds: ["S2-pre-a", "S2-pre-b"], indicator: null, adapterVersion: SATELLITE_ADAPTER_VERSION }))
+      .digest("hex");
+    expect(result.evidence.evidenceVersion).toBe(expected);
+
+    // No imagery at all: both windows recorded as empty lists.
+    const empty = await runSatelliteAnalysis(prepostArgs(baseConfig(), makeTransport({ onSearch: () => searchResponse([]) })));
+    expect(empty.outcome).toBe(SATELLITE_OUTCOMES.IMAGERY_UNAVAILABLE);
+    expect(empty.discovery.scenesByWindow).toEqual({ pre: [], post: [] });
+    expect(empty.evidence.metadata.outcome).toBe("IMAGERY_UNAVAILABLE");
+    // A single window has no pre/post split.
+    const single = await runSatelliteAnalysis(runArgs(baseConfig(), makeTransport({ onSearch: () => searchResponse([feature("S2-a", "2024-02-10T05:00:00Z", 5)]) })));
+    expect(single.discovery.scenesByWindow.pre).toBeNull();
+    expect(single.discovery.scenesByWindow.post).toBeNull();
+    expect(single.discovery.scenesByWindow.single.map((scene) => scene.sceneId)).toEqual(["S2-a"]);
+    // Runs that never searched still name their outcome.
+    const disabled = await runSatelliteAnalysis(runArgs(baseConfig({ enabled: false }), makeTransport()));
+    expect(disabled.evidence.metadata.outcome).toBe("CONFIG_DISABLED");
+    const failed = await runSatelliteAnalysis(runArgs(baseConfig(), makeTransport({ onSearch: () => { throw httpError(503); } })));
+    expect(failed.evidence.metadata.outcome).toBe(failed.outcome);
+    expect(failed.evidence.metadata.outcome).toBe(SATELLITE_OUTCOMES.PROVIDER_ERROR);
+  });
+
   it("PC-6: a single window can never support or refute a loss", async () => {
     const transport = makeTransport({ onSearch: () => searchResponse([feature("S2-a", "2024-02-10T05:00:00Z", 5)]), onStats: () => maskedStats(0.5, 100, 0) });
     const result = await runSatelliteAnalysis(runArgs(enabled(), transport));

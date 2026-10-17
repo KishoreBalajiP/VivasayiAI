@@ -557,3 +557,47 @@ All claim endpoints: `requireAuth` + ownership scoping (`cognitoSub`); `claimLim
 > - `POST /admin/claims/:claimId/ownership/:evidenceId/review` — admin-only body `{ status, method?:"manual_review", reason }`; race-safe CAS (`PENDING → terminal`), replay-safe, immutably records `AdminAction(manual_review)` + `ClaimAudit(ownership_evidence_reviewed)`. `VERIFIED` is refused (`400`) because **no authoritative provider is configured**; `AVAILABLE` here means "present/consistent on manual review", not a legal determination.
 >
 > **Boundaries preserved:** no new claim state; the deterministic engine and its outcomes are untouched; `OWNERSHIP` stays non-operative; ownership evidence is never consumed by any decision. See §9A.1 of `07_Database_Design.md`. 35-scenario Phase 12 suite added (`tests/ownershipEvidence.unit.test.js`, `tests/ownership.evidence.test.js`; full suite 527).
+
+## 12. Claim verification API changes, October 2026 (ADR-022)
+
+**Status (2026-10-17).** Implemented in the backend working tree on `develop` after `6dbe6b8` (uncommitted), automated-test verified with mocked providers, not deployed. Where this section disagrees with the phase notes in §11, this section is correct. The farmer-facing summary is [FRONTEND_CONTRACT_2026-10.md](FRONTEND_CONTRACT_2026-10.md); the progress object is specified in [PROGRESS_CONTRACT_v1.md](PROGRESS_CONTRACT_v1.md).
+
+### 12.1 Submit, resubmit, withdraw
+
+- `POST /claims/:claimId/submit` and `POST /claims/:claimId/resubmit` change state with compare-and-set and **write the round's verification plan before answering** (`services/claim.service.js`, `services/claimVerificationPipeline.service.js`). If the plan cannot be written the response is **503** `"Your claim was saved, but its checks could not be scheduled. Please try again."`; the claim is already `submitted`, and repeating the call returns 200 with `idempotent: true` after re-running the plan. A repeated submit after the claim was decided returns 200 "already submitted" and writes nothing.
+- `POST /claims/:claimId/withdraw` cancels the claim's queued jobs; no step runs afterwards.
+- A photo completed or a land document attached after submit queues the matching steps and the engine under its own plan key. The upload itself never fails because of scheduling.
+
+### 12.2 `GET /claims/:claimId/progress` (new)
+
+Owner only (404 for anyone else, before anything runs); read rate limit. Response `{ statusCode, message: "Claim progress fetched", data: { progress } }`, where `progress` is the `progress-v1` object: six stages, an overall status, a supporting-only satellite status and real `nextCheckAt` times, built from persisted rows only. When `CLAIM_AUTOMATED_VERIFICATION_ENABLED` and `CLAIM_VERIFICATION_DRAIN_ON_READ` are true, the owner's read also runs **one** due job (budget `CLAIM_VERIFICATION_READ_DRAIN_BUDGET_MS`, default 20 s), so a poll can take up to about 20 s (`controllers/claim.controller.js:76-84,194-198`).
+
+### 12.3 `GET /claims/:claimId/verification` (changed)
+
+Also returns `data.progress` (the same object). **Behaviour change:** its `verification.persisted` rows are now the farmer projection: no review cases, `result: null`, `provider: null`, no internal versions or references. Reviewers use the diagnostics endpoint below.
+
+### 12.4 `POST /claims/:claimId/verify` (changed semantics)
+
+Checks ownership **before** running anything (404 otherwise). For a `submitted` claim it re-ensures the plan, runs this claim's due jobs (at most 10, within `CLAIM_VERIFICATION_REQUEST_BUDGET_MS`, default 22 s), and decides only when no blocking step is queued or running; otherwise it answers "Claim verification in progress". The farmer UI no longer calls it; it remains for reviewers and older clients. The response's `policyHash` is `null` for this farmer-facing endpoint.
+
+### 12.5 Admin
+
+| Endpoint | Change |
+|---|---|
+| `GET /admin/claims?held=true` | New filter: claims the engine is holding for a person (still `submitted`, no decision, `verification.status: "held"`) |
+| `POST /admin/claims/:claimId/override` | May now also override a **held** `submitted` claim (owner decision D8), with compare-and-set on `submitted`; the claim's queued decision jobs are cancelled. Any other `submitted` claim is still refused |
+| `GET /admin/claims/:claimId/verification-diagnostics` (new) | Read-only: jobs (attempts, `lastError`, `attemptLog`), the assessment, every evidence row, review cases, satellite internals, the audit trail, admin actions and the farmer's `progress` |
+| `POST /admin/claims/:claimId/jobs/requeue` (new) | Body `{ reason (10-2000 characters), steps? }`. Re-queues the claim's dead jobs (and the engine); recorded as `AdminAction` `jobs_requeued` plus `ClaimAudit` `verification_jobs_requeued`; 409 unless the claim is `submitted`; a repeat that finds nothing to do returns `idempotent: true` and records nothing |
+
+### 12.6 Rate limits and headers
+
+Per user, in memory per container (`middlewares/rateLimit.js`, defaults `RATE_LIMIT_DEFAULTS` in `config/env.js:39`):
+
+| Bucket | Default | Routes |
+|---|---|---|
+| `claimLimiter` | **15 per hour** (was 5) | create, submit, withdraw, resubmit, verify, appeal, the per-claim verification `POST`s |
+| `evidenceLimiter` | **60 per hour** (was 20) | photo presign, complete, delete; land-document attach (`POST /claims/:id/ownership`) |
+| `claimReadLimiter` | 600 per hour | every claim `GET`, including `/progress`, `/verification` and signed evidence URLs |
+| `uploadLimiter` | 10 per minute | the generic `/upload` routes (chat images, land-document files) |
+
+A limited request gets **429** `"Too many requests, please try again later."` with standard `RateLimit-*` headers. CORS exposes `Retry-After`, `x-request-id` and `RateLimit-Reset` to the browser (`middlewares/cors.js:10`).

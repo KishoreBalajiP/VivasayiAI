@@ -5,7 +5,7 @@
 > - **Version:** 1.0
 > - **Status:** `[ACTIVE]`
 > - **Owner:** Backend / Data
-> - **Last Reviewed:** 2026-08-07
+> - **Last Reviewed:** 2026-10-17 (§9B, §9C added) · previously 2026-08-07
 > - **Related Documents:** [06_System_Architecture](06_System_Architecture.md) · [08_API_Documentation](08_API_Documentation.md) · [09_AI_Architecture](09_AI_Architecture.md) · [18_DECISIONS](../decisions/18_DECISIONS.md)
 
 > **Why this document exists:** Defines every MongoDB collection, its fields, constraints, indexes, and relationships, plus the ER diagram and the schema changes planned for production. It is the reference for any query, migration, or schema decision.
@@ -29,6 +29,7 @@
 | `claimevidence` | `ClaimEvidence.js` | Claim evidence images (owner-scoped, presigned S3) | `[ACTIVE]` Phase 2 (presign/complete/delete/url; pHash deferred to E9-S6) |
 | `claimassessment` | `ClaimAssessment.js` | Deterministic verification result + AI aggregate | `[ACTIVE]` Phase 4 = AI evidence assessment stage (E9-S4; decision fields reserved until E9-S5) |
 | `claimaudit` | `ClaimAudit.js` | Append-only claim state-transition audit trail | `[ACTIVE]` Phase 2 (farmer transitions; engine/admin with verification phases) |
+| `verificationjobs` | `VerificationJob.js` | Durable verification job queue (one row per step run) | `[ACTIVE]` ADR-021; additive ADR-022 fields (2026-10, uncommitted working tree). See §9B |
 | `verificationevidences` | `VerificationEvidence.js` | Source-neutral verification evidence (source + status), additive Phase 11 foundation | `[ACTIVE]` Phase 11 (E11-S11; OWNERSHIP/SATELLITE represented but non-operative); Phase 12 (E12) writes `source:"OWNERSHIP"` for land-ownership documents (still non-operative) |
 
 > **Note:** `queries` and `contexts` were designed for the capstone (context injection, query audit trail) but the chat flow never writes to them today. Under vision-v2, `contexts` becomes the seed for the **Context Engine's reference data** (districts/soil/season) and `queries` (or a successor) becomes the context-snapshot audit store (see §7). Phase 1 re-introduces their purpose via the redesigned Context Engine (F-20/F-46).
@@ -491,6 +492,57 @@ claim outcome.
   never consumes it this phase.
 
 ---
+
+## 9B. Collection: `verificationjobs` (durable verification queue, ADR-021 / ADR-022)
+
+**Status (2026-10-17).** The base schema is committed (`6dbe6b8`); the ADR-022 fields are in the uncommitted working tree. Every ADR-022 field is additive and absent (or null) on older rows. Behaviour: [JOB_ORCHESTRATION.md](../engineering/JOB_ORCHESTRATION.md) and [CLAIM_FLOW.md](CLAIM_FLOW.md).
+
+```js
+{
+  claimId:       ObjectId,   // ref LossClaim (indexed)
+  cognitoSub:    String,     // claim owner
+  step:          "ai_assessment" | "land_documents" | "official_land_record" | "satellite" | "weather" | "engine",
+  status:        "queued" | "running" | "succeeded" | "failed" | "dead" | "cancelled",  // `failed` is never written by the current queue; `cancelled` added by ADR-022
+  attempts:      Number,     // incremented when a runner claims the job
+  maxAttempts:   Number,     // schema default 3; the queue stores the per-step value at creation (ai_assessment and land_documents 7, others 5)
+  runAt:         Date,       // due time
+  leaseOwner:    String,     // runner holding the job
+  leaseUntil:    Date,       // lease expiry; renewed by a heartbeat
+  activeKey:     String,     // "<claimId>:<step>" while queued or running, unset otherwise
+  lastError:     { code, message, kind, retryable, at },   // kind/retryable/at: ADR-022 (utils/providerErrors.js)
+  resultSummary: Mixed,
+  // --- ADR-022 (additive) ---
+  planKey:       String,     // "r<round>", "r<round>:ev:<version>", "r<round>:doc:<evidenceId>"; none on recovery jobs
+  requestId:     String,     // request that created the job
+  correlationId: String,     // "clm_<claimId>_r<round>"
+  cancelledAt:   Date,  cancelReason: String,
+  rescheduleCount: Number,   // times the step asked to run later (does not use an attempt)
+  startedAt, lastAttemptAt, completedAt, deadAt: Date,
+  attemptLog:    [{ attempt, at, outcome, code, kind, durationMs }],  // last 10 attempts
+  recoveryRound: Number,  recoveredFrom: ObjectId,  requeuedAt: Date,   // dead-job recovery
+  rerunRequested: Boolean,   // late evidence arrived while the job ran
+  createdAt, updatedAt
+}
+```
+
+**Indexes** (`models/VerificationJob.js:103-114`):
+- `{ status: 1, runAt: 1 }`, for claiming due jobs.
+- `{ activeKey: 1 }` unique, partial on string keys: at most one active job per claim and step.
+- `{ claimId: 1, step: 1, planKey: 1 }` unique, partial on string `planKey` (ADR-022): each planned step runs once per plan. The 2026-10-16 dry run against production found no row with a `planKey`, so the index can be built safely ([MIGRATION_DRY_RUN_2026-10-16.md](../engineering/MIGRATION_DRY_RUN_2026-10-16.md)).
+
+## 9C. October 2026 additive fields on existing collections (ADR-022)
+
+Uncommitted working tree, not deployed. No field was removed or renamed, no claim state was added, and `scripts/migrations/2026-10-verification-automation.js` (dry run by default) backfills what can be backfilled.
+
+| Collection | Field | Meaning |
+|---|---|---|
+| `lossclaims` | `firstSubmittedAt: Date` (default null) | Time of the first submission. `submittedAt` is overwritten by every resubmission; policy `v1.1-safe-ai` measures the claim window from this field. Older claims fall back to the earliest `submitted` audit row (the migration backfills it) |
+| `lossclaims` | `submissionRound: Number` (default 0) | 1 after the first submit, +1 per resubmit; scopes each round's verification plan (`planKey r<round>`) |
+| `claimassessment` | `slotLeaseUntil: Date` (default null) | While the photo check is `processing`, the run holding the slot keeps this in the future; a crashed run lets it lapse and the next run resumes from the checkpointed images |
+| `claimassessment` | `error.kind`, `error.code`; `verification.error.kind`, `verification.error.code` | Provider error classification (`utils/providerErrors.js`) when a provider failure stopped the run |
+| `adminactions` | `action: "jobs_requeued"` (new enum value) | An admin re-queued a claim's dead verification jobs (`POST /admin/claims/:claimId/jobs/requeue`), with a `ClaimAudit` row `verification_jobs_requeued` |
+
+A held claim is not a field or a state: the claim stays `submitted`, its assessment has no decision, and `claimassessment.verification.status` is `"held"` (see [CLAIM_FLOW.md §2](CLAIM_FLOW.md#2-claim-states-frozen-and-the-held-overlay)).
 
 ## 10. Collection: `queries` (legacy / unused)
 

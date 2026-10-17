@@ -8,9 +8,17 @@
     "test:watch": "vitest",
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "worker": "node scripts/worker.js",
+    "e2e:backend": "node scripts/e2e/hermeticBackend.js",
+    "e2e:scenarios": "node scripts/e2e/checkScenarios.js",
     "seed:districts": "node scripts/seedDistricts.js",
     "ingest": "node rag/ingest.js",
-    "eval": "node scripts/eval/run.js"
+    "rag:build-local": "node rag/buildLocalIndex.js",
+    "eval": "node scripts/eval/run.js",
+    "eval:engine-golden": "node scripts/eval/captureEngineGolden.js --check",
+    "manuscript:numbers": "node scripts/eval/checkManuscriptNumbers.js",
+    "acceptance": "node scripts/acceptance/runAll.js",
+    "acceptance:report": "node scripts/acceptance/report.js"
   },
   "keywords": [],
   "author": "",

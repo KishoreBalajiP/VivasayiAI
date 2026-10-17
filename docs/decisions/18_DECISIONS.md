@@ -5,7 +5,7 @@
 > - **Version:** 1.0
 > - **Status:** `[ACTIVE]`
 > - **Owner:** Engineering (all deciders)
-> - **Last Reviewed:** 2026-08-07
+> - **Last Reviewed:** 2026-10-17 (status notes on ADR-012, -013, -019, -020, -021, -022; ADR-023 added)
 > - **Related Documents:** [AI_Product_Principles](../product/AI_Product_Principles.md) · [06_System_Architecture](../architecture/06_System_Architecture.md) · [09_AI_Architecture](../architecture/09_AI_Architecture.md) · [12_Technical_Guidelines](../engineering/12_Technical_Guidelines.md) · [13_Testing_Strategy](../engineering/13_Testing_Strategy.md)
 
 > **Why this document exists:** Every consequential technical or product decision is recorded with its context, options considered, chosen solution, rationale, and tradeoffs. This gives new engineers the "why" behind the code and lets future decisions build on — or consciously reverse — earlier ones.
@@ -89,7 +89,7 @@
 
 **Problem:** Organize backend and frontend code.
 **Options:** Monorepo (chosen initially as two folders) · separate repos (chosen).
-**Chosen:** Two separate Git repos: `tn-farming-assistant` (backend) and `tn-farming-assistant-frontend`. Backend is designated the **Product Repository** and now owns all documentation (`docs/`).
+**Chosen:** Two separate Git repos: `tn-farming-assistant` (backend) and `tn-farming-assistant-frontend` (*note 2026-10-17:* the GitHub repositories are named `VivasayiAI` and `VivasayiAI-Frontend`). Backend is designated the **Product Repository** and now owns all documentation (`docs/`).
 **Reason:** Independent deploy cadence (backend deploys to Lambda; frontend static), clean CI boundaries, docs co-located with the code that defines the contracts.
 **Tradeoffs:** Cross-repo changes (e.g., API change) need coordinated PRs; the docs hub must be kept in sync with frontend reality (status labels help).
 
@@ -113,6 +113,8 @@
 ## ADR-011 — Manual knowledge ingestion (script), scheduled versioned ingestion planned
 - **Status:** ACCEPTED (will be superseded) · **Date:** 2025-10-29
 
+> **Status note (2026-10-17).** Superseded in practice: the backend has a vitest suite (`npm test`; 81 test files in `tests/`) and CI (`.github/workflows/deploy-lambda.yml`) runs `npx vitest run` before the deploy job, which runs only on pushes to `main`. The 2026-10 acceptance run counted 1,133 backend, 726 frontend and 90 Playwright tests, all passing (`test-results/acceptance/REPORT-20261016T205016Z-6dbe6b8.md`); see [13_Testing_Strategy](../engineering/13_Testing_Strategy.md). The frontend has no CI.
+
 **Problem:** Move S3 CSV datasets into ChromaDB.
 **Chosen (current):** One-off `rag/ingest.js` run by hand; CSV → 1000/200-char chunks → Cohere → ChromaDB; chunk IDs include `Date.now()` (non-deterministic).
 **Reason:** Fastest path to a working demo; no scheduler needed.
@@ -128,6 +130,8 @@
 
 ## ADR-013 — (PROPOSED) Backend-issued session tokens with verified identity
 - **Status:** PROPOSED · **Date:** 2026-08-07 · **Deciders:** Founding team (Phase 1)
+
+> **Status note (2026-10-17).** Option 2 is implemented: `POST /auth/google` (`routes/auth.js:9`) verifies the Cognito token once and returns backend-issued HS256 access and refresh tokens (`services/auth.service.js:90-92`, `utils/token.js`); `requireAuth` (`middlewares/auth.js`, mounted in `app.js`) verifies the access token on every request. A refresh token is issued, but `routes/auth.js` has no refresh route.
 
 **Problem:** Replace email-claim authorization and unverified JWT decoding (SEC-01/02).
 **Options:**
@@ -227,6 +231,8 @@
 ## ADR-019 — AI-Driven Agricultural Loss / Affected-Area Claim Verification
 - **Status:** ACCEPTED (Domain & MVP scope; implementation Phase 1) · **Date:** 2026-09-20 · **Deciders:** Founding team + Product Owner
 
+> **Status note (2026-10-17).** The Phase 5 and Phase 6 notes below say `partially_verified` and `duplicate_area` are never emitted. That is no longer true: since E9-S9 the engine's overlap check emits `duplicate_area` for an overlap with the farmer's own verified claim and `partially_verified` for a partial overlap (`services/claimVerificationEngine.service.js:23,43,416-430`). The ten states are still frozen; ADR-022 added none. The default policy is now `v1.1-safe-ai` (ADR-022).
+
 **Problem:** The product must verify farmer-reported agricultural loss / affected-area claims (e.g., crop loss from weather/insects) with trust, determinism, and no human bottleneck, while keeping AI exactly inside — not beyond — its safe boundary. Ten decision points (P1–P10 below) were mandated and are frozen for Phase 1 scope.
 
 ### Approved decisions (P1–P10)
@@ -324,6 +330,8 @@ Phase 6 exposes the frozen E9-S5 engine through **one thin public endpoint** `PO
 
 **Status:** implemented and tested; **proposed by engineering, not yet approved by the product owner.** The default policy `v1-legacy` reproduces every historical decision exactly, so nothing changes until `CLAIM_VERIFICATION_POLICY=v2-components` is set.
 
+> **Status note (2026-10-17).** The default is no longer `v1-legacy`: since 16 October 2026 it is `v1.1-safe-ai` (`config/env.js:33`, ADR-022). `v1-legacy` and `v2-components` are unchanged (same hashes) and selectable with `CLAIM_VERIFICATION_POLICY`; `v2-components` still needs owner sign-off.
+
 **Context.** The deterministic engine (ADR-019) decided from the claim, the AI photograph assessment and the claimant's own spatial facts. Ownership documents, satellite imagery and weather were stored but could never affect a decision, and a claim could reach `verified` while an ownership review was still pending. Providers that failed (land records, satellite) and missing evidence were also indistinguishable from negative findings.
 
 **Decision.**
@@ -348,6 +356,8 @@ Phase 6 exposes the frozen E9-S5 engine through **one thin public endpoint** `PO
 
 **Status:** implemented and tested; the scheduled worker is optional and needs an EventBridge rule that is not part of this repository.
 
+> **Status note (2026-10-17).** ADR-022 adds `infra/verification-worker.yaml` (a scheduled Lambda with the EventBridge rule DISABLED), `npm run worker` and the recovery sweeps. The worker is **not deployed**; [WORKER_RUNBOOK.md](../engineering/WORKER_RUNBOOK.md) is the deployment procedure.
+
 **Context.** Automated verification ran in a fire-and-forget promise after the HTTP response. Lambda freezes the container once the response is sent, so the work could silently never finish, and its "already running" guard was per-process memory. Running everything inside the request does not fit either: one AI assessment can take 25 s against API Gateway's 29 s limit.
 
 **Decision.** Work is stored as durable job rows in MongoDB (`models/VerificationJob.js`). Submit only enqueues. Steps run when someone drains the queue: the verify call (bounded by `CLAIM_VERIFICATION_REQUEST_BUDGET_MS`, default 22 s), a status read (`CLAIM_VERIFICATION_DRAIN_ON_READ`, one step per read), or the scheduled `worker` handler.
@@ -360,6 +370,65 @@ Phase 6 exposes the frozen E9-S5 engine through **one thin public endpoint** `PO
 - A resolved ownership review or review case queues a fresh engine run.
 
 **Trade-offs.** A status `GET` has a side effect (it advances one step). It is owner-checked, rate-limited by its own bucket, and can be switched off. SQS or EventBridge can feed the same rows later without changing the data model.
+
+## ADR-022 — Safe-AI policy, durable enqueue, scheduled worker and the farmer progress contract
+
+**Status:** `[PROPOSED]` · 2026-10-16 · implemented and tested in the working tree, **not committed and not deployed**. The owner decisions D1, D2, D5, D7, D8 and D9 of the 2026-10 completion plan are binding; the points marked *owner confirmation* below are engineering's reading of them. Amends ADR-019, ADR-020 and ADR-021.
+
+**Context.** Nothing processed a submitted claim unless a browser kept calling `POST /verify`: no worker was deployed and the enqueue at submit was fire-and-forget. A technical failure could become an adverse outcome (an AI-only "no damage" reading rejected under v1-legacy; malformed model output asked for more evidence). Satellite could delay a decision by three weeks. The farmer could not see real progress, and `GET /verification` leaked review cases and error codes.
+
+**Decision.**
+- **Policy `v1.1-safe-ai`** (D2), a new versioned definition beside the frozen v1-legacy and v2 ones (whose hashes, and so the replay of every stored decision, are unchanged):
+  - an AI-only "no damage" reading holds the claim with one review case instead of rejecting it; a rejection for any other rule (window, event type, outside the parcel) stays a rejection;
+  - a provider failure or unreadable model output makes the photo check `unavailable`: the queue retries it, and the engine holds instead of asking for more evidence;
+  - the claim window is measured at the claim's **first** submission (`firstSubmittedAt`), because `submittedAt` is overwritten on resubmission and waiting must never turn into a late-claim rejection (*owner confirmation*: D1 says "submission");
+  - the default switch to v1.1 is a separate step (plan A12). *Done on 2026-10-16:* `DEFAULT_CLAIM_VERIFICATION_POLICY = "v1.1-safe-ai"` (`config/env.js:33`).
+- **Satellite never blocks or changes a decision under any policy** (D1). This is queue timing (`NON_BLOCKING_STEPS`), not a policy key, so no policy hash changes. Dead satellite and weather jobs open no review case.
+- **Durable, idempotent enqueue** (D7): submit, resubmit and withdraw use compare-and-set on the expected state; the round's plan (`planKey r<submissionRound>`) is written inside the request; a failure is a 503 "saved, checks not scheduled" that a retry recovers. Late photos and documents get their own plan keys. Jobs carry `requestId` and `correlationId`; leases are owner-checked and renewed by a heartbeat; retries back off with jitter; dead transient failures are re-queued after 6 h (at most two rounds).
+- **Worker** (D7): `drainDueJobs` runs due jobs, then four bounded sweeps: stuck `processing` claims, lost plans (a submitted claim with no engine job since its latest submission, after a 5-minute grace; keyed on that rather than the plan key so a legacy claim is never planned twice), dead-job recovery and stale holds. `runWorkerLoop` stops gracefully between jobs. `npm run worker` (`scripts/worker.js`: `--once`, `--requeue-dead [--dry-run]`) refuses any database that is not local unless `WORKER_ALLOW_REMOTE_DB=true`. The Lambda `worker` handler stops 10 s before its timeout and tags job logs with its `awsRequestId`. `infra/verification-worker.yaml` defines the scheduled Lambda with the EventBridge rule **DISABLED**; deployment follows `docs/engineering/WORKER_RUNBOOK.md`. CI is unchanged.
+- **Farmer progress contract `progress-v1`**: `GET /claims/:id/progress` (and `data.progress` in `GET /verification`) built from persisted state only. Six stages, six overall statuses, a truthful satellite status that is never `passed` unless an analysis supports the loss, and real `nextCheckAt` values only. The vocabulary is one generated file, `docs/architecture/progress-contract-v1.json`; see `docs/architecture/PROGRESS_CONTRACT_v1.md`. The farmer's `persisted[]` rows drop review cases and internal fields.
+- **Reviewer side** (D8, D9): an admin may override a **held** claim (compare-and-set on `submitted`, queued decision jobs cancelled); held claims appear in the queue (`?held=true`); `GET /admin/claims/:id/verification-diagnostics` (read-only) and `POST /admin/claims/:id/jobs/requeue` (recorded as `AdminAction` `jobs_requeued` + `ClaimAudit`).
+- **`POST /claims/:id/verify`** checks ownership before running anything and decides only when no blocking step is queued or running ("in progress" otherwise). It stays for reviewers and older clients; the farmer UI stops calling it.
+- **Rate limits** (D5): 15 claim writes and 60 evidence calls per user per hour by default (`RATE_LIMIT_DEFAULTS`); reads unchanged.
+
+**Consequences.**
+- Until the scheduled worker runs, production moves the queue only through polls (one step per poll; the default 20 s budget, `CLAIM_VERIFICATION_READ_DRAIN_BUDGET_MS`, always fits the 15 s the photo check needs, so a poll can take up to about 20 s; a step that does not fit is skipped and does not use up the poll) and `POST /verify`. The worker must ship with the frontend release that removes the verify button, and the runbook preflight must confirm `CLAIM_AUTOMATED_VERIFICATION_ENABLED` and `CLAIM_VERIFICATION_DRAIN_ON_READ` are true.
+- Additive schema only (`LossClaim.firstSubmittedAt` / `submissionRound`, job lifecycle fields, `ClaimAssessment.slotLeaseUntil`, the `jobs_requeued` admin action) and no new claim states. `scripts/migrations/2026-10-verification-automation.js` backfills and reports; it is dry-run by default.
+- More provider calls per difficult claim (up to 7 photo-check attempts plus recovery rounds) in exchange for never deciding against a farmer on a technical failure. A billed Gemini key (D6) is a prerequisite for production.
+- A job that recovers leaves its earlier review case open (harmless under v1.1; under v2 it keeps the claim held until a reviewer closes it).
+
+## ADR-023 — Table-aware RAG chunker and a local evaluation index (production untouched)
+
+**Status:** `[PROPOSED]` · 2026-10-16 · implemented and unit-tested in the working tree, **not committed and not deployed**. Plan A10, owner decision D3. Production chat is unchanged.
+
+**Context.** The 16 October retrieval study ([LIVE_RESULTS_2026-10-16.md](../research/evaluation/live/LIVE_RESULTS_2026-10-16.md)) found that the production collection `farming-documents` is almost entirely statistics tables, and that the old ingestion produced header-only chunks and chunks whose preamble named districts the rows did not contain. Re-ingesting production to try a fix would change live chat before anyone could measure the effect.
+
+**Decision.**
+- **Chunker `table-v1`** (`rag/ingestHelpers.js` `tableToChunks`, `CHUNKERS`): every chunk carries `File:`, `Table:` and `Columns:` lines and at least one data row; a header-only file gives no chunk; a district appears in a chunk only through one of its rows; long-format district groups stay together; ids are deterministic; metadata is scalar (district, crop, rows, chunker, file hash). The old chunker is kept as `legacy-e9b779d` for evaluation only.
+- **Local index, never Chroma.** `npm run rag:build-local` (`rag/buildLocalIndex.js`) reads a fixed allow-list of 60 knowledge keys with `GetObject` / `HeadObject` only (`createReadOnlyS3` refuses any other command, bucket or key, and anything under `uploads/` or `claims/`), embeds with Cohere `search_document`, and writes `.rag-local/indexes/<tag>/` (gitignored; manifest, chunks, embeddings, `SHA256SUMS`; never overwritten). `rag/localIndex.js` searches it by exact squared L2, matching Chroma's default space.
+- **Production writes are opt-in and guarded.** `npm run ingest` defaults to `--target=local`. `--target=chroma-cloud` needs `--collection=<name>` and `--confirm-production-write` and refuses to mix chunkers in one collection (`rag/ingest.js:16-24,63-70`). The production snapshot script reads only, behind `--allow-prod-read`.
+- **Evaluation rule:** a local evaluator must first reproduce the frozen 16 October baseline (parity) before any after-numbers may be cited.
+
+**Consequences.**
+- Production chat still uses the original collection; re-ingestion with `table-v1` is an owner decision that has not been taken.
+- The chunker is covered by unit tests (RC-1..RC-16, `tests/rag.chunker.unit.test.js`); audit B found no Chroma or S3 write call in the RAG and evaluation scripts other than the guarded ingest path.
+- **The effect on retrieval is unmeasured.** The owner stopped the live evaluation on 2026-10-17 after both parity checks failed (a diagnostic showed the local search reproduces Chroma's ranking, so the frozen baseline itself could not be reproduced). No before/after result exists and the manuscript cites none ([STATUS_2026-10-17.md](../research/evaluation/live/rag/STATUS_2026-10-17.md)).
+
+## ADR-024 — Hermetic e2e harness and dev-only seams (never reachable in production)
+
+**Status:** `[PROPOSED]` · 2026-10-16 · implemented and tested in the working tree, **not committed and not deployed**. Plan A8, owner decision D4. (ADR-023, the local RAG index, is above.)
+
+**Context.** The Playwright suite (D4) must drive the real product end to end — browser upload, queue, worker, decision, tracker — with no AWS, Gemini, Copernicus, Open-Meteo, Cohere or Chroma traffic, and must be able to inject provider faults (429, 503, timeout, malformed output) that the existing `IMAGE_AI_MODE=mock` short-circuits before the model call.
+
+**Decision.**
+- **Seams** (dev/test only): `IMAGE_STORAGE_MOCK_DIR` (file-backed mock bucket, so a separate worker process sees uploads); `DEV_STORAGE_RECEIVER` + `DEV_STORAGE_PUBLIC_BASE_URL` (`routes/devStorage.js`, an HMAC-SHA256-signed PUT/GET stand-in for S3 presigned URLs: method, key, content type and expiry are signed with `SESSION_JWT_SECRET`; only the presign key layouts; body capped at the upload limit; GET sends `Cross-Origin-Resource-Policy: cross-origin`); `WEATHER_MODE` / `WEATHER_MOCK_OUTCOME`; `SATELLITE_MODE` / `SATELLITE_MOCK_OUTCOME` (the REAL adapter runs against an in-process stand-in provider and is recorded through the normal `recordEvidenceRun`, labelled `cdse-sentinel-mock`, `metadata.simulated: true`). Outcome selectors and modes are read on every call.
+- **Never in production.** `isDevStorageReceiverEnabled()` requires mock storage, `NODE_ENV` not production, no `AWS_LAMBDA_FUNCTION_NAME` and `DEV_STORAGE_RECEIVER=true`; `app.js` imports the receiver dynamically only then (otherwise `/__dev/storage` is a 404). `assertProductionSafety()` (`index.js` after `validateEnv`, `scripts/worker.js`) refuses to boot in production or on Lambda with any mock mode, the receiver or `IMAGE_STORAGE_MOCK_DIR` set.
+- **Harness** `scripts/e2e/hermeticBackend.js` (`npm run e2e:backend`): loads the committed `scripts/e2e/e2e.env` before any import (and never `.env`), refuses production, Lambda, any live credential, a non-placeholder AI key or a non-loopback database; installs a loopback-only network guard that blocks and records every other connection and DNS query; runs mongodb-memory-server (or a loopback `--mongo=local`); keeps `IMAGE_AI_MODE=live` and replaces `model.generate` on the shared chat model with a fake Gemini that recognises the real prompt constants; runs the real worker inline or as a separate process (`--worker=process`, `node --import scripts/e2e/fakeGeminiPreload.js scripts/worker.js`). A separate token-protected control server (never mounted on the app) mints sessions, switches scenarios, pauses/kills the worker, inspects claims read-only, seeds claims through the API and serves map tiles and a geocoder stub. `scripts/e2e/scenarios.json` (S00–S16) holds the expected outcomes; the ones the pure engine decides are pinned by `tests/decisionConsistency.test.js`.
+
+**Consequences.**
+- No Cognito bypass and no `__e2e` code in the frontend source: sessions are injected by the Playwright fixtures.
+- A production function that today has any mock mode set would now refuse to boot; the worker runbook preflight lists the keys to check.
+- The harness is excluded from the Docker image (`.dockerignore`), and CI is unchanged.
 
 
 - New decisions: create a new ADR entry, update this file, and link it from affected docs.

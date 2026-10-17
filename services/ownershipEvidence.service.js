@@ -118,6 +118,15 @@ const buildSummary = (rows) => {
   };
 };
 
+// ADR-022: a document attached while the claim is `submitted` is examined automatically (then the
+// official record lookup and the engine). Scheduling never fails the attach: the pipeline logs a
+// failure, and a repeated attach schedules again (idempotent per document).
+const scheduleLateDocument = async ({ claim, cognitoSub, evidenceId, requestId, trigger }) => {
+  if (!env.claimAutomatedVerificationEnabled || claim.state !== "submitted") return;
+  const { scheduleDocumentPlan } = await import("./claimVerificationPipeline.service.js");
+  await scheduleDocumentPlan({ claimId: claim._id, cognitoSub, evidenceId, requestId, trigger });
+};
+
 // Attach a previously uploaded (stored) private document to a claim the caller owns.
 export const submitOwnershipEvidence = async ({
   claimId,
@@ -155,7 +164,11 @@ export const submitOwnershipEvidence = async ({
 
   const idempotencyKey = deriveOwnershipIdempotencyKey(reference);
   const existing = await VerificationEvidence.findOne({ claimId: claim._id, idempotencyKey });
-  if (existing) return { evidence: serializeOwnershipRow(existing), idempotent: true };
+  if (existing) {
+    // A retried attach also recovers a document check that was not scheduled.
+    await scheduleLateDocument({ claim, cognitoSub, evidenceId: existing._id, requestId, trigger: "document_attached_retry" });
+    return { evidence: serializeOwnershipRow(existing), idempotent: true };
+  }
 
   const metadata = {
     parcelId: claim.parcelId,
@@ -215,6 +228,7 @@ export const submitOwnershipEvidence = async ({
     requestId,
   });
 
+  await scheduleLateDocument({ claim, cognitoSub, evidenceId: created._id, requestId, trigger: "document_attached" });
   return { evidence: serializeOwnershipRow(created), idempotent: false };
 };
 

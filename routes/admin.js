@@ -10,6 +10,7 @@ import {
   ownershipReviewBody,
   reviewCaseParams,
   reviewCaseDecisionBody,
+  requeueJobsBody,
 } from "../utils/validation.schemas.js";
 import {
   listQueue,
@@ -17,6 +18,8 @@ import {
   overrideClaim,
   dashboard,
   investigation,
+  verificationDiagnostics,
+  requeueJobs,
 } from "../controllers/admin.controller.js";
 import {
   adminListOwnershipEvidence,
@@ -63,6 +66,12 @@ router.post(
   validate(reviewCaseDecisionBody),
   adminDecideReviewCase
 );
+
+// ADR-022 (D9) — automated verification, reviewer side: read-only diagnostics (jobs, attempts,
+// error codes, review cases, satellite internals, audit trail and the farmer's progress side by
+// side) and the single recovery action, re-queueing dead jobs (immutably recorded).
+router.get("/claims/:claimId/verification-diagnostics", validate(claimParams, "params"), verificationDiagnostics);
+router.post("/claims/:claimId/jobs/requeue", validate(claimParams, "params"), validate(requeueJobsBody), requeueJobs);
 
 // Operations dashboard (pure server-side metrics; no third-party analytics).
 router.get("/dashboard", validate(adminDashboardQuery, "query"), dashboard);

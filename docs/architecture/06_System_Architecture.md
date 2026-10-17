@@ -5,14 +5,68 @@
 > - **Version:** 1.0
 > - **Status:** `[ACTIVE]`
 > - **Owner:** Engineering / Solution Architect
-> - **Last Reviewed:** 2026-08-07
-> - **Related Documents:** [07_Database_Design](07_Database_Design.md) · [08_API_Documentation](08_API_Documentation.md) · [09_AI_Architecture](09_AI_Architecture.md) · [12_Technical_Guidelines](../engineering/12_Technical_Guidelines.md) · [14_Deployment](../engineering/14_Deployment.md) · [15_Security](../engineering/15_Security.md) · [18_DECISIONS](../decisions/18_DECISIONS.md)
+> - **Last Reviewed:** 2026-10-17 (§0 added; §1-§8 describe the August 2026 baseline and are marked where superseded)
+> - **Related Documents:** [CLAIM_FLOW](CLAIM_FLOW.md) · [PROGRESS_CONTRACT_v1](PROGRESS_CONTRACT_v1.md) · [07_Database_Design](07_Database_Design.md) · [08_API_Documentation](08_API_Documentation.md) · [09_AI_Architecture](09_AI_Architecture.md) · [12_Technical_Guidelines](../engineering/12_Technical_Guidelines.md) · [14_Deployment](../engineering/14_Deployment.md) · [15_Security](../engineering/15_Security.md) · [18_DECISIONS](../decisions/18_DECISIONS.md)
 
 > **Why this document exists:** Gives every engineer and architect the same mental model of how the system is assembled today, where each component runs, and how data flows — plus the target architecture so future decisions are consistent. Diagrams use Mermaid.
 
 ---
 
+## 0. Current state (2026-10-17)
+
+Sections 1 to 8 below were written in August 2026, before authentication was fixed and before the claim system existed. Where they disagree with this section, this section is correct. Status: the October hardening work is on `origin/develop` (`b760596`, `6dbe6b8`), not on `main`, and not deployed; the 2026-10 completion work (ADR-022 to ADR-024) is uncommitted in the working trees. See [ACCEPTANCE_MATRIX_2026-10-17.md](../engineering/ACCEPTANCE_MATRIX_2026-10-17.md).
+
+```mermaid
+flowchart LR
+    subgraph Browser
+        FE[React SPA<br/>VivasayiAI-Frontend]
+    end
+    subgraph AWS
+        API[API Lambda<br/>index.handler]
+        W[Worker Lambda<br/>index.worker<br/>NOT DEPLOYED]
+        EB[EventBridge rule<br/>DISABLED in template]
+        S3[(S3<br/>uploads, claim evidence,<br/>knowledge CSVs)]
+        Cognito[Cognito]
+    end
+    subgraph External
+        Mongo[(MongoDB Atlas<br/>claims, assessments,<br/>evidence, verificationjobs)]
+        Chroma[(Chroma Cloud<br/>farming-documents)]
+        Gemini[Gemini]
+        Cohere[Cohere]
+        CDSE[Copernicus CDSE]
+        OM[Open-Meteo]
+    end
+    FE -- "/auth, /chat, /profile, /claims, /admin" --> API
+    FE -- "presigned PUT" --> S3
+    FE -- "Hosted UI" --> Cognito
+    API --> Mongo
+    API --> Chroma
+    API --> Cohere
+    API --> Gemini
+    API --> S3
+    API --> OM
+    EB -. "schedule" .-> W
+    W --> Mongo
+    W --> Gemini
+    W --> CDSE
+    W --> OM
+    W --> S3
+```
+
+| Area | Today | Where |
+|---|---|---|
+| Authentication | Cognito token verified once at `POST /auth/google`; the backend issues its own HS256 session tokens; `requireAuth` verifies them on every request; resources are scoped by Cognito `sub` (ADR-013, ADR-018) | `routes/auth.js`, `middlewares/auth.js`, `utils/token.js` |
+| Weather | Proxied by the backend (`GET /weather`); the frontend no longer calls Open-Meteo | `routes/weather.js` |
+| Claims | Wizard, evidence uploads, submit with a durable plan of verification jobs, deterministic engine with a versioned policy (default `v1.1-safe-ai`), farmer progress contract | [CLAIM_FLOW.md](CLAIM_FLOW.md), [PROGRESS_CONTRACT_v1.md](PROGRESS_CONTRACT_v1.md) |
+| Verification runners | Scheduled worker (`index.worker`, `infra/verification-worker.yaml`; **not deployed**), local `npm run worker`, one job per owner poll, `POST /claims/:id/verify` | [JOB_ORCHESTRATION.md](../engineering/JOB_ORCHESTRATION.md), [WORKER_RUNBOOK.md](../engineering/WORKER_RUNBOOK.md) |
+| Satellite | Sentinel-2 discovery (anonymous) and optional NDVI processing (off by default); supporting only, never blocks a decision | [SATELLITE_LIMITATIONS.md](../engineering/SATELLITE_LIMITATIONS.md) |
+| Knowledge retrieval | Production chat reads the original `farming-documents` collection; the new table chunker builds local evaluation indexes only (ADR-023) | `rag/` |
+| Dev and test seams | Mock storage, dev storage receiver, mock weather and satellite, hermetic e2e harness; refused at boot in production or on Lambda (ADR-024) | `config/env.js` `assertProductionSafety` |
+| Deployment | CI runs the tests, then (on `main` only) builds the image and updates the API Lambda with an immutable commit-SHA tag. The worker and the frontend are not deployed | [14_Deployment.md](../engineering/14_Deployment.md) |
+
 ## 1. Overall architecture (today)
+
+> **Superseded (2026-10-17):** this section describes the August 2026 baseline; see §0.
 
 The product is a **serverless monolith**: one Express API (wrapped with `serverless-http`) runs on AWS Lambda; a React SPA calls it from the browser; an external SaaS vector store (ChromaDB cloud) holds the knowledge base; MongoDB Atlas holds users, chat sessions, and farm profiles. Notably, **weather is fetched directly by the frontend** (Open-Meteo) and also via backend proxy; there is **no Context Engine, no Model Adapter, no Farm Memory, and no Agricultural Loss Claim system yet** (those are the vision-v2 target; see [AI_Product_Principles.md](../product/AI_Product_Principles.md)).
 
@@ -141,7 +195,9 @@ flowchart LR
     API -->|returns user + id_token| FE
 ```
 
-**Security reality (critical):** the backend calls `jwt.decode(id_token)` **without verifying the signature**; subsequent APIs authorize by a `userEmail` field supplied by the client. This must be replaced (Phase 1) — see [15_Security.md](../engineering/15_Security.md).
+> **Superseded (2026-10-17):** fixed in Phase 1 (ADR-013, ADR-018). The backend now verifies the Cognito token and issues its own session tokens; see §0 and [15_Security.md](../engineering/15_Security.md).
+
+**Security reality (critical, August 2026):** the backend calls `jwt.decode(id_token)` **without verifying the signature**; subsequent APIs authorize by a `userEmail` field supplied by the client. This must be replaced (Phase 1) — see [15_Security.md](../engineering/15_Security.md).
 
 ## 7. Cloud & external APIs
 
@@ -160,7 +216,7 @@ flowchart LR
 
 ## 8. Deployment
 
-- **Backend:** GitHub Actions on push to `main` → Docker build → ECR (`vivasayiai-lambda`) → `lambda update-function-code` → Lambda `tnFarmingAssistant`.
+- **Backend:** GitHub Actions: a `test` job (`npx vitest run`) on pushes to `main` and pull requests to `main` and `develop`; on a push to `main` only, after the tests pass, Docker build → ECR (`vivasayiai-lambda`) → `lambda update-function-code` → Lambda `tnFarmingAssistant`.
 - **Frontend:** not yet deployed (dev server only).
 - **Local:** backend `npm run dev` (nodemon, port 8000); frontend `npm run dev` (Vite, port 5173).
 - **Dockerfile:** `public.ecr.aws/lambda/nodejs:24`, `npm install --production`, `CMD ["index.handler"]`.

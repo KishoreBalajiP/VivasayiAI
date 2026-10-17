@@ -4,7 +4,7 @@ import ApiError from "../utils/ApiError.js";
 import WeatherCache from "../models/WeatherCache.js";
 import District from "../models/District.js";
 import weatherConfig from "../config/weather.js";
-import { env } from "../config/env.js";
+import { env, weatherMode } from "../config/env.js";
 
 // Open-Meteo weather-code reference (for translating WMO codes to short labels in the
 // cached payload — no magic numbers; single source of truth). Kept minimal and stable.
@@ -135,10 +135,51 @@ const buildResponse = (record) => {
   };
 };
 
+// ADR-024 (plan A8) dev/e2e seam for the app shell's /weather: WEATHER_MODE=mock answers a fixed
+// forecast for any district (WEATHER_MOCK_OUTCOME=unavailable|timeout gives the provider-failure
+// shape instead) without reading the district reference data, the cache or Open-Meteo; WEATHER_MODE=off
+// reports weather as unavailable. Never in production (assertProductionSafety).
+const unknownWeather = (key, note) => ({
+  district: key,
+  current: null,
+  forecast: [],
+  source: "open-meteo",
+  cached: false,
+  ageSeconds: 0,
+  status: "unknown",
+  note,
+});
+const mockWeather = (key) => {
+  const outcome = String(process.env.WEATHER_MOCK_OUTCOME || "available").trim().toLowerCase();
+  if (outcome === "unavailable" || outcome === "timeout") {
+    return { ...unknownWeather(key, "Weather data is temporarily unavailable (provider failure)."), source: "mock" };
+  }
+  const today = new Date();
+  const day = (offset) => new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + offset)).toISOString().slice(0, 10);
+  const days = [
+    { temperatureMax: 32.4, temperatureMin: 24.1, weatherCode: 61, precipitation: 6.2 },
+    { temperatureMax: 31.8, temperatureMin: 23.9, weatherCode: 3, precipitation: 0 },
+    { temperatureMax: 33.0, temperatureMin: 24.6, weatherCode: 1, precipitation: 0 },
+  ];
+  return {
+    district: key,
+    current: { temperature: 29.5, windspeed: 8.2, weatherCode: 61, isDay: 1, summary: summarize(61) },
+    forecast: days.map((entry, index) => ({ date: day(index), ...entry, summary: summarize(entry.weatherCode) })),
+    source: "mock",
+    cached: false,
+    ageSeconds: 0,
+    freshness: "fresh",
+  };
+};
+
 // Cache-first weather resolution (D-16/D-17/D-18). Never throws on provider failure.
 export const getWeather = async (district) => {
   const startedAt = Date.now();
   const key = (district || "").toLowerCase().trim();
+
+  const mode = weatherMode();
+  if (mode === "mock") return mockWeather(key);
+  if (mode === "off") return unknownWeather(key, "Weather is switched off in this environment.");
 
   // 1) Cache hit (fresh preferred, stale honored per D-18 hybrid).
   try {

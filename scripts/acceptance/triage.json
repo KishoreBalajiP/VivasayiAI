@@ -1,0 +1,17 @@
+{
+  "schema": "vivasayi-acceptance-triage/v1",
+  "$comment": "TEMPLATE. Copy to test-results/acceptance/triage.json (gitignored) and add one entry per failure. report.js merges entries by id + signature: 'id' is the failure id from REPORT-<runId>.md (e.g. 'VJ-14', 'E2E-07@mobile-chromium', 'SUITE::frontend-lint') and 'signature' is the 40-hex sha1 shown next to it. A failure with no matching entry keeps rootCause/impact/fix = 'UNTRIAGED' and is flagged. report.js also writes test-results/acceptance/triage.todo-<runId>.json with a stub for every untriaged failure. category: code_defect | test_defect | external_blocker (quota, credentials, owner action) | environment. severity (S1-S4) and releaseBlocking are optional overrides of the matrix.json defaults.",
+  "entries": [],
+  "exampleEntry": {
+    "id": "VJ-14",
+    "signature": "0000000000000000000000000000000000000000",
+    "category": "code_defect",
+    "rootCause": "finishJob does not filter on leaseOwner, so a stale worker overwrites the new owner's result.",
+    "impact": "A crashed worker can record a second decision for the same claim (S1).",
+    "fix": "Add leaseOwner and status:'running' to the finishJob filter; return lease_lost when nothing matched.",
+    "severity": "S1",
+    "releaseBlocking": true,
+    "triagedBy": "name",
+    "triagedAt": "YYYY-MM-DD"
+  }
+}

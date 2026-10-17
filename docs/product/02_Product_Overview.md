@@ -29,7 +29,7 @@ It is built as a **retrieval-augmented generation (RAG) system**: a large langua
 | Artifact | Description | Status |
 |---|---|---|
 | Backend API (`tn-farming-assistant`) | Express API on AWS Lambda — auth, chat with RAG, chat-session management, knowledge ingestion | [EXISTING] |
-| Web frontend (`tn-farming-assistant-frontend`) | React SPA — login, weather card, bilingual chat UI, voice input, chat history | [EXISTING] |
+| Web frontend (`VivasayiAI-Frontend` repository) | React SPA — login, weather card, bilingual chat UI, voice input, chat history | [EXISTING] |
 
 ## 2. Why was it built?
 

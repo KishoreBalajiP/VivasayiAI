@@ -103,6 +103,9 @@ const verificationSchema = new mongoose.Schema(
     error: {
       stage: { type: String, default: null },
       message: { type: String, default: null },
+      // Provider error kind/code (utils/providerErrors.js) when a provider failure stopped the run.
+      kind: { type: String, default: undefined },
+      code: { type: String, default: undefined },
     },
   },
   { _id: false }
@@ -134,11 +137,20 @@ const claimAssessmentSchema = new mongoose.Schema(
     startedAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },
     failedAt: { type: Date, default: null },
+    // ADR-022 (additive). While `status` is "processing", the run that owns the slot keeps this in
+    // the future (renewed after every image). A run that crashed lets it lapse, and the next caller
+    // takes the slot over and resumes from the images already checkpointed instead of waiting for
+    // ever. Rows written before this field existed fall back to `startedAt` + a stale threshold.
+    slotLeaseUntil: { type: Date, default: null },
     // Sanitized processing error (stage + short message). Never contains provider internals,
-    // prompts, URLs, keys, or image content.
+    // prompts, URLs, keys, or image content. `kind`/`code` (additive) classify a provider failure
+    // (utils/providerErrors.js: quota, overload, timeout, network, auth_config, malformed_response,
+    // storage, application_defect); absent on rows written before the taxonomy existed.
     error: {
       stage: { type: String, default: null },
       message: { type: String, default: null },
+      kind: { type: String, default: undefined },
+      code: { type: String, default: undefined },
     },
     // --- E9-S5 (Phase 5) — final deterministic decision (written by the verification engine) ---
     approvedGeometry: { type: Object, default: null },

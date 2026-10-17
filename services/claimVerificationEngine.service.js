@@ -1,6 +1,6 @@
 import { env } from "../config/env.js";
 import { CLAIM_EVENT_TYPES } from "../models/LossClaim.js";
-import { COMPONENTS as COMPONENT_NAMES } from "../config/verificationPolicy.js";
+import { COMPONENTS as COMPONENT_NAMES, policySetting } from "../config/verificationPolicy.js";
 
 // E9-S5 (ADR-019) — Deterministic Claim Verification Engine (07_Database_Design §8, 06 §9).
 // E9-S9 (Phase 9) — Real Overclaim-Prevention Engine: the spatial/eligibility inputs below make the
@@ -59,6 +59,10 @@ const ACCEPTABLE_QUALITY = new Set(["good", "fair"]);
 const round4 = (value) => Math.round(value * 10000) / 10000;
 
 const uniqueNonEmpty = (values) => Array.from(new Set(values.filter(Boolean)));
+
+const recordsCandidateSource = (policy) =>
+  Boolean(policy) &&
+  (policySetting(policy, "aiNoDamageScope") !== null || policySetting(policy, "technicalFailure") === "hold");
 
 export const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
   const aggregate = assessment && assessment.aiAggregate ? assessment.aiAggregate : null;
@@ -144,14 +148,32 @@ export const evaluateAiCheck = ({ claim, assessment, evidenceCount }) => {
 //     claim (disposition "hold", outcome null) until a person or a provider resolves it.
 // With the AI "no damage" policy set to `review`, a confident no-damage reading holds the claim for
 // a reviewer instead of rejecting it: a language model alone must not cause an adverse decision.
-export const applyComponentGate = ({ candidate, ai = null, components = null, policy = null }) => {
+//
+// ADR-022 (policy v1.1-safe-ai). These two holds are checked BEFORE the gate switch, so a policy
+// without the component gate can still use them (v1-legacy has neither, and v2 has the gate on, so
+// the order changes nothing for them):
+//   - `aiNoDamageScope: "ai_only"` limits the no-damage hold to a rejection the AI rule itself
+//     produced (`candidate.source === "aiCheck"`). A rejection for timeliness, event type or an area
+//     outside the parcel is not the model's verdict and stays a rejection.
+//   - `technicalFailure: "hold"` turns "the AI assessment is unavailable" (a provider failure, an
+//     unreadable answer, an assessment that never completed) into a hold instead of a request for
+//     more evidence: the farmer did nothing wrong, the queue retries, and a person checks if it
+//     keeps failing.
+export const applyComponentGate = ({ candidate, ai = null, components = null, policy = null, assessmentErrorKind = null }) => {
   const decide = (outcome, reason, gate = null) => ({ disposition: "decide", outcome, reason, gate });
   if (!policy || !components) return decide(candidate.outcome, candidate.reason, null);
 
   const policyRef = { policyId: policy.id, policyHash: policy.hash };
-  if (!policy.gateEnabled) return decide(candidate.outcome, candidate.reason, { ...policyRef, applied: false, blocking: [] });
+  const fromAiRule = candidate.source === "aiCheck";
 
-  if (candidate.outcome === "rejected" && ai && ai.code === "no_damage_confident" && policy.aiNoDamage === "review") {
+  const aiOnlyScope = policySetting(policy, "aiNoDamageScope") === "ai_only";
+  if (
+    candidate.outcome === "rejected" &&
+    ai &&
+    ai.code === "no_damage_confident" &&
+    policy.aiNoDamage === "review" &&
+    (!aiOnlyScope || fromAiRule)
+  ) {
     const blocking = [{ component: "photos", outcome: "requires_review", action: "hold", reasonCode: "ai_no_damage_needs_review" }];
     return {
       disposition: "hold",
@@ -160,6 +182,19 @@ export const applyComponentGate = ({ candidate, ai = null, components = null, po
       gate: { ...policyRef, applied: true, blocking },
     };
   }
+
+  if (policySetting(policy, "technicalFailure") === "hold" && fromAiRule && ai && ai.code === "assessment_unavailable") {
+    const reasonCodes = ["ai_assessment_unavailable", ...(assessmentErrorKind ? [`provider_${assessmentErrorKind}`] : [])];
+    const blocking = [{ component: "photos", outcome: "unavailable", action: "hold", reasonCodes }];
+    return {
+      disposition: "hold",
+      outcome: null,
+      reason: "The automated photo check is temporarily unavailable; it will be retried or checked by a person",
+      gate: { ...policyRef, applied: true, blocking },
+    };
+  }
+
+  if (!policy.gateEnabled) return decide(candidate.outcome, candidate.reason, { ...policyRef, applied: false, blocking: [] });
 
   if (candidate.outcome !== "verified" && candidate.outcome !== "partially_verified") {
     return decide(candidate.outcome, candidate.reason, { ...policyRef, applied: true, blocking: [] });
@@ -242,12 +277,22 @@ export const evaluateClaimVerification = ({
   const allowedAreaAcres = parcelAreaAcres * (1 + claimAreaOverageFraction);
 
   // --- 1. timelinessCheck (P2: not future, within CLAIM_WINDOW_DAYS) ---
+  // ADR-022: a policy may measure the window at the claim's first submission (the filing time), so
+  // the time spent waiting for checks, a resubmission or a review never makes a claim late. Without
+  // a recorded first submission, or under the older policies, the decision time is used as before.
   const eventTime = claim && claim.eventDate ? new Date(claim.eventDate).getTime() : NaN;
   const windowMs = claimWindowDays * 24 * 60 * 60 * 1000;
+  const firstSubmittedTime =
+    claim && claim.firstSubmittedAt ? new Date(claim.firstSubmittedAt).getTime() : NaN;
+  const windowReference =
+    policySetting(policy, "claimWindowReference") === "firstSubmittedAt" && !Number.isNaN(firstSubmittedTime)
+      ? firstSubmittedTime
+      : timestamp;
   const timelinessPassed =
     !Number.isNaN(eventTime) &&
     eventTime <= timestamp &&
-    eventTime >= timestamp - windowMs;
+    eventTime <= windowReference &&
+    eventTime >= windowReference - windowMs;
   const timelinessRules = { passed: timelinessPassed };
 
   // --- 2. eventTypeCheck (frozen vocabulary) ---
@@ -345,52 +390,75 @@ export const evaluateClaimVerification = ({
   }
 
   // --- Deterministic outcome resolution (strict precedence; first failing block wins) ---
+  // `candidateSource` names the rule that produced the candidate outcome (null: every rule passed),
+  // so the gate can tell a rejection the AI caused from one it did not (ADR-022).
   let outcome = "verified";
   let reason = "All deterministic verification rules passed";
+  let candidateSource = null;
   if (!timelinessPassed) {
     outcome = "rejected";
     reason = "Event date is outside the supported claim window";
+    candidateSource = "timelinessCheck";
   } else if (!eventTypePassed) {
     outcome = "rejected";
     reason = "Claim event type is not in the supported vocabulary";
+    candidateSource = "eventTypeCheck";
   } else if (!areaPassed) {
     outcome = "out_of_limit";
     reason = "Claimed area exceeds the parcel area allowance";
+    candidateSource = "areaCheck";
   } else if (insideParcel === false) {
     outcome = "rejected";
     reason = "Claimed area is outside the parcel boundary";
+    candidateSource = "spatialCheck";
   } else if (overlapsVerified && !enriched) {
     // Legacy sparse mode (no spatial facts): any verified overlap is a duplicate (frozen E9-S5).
     outcome = "duplicate_area";
     reason = "Claim area overlaps an already verified claim";
+    candidateSource = "overlapCheck";
   } else if (overlapsVerified && enriched && fullyCovered) {
     outcome = "duplicate_area";
     reason = "Claimed area duplicates an already verified claim";
+    candidateSource = "overlapCheck";
   } else if (overlapsVerified && enriched && partialApproval && partialApproval.areaAcres > 0) {
     // E9-S9: partial overlap → approve ONLY the non-overlapping remainder if it fits the budget.
     if (newAreaAcres > remainingEligibleAcres) {
       outcome = "out_of_limit";
       reason = `Only ${remainingEligibleAcres} acres remain eligible; the ${newAreaAcres} new acres exceed this`;
+      candidateSource = "remainingCheck";
     } else {
       outcome = "partially_verified";
       reason = `Partially verified: ${round4(partialApproval.areaAcres)} acres not previously claimed were approved`;
+      candidateSource = "overlapCheck";
     }
   } else if (overlapsInFlight) {
     outcome = "more_evidence_required";
     reason = "Claim area overlaps a claim still in progress";
+    candidateSource = "overlapCheck";
   } else if (!remainingPassed) {
     outcome = "out_of_limit";
     reason = "Claimed area exceeds the remaining eligible acreage";
+    candidateSource = "remainingCheck";
   } else if (ai.decision === "rejected") {
     outcome = "rejected";
     reason = ai.reason;
+    candidateSource = "aiCheck";
   } else if (ai.decision === "more_evidence_required") {
     outcome = "more_evidence_required";
     reason = ai.reason;
+    candidateSource = "aiCheck";
   }
 
   // ADR-020: the component gate may turn an approval into a hold or a request for more evidence.
-  const gated = applyComponentGate({ candidate: { outcome, reason }, ai, components, policy });
+  const assessmentErrorKind =
+    assessment && assessment.error && typeof assessment.error.kind === "string" ? assessment.error.kind : null;
+  const gated = applyComponentGate({
+    candidate: { outcome, reason, source: candidateSource },
+    ai,
+    components,
+    policy,
+    assessmentErrorKind,
+  });
   const disposition = gated.disposition;
   outcome = gated.outcome;
   reason = gated.reason;
@@ -461,6 +529,9 @@ export const evaluateClaimVerification = ({
       : null,
     policy: policy ? { id: policy.id, hash: policy.hash } : null,
     engineVersion: VERIFICATION_ENGINE_VERSION,
+    // ADR-022: reported only under a policy whose gate reads it, so decisions made under the frozen
+    // policies replay byte-identically (tests/policy.parity.test.js).
+    ...(recordsCandidateSource(policy) ? { candidateSource } : {}),
   };
 };
 

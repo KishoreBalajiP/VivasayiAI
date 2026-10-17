@@ -1,0 +1,1426 @@
+{
+  "schema": "vivasayi-acceptance-matrix/v1",
+  "$comment": "Single ID registry and scenario map for plan Part F. Read by scripts/acceptance/report.js. Test titles start with '<ID>:' (e.g. 'EQ-1: ...'). Selector forms in scenarios[].tests: an exact ID ('VJ-20'); a family wildcard ('SD-*' = every test whose ID starts with 'SD-'; at least one must exist); or a file selector {repo, file, title?} meaning every test in that file whose full name matches the case-insensitive 'title' regex. Playwright results carry '@<project>' and match their base ID in every project.",
+  "idPattern": "^([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+[a-z]?):",
+  "levels": {
+    "U": "Backend unit: pure functions, no database",
+    "I/API": "Backend integration: Express + mongodb-memory-server via tests/helpers.js",
+    "FE-U": "Frontend vitest (unit and dom projects)",
+    "E2E": "Playwright in the frontend against the hermetic backend harness"
+  },
+  "suites": {
+    "backend-vitest": {
+      "repo": "backend",
+      "levels": [
+        "U",
+        "I/API"
+      ],
+      "rawReport": "test-results/raw/backend-vitest.json",
+      "format": "vitest-json"
+    },
+    "frontend-vitest": {
+      "repo": "frontend",
+      "levels": [
+        "FE-U"
+      ],
+      "rawReport": "test-results/raw/frontend-vitest.json",
+      "format": "vitest-json"
+    },
+    "e2e-playwright": {
+      "repo": "frontend",
+      "levels": [
+        "E2E"
+      ],
+      "rawReport": "test-results/raw/e2e-playwright.json",
+      "format": "playwright-json"
+    }
+  },
+  "levelSuites": {
+    "U": "backend-vitest",
+    "I/API": "backend-vitest",
+    "FE-U": "frontend-vitest",
+    "E2E": "e2e-playwright"
+  },
+  "mocks": {
+    "FG": "fake Gemini on chat.service model.generate (scripts/e2e/lib/fakeGemini.js)",
+    "MS": "mock storage plus the dev receiver",
+    "MMS": "mongodb-memory-server",
+    "SAT-M": "SATELLITE_MODE=mock",
+    "WX-M": "WEATHER_MODE=mock",
+    "LR-M": "LAND_RECORD_MODE=mock",
+    "vi.mock": "vitest module mock",
+    "PR": "Playwright route()",
+    "control": "hermetic control server (/__e2e/*)",
+    "slowWorkerBootstrap": "tests/fixtures/slowWorkerBootstrap.js (sleeping executor in a child worker)"
+  },
+  "severities": {
+    "S1": "Wrong or adverse decision, data leak or lost claim",
+    "S2": "Stuck claim or wrong status shown",
+    "S3": "Minor UI or text",
+    "S4": "Docs or cosmetic"
+  },
+  "defaults": {
+    "unmappedFailure": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "A failing test that no scenario maps is release-blocking until triage says otherwise."
+    }
+  },
+  "suiteDefaults": {
+    "backend-vitest": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "The backend suite did not complete"
+    },
+    "backend-node-check": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "A backend file does not parse"
+    },
+    "frontend-typecheck": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "The frontend does not typecheck"
+    },
+    "frontend-lint": {
+      "severity": "S3",
+      "releaseBlocking": true,
+      "reason": "Lint errors block release until triaged"
+    },
+    "frontend-build": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "The frontend does not build"
+    },
+    "frontend-vitest": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "The frontend suite did not complete"
+    },
+    "e2e-playwright": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "The Playwright run did not complete"
+    },
+    "manuscript-numbers": {
+      "severity": "S4",
+      "releaseBlocking": false,
+      "reason": "Research integrity: prose numbers are not traceable (blocks the manuscript, not the product)"
+    },
+    "frozen-hashes": {
+      "severity": "S2",
+      "releaseBlocking": true,
+      "reason": "A frozen 2026-10-16 research artifact changed"
+    }
+  },
+  "fileLevels": {
+    "files": {
+      "backend": {
+        "tests/acceptance.report.unit.test.js": "U",
+        "tests/admin.api.test.js": "I/API",
+        "tests/admin.diagnostics.test.js": "I/API",
+        "tests/admin.unit.test.js": "U",
+        "tests/adversarial.claims.test.js": "I/API",
+        "tests/ai.503.test.js": "I/API",
+        "tests/auth.service.test.js": "I/API",
+        "tests/authz.matrix.test.js": "I/API",
+        "tests/chat.context.test.js": "I/API",
+        "tests/chat.intent.unit.test.js": "U",
+        "tests/chat.pipeline.test.js": "I/API",
+        "tests/chat.regressions.test.js": "U",
+        "tests/claim.assessment.test.js": "I/API",
+        "tests/claim.crossFarmerOverlap.test.js": "I/API",
+        "tests/claim.progress.test.js": "I/API",
+        "tests/claim.relationship.test.js": "I/API",
+        "tests/claim.verification.test.js": "I/API",
+        "tests/claim.verificationEngine.components.test.js": "U",
+        "tests/claim.verificationEngine.phase9.test.js": "U",
+        "tests/claim.verificationEngine.test.js": "U",
+        "tests/claim.verify.api.test.js": "I/API",
+        "tests/claim.verify.held.test.js": "I/API",
+        "tests/claim.verify.retryBound.test.js": "I/API",
+        "tests/claim.verify.safeAi.test.js": "I/API",
+        "tests/claim.vision.test.js": "U",
+        "tests/claimSpatial.test.js": "U",
+        "tests/claimState.test.js": "U",
+        "tests/claims.api.test.js": "I/API",
+        "tests/claims.evidence.test.js": "I/API",
+        "tests/claims.ratelimit.test.js": "I/API",
+        "tests/decisionConsistency.test.js": "I/API",
+        "tests/devStorage.test.js": "I/API",
+        "tests/e2eHarness.smoke.test.js": "I/API",
+        "tests/e2eHarness.unit.test.js": "U",
+        "tests/error.middleware.test.js": "I/API",
+        "tests/eval.harness.test.js": "U",
+        "tests/geometryBbox.unit.test.js": "U",
+        "tests/landDocument.examination.test.js": "I/API",
+        "tests/logger.test.js": "U",
+        "tests/manualReview.test.js": "I/API",
+        "tests/migration.verificationComponents.test.js": "I/API",
+        "tests/mockModes.test.js": "I/API",
+        "tests/nameMatch.unit.test.js": "U",
+        "tests/ndviStatistics.unit.test.js": "U",
+        "tests/officialLandRecord.test.js": "I/API",
+        "tests/ownership.evidence.test.js": "I/API",
+        "tests/ownershipEvidence.unit.test.js": "U",
+        "tests/parcel.geometry.test.js": "I/API",
+        "tests/parcelGeometry.range.test.js": "U",
+        "tests/parcelMapClaimFlow.api.test.js": "I/API",
+        "tests/parcels.api.test.js": "I/API",
+        "tests/policy.parity.test.js": "U",
+        "tests/progressContract.unit.test.js": "U",
+        "tests/providerErrors.api.test.js": "I/API",
+        "tests/providerErrors.unit.test.js": "U",
+        "tests/rag.chunker.unit.test.js": "U",
+        "tests/rag.ingest.unit.test.js": "U",
+        "tests/ragEvalSpec.unit.test.js": "U",
+        "tests/requestId.test.js": "I/API",
+        "tests/researchIntegrity.unit.test.js": "U",
+        "tests/satelliteAdapter.unit.test.js": "U",
+        "tests/satelliteDisplay.unit.test.js": "U",
+        "tests/satellitePoc.unit.test.js": "U",
+        "tests/satelliteVerification.service.test.js": "I/API",
+        "tests/token.verify.test.js": "U",
+        "tests/verification.concurrency.test.js": "I/API",
+        "tests/verificationComponents.unit.test.js": "U",
+        "tests/verificationEnqueue.test.js": "I/API",
+        "tests/verificationEvidence.history.test.js": "I/API",
+        "tests/verificationEvidence.test.js": "I/API",
+        "tests/verificationEvidence.unit.test.js": "U",
+        "tests/verificationJobs.test.js": "I/API",
+        "tests/verificationPolicy.unit.test.js": "U",
+        "tests/verificationWorker.loop.test.js": "I/API",
+        "tests/weather.service.test.js": "I/API",
+        "tests/weatherArchive.unit.test.js": "U",
+        "tests/worker.crashRecovery.test.js": "I/API"
+      },
+      "frontend": {}
+    },
+    "patterns": [
+      {
+        "repo": "backend",
+        "glob": "tests/**/*.unit.test.js",
+        "level": "U"
+      },
+      {
+        "repo": "backend",
+        "glob": "tests/**/*.test.js",
+        "level": "I/API"
+      },
+      {
+        "repo": "frontend",
+        "glob": "e2e/**/*.spec.ts",
+        "level": "E2E"
+      },
+      {
+        "repo": "frontend",
+        "glob": "src/**/*.test.ts",
+        "level": "FE-U"
+      },
+      {
+        "repo": "frontend",
+        "glob": "src/**/*.test.tsx",
+        "level": "FE-U"
+      }
+    ]
+  },
+  "registry": [
+    {
+      "prefix": "EQ",
+      "ids": "EQ-1..10",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/verificationEnqueue.test.js",
+      "covers": "Enqueue and concurrency"
+    },
+    {
+      "prefix": "VJ",
+      "ids": "VJ-14..26",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/verificationJobs.test.js",
+      "covers": "Queue robustness; VJ-20 non-blocking satellite under all three policies; VJ-7b/7c read-drain budget, VJ-23b dead-job recovery not starved, VJ-24b/24c stuck-claim sweep not starved and never under a live engine lease",
+      "existing": "VJ-1..13",
+      "suffixIds": [
+        "VJ-7b",
+        "VJ-7c",
+        "VJ-14b",
+        "VJ-19b",
+        "VJ-23b",
+        "VJ-24b",
+        "VJ-24c",
+        "VJ-25b"
+      ]
+    },
+    {
+      "prefix": "P4",
+      "ids": "P4-35..38, P4-08b",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/claim.assessment.test.js",
+      "covers": "Assessment budget, checkpoint, slot lease; v1-legacy malformed parity",
+      "existing": "P4-01..34, P4-V01..V13",
+      "suffixIds": [
+        "P4-08b"
+      ]
+    },
+    {
+      "prefix": "LD",
+      "ids": "LD-15",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/landDocument.examination.test.js",
+      "covers": "Per-document failures record kind and retryable",
+      "renamedFrom": "LD-1 (design-backend)",
+      "existing": "LD-1..14"
+    },
+    {
+      "prefix": "VP",
+      "ids": "VP-7..10",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/verificationPolicy.unit.test.js",
+      "covers": "Policy hashes frozen; v1.1 definition; default policy",
+      "existing": "VP-1..6"
+    },
+    {
+      "prefix": "PV",
+      "ids": "PV-1..7",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/policy.parity.test.js",
+      "covers": "Golden parity v1-legacy/v2; v1.1 differs only on AI-only rejects; PV-7 technical hold inside the engine"
+    },
+    {
+      "prefix": "SA",
+      "ids": "SA-1..10",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/claim.verify.safeAi.test.js (SA-1..9), tests/claim.verify.retryBound.test.js (SA-10)",
+      "covers": "Safe-AI behaviour under v1.1; SA-10 photo-check retries stay bounded under a persistent provider failure",
+      "suffixIds": [
+        "SA-1b",
+        "SA-1c",
+        "SA-1d",
+        "SA-2b"
+      ]
+    },
+    {
+      "prefix": "PE",
+      "ids": "PE-1..6",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/providerErrors.unit.test.js",
+      "covers": "Provider error taxonomy"
+    },
+    {
+      "prefix": "PRG",
+      "ids": "PRG-1..10",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/claim.progress.test.js (PRG-1..9), tests/progressContract.unit.test.js (PRG-10, PRG-10b..f)",
+      "covers": "Farmer progress contract progress-v1; PRG-10 in tests/progressContract.unit.test.js",
+      "renamedFrom": "PG (collides with tests/parcelGeometry.range.test.js PG-1..3)",
+      "suffixIds": [
+        "PRG-10b",
+        "PRG-10c",
+        "PRG-10d",
+        "PRG-10e",
+        "PRG-10f"
+      ]
+    },
+    {
+      "prefix": "SD",
+      "ids": "SD-1..15",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/satelliteDisplay.unit.test.js",
+      "covers": "Satellite truth table, one case per row"
+    },
+    {
+      "prefix": "AD",
+      "ids": "AD-1..4",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/admin.diagnostics.test.js",
+      "covers": "Admin diagnostics and requeue; AD-4 the requeue is recorded before any job changes"
+    },
+    {
+      "prefix": "VL",
+      "ids": "VL-1..5",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/claim.verificationLeak.test.js",
+      "covers": "Farmer /verification leak fix; VL-5 no policy hash or provider/model names in the farmer's claim reads (admin views unchanged)"
+    },
+    {
+      "prefix": "VF",
+      "ids": "VF-1..5",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/claim.verify.ready.test.js (VF-1..4), tests/claim.verify.api.test.js (VF-5)",
+      "covers": "POST /claims/:id/verify ownership and inProgress semantics"
+    },
+    {
+      "prefix": "WK",
+      "ids": "WK-1..8",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/verificationWorker.loop.test.js (WK-1..6, WK-4b), tests/worker.crashRecovery.test.js (WK-7..8)",
+      "covers": "Worker loop, CLI, Lambda handler, IaC static check, crash recovery",
+      "suffixIds": [
+        "WK-4b"
+      ]
+    },
+    {
+      "prefix": "DS",
+      "ids": "DS-1..5",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/devStorage.test.js",
+      "covers": "Dev storage receiver (backend), production guard, file-backed mock store (DS-5b). The FE draft-storage family is DRF to avoid a collision.",
+      "suffixIds": [
+        "DS-5b"
+      ]
+    },
+    {
+      "prefix": "MK",
+      "ids": "MK-1..3",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/mockModes.test.js (MK-1..2), tests/e2eHarness.smoke.test.js (MK-3, MK-3b)",
+      "covers": "Weather and satellite mock modes; harness smoke (inline and process worker)",
+      "suffixIds": [
+        "MK-3b"
+      ]
+    },
+    {
+      "prefix": "HX",
+      "ids": "HX-1..6",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/e2eHarness.unit.test.js (HX-1..5), tests/e2eHarness.smoke.test.js (HX-6)",
+      "covers": "Hermetic e2e harness guards"
+    },
+    {
+      "prefix": "RL",
+      "ids": "RL-7..8",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/claims.ratelimit.test.js",
+      "covers": "D5 rate-limit defaults",
+      "existing": "RL-1..6"
+    },
+    {
+      "prefix": "MGA",
+      "ids": "MGA-1..4",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/migration.verificationAutomation.test.js",
+      "covers": "2026-10 verification-automation migration",
+      "renamedFrom": "MG (collides with tests/migration.verificationComponents.test.js MG-1..8)"
+    },
+    {
+      "prefix": "DC",
+      "ids": "DC-1..13",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/decisionConsistency.test.js",
+      "covers": "API + worker outcome equals the pure engine; DC-13 scripts/e2e/scenarios.json consistency (scenario outcomes pinned by the DC tests they name)"
+    },
+    {
+      "prefix": "CV",
+      "ids": "CV-1..3",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/verification.concurrency.test.js",
+      "covers": "Concurrent verification"
+    },
+    {
+      "prefix": "AZ",
+      "ids": "AZ-1..4",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/authz.matrix.test.js",
+      "covers": "Authorisation sweep"
+    },
+    {
+      "prefix": "RC",
+      "ids": "RC-1..16",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/rag.chunker.unit.test.js",
+      "covers": "RAG table chunker, local index, S3 guard, write-once; RC-14 literal uploads/ and claims/ refused, RC-15 baseline60 100-row cap, RC-16 --date/--tag validation and the chat collection log"
+    },
+    {
+      "prefix": "RS",
+      "ids": "RS-1..3",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/ragEvalSpec.unit.test.js",
+      "covers": "Frozen RAG eval spec"
+    },
+    {
+      "prefix": "LW",
+      "ids": "LW-1..2",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/researchIntegrity.unit.test.js",
+      "covers": "Write-once outputs"
+    },
+    {
+      "prefix": "FH",
+      "ids": "FH-1",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/researchIntegrity.unit.test.js",
+      "covers": "Frozen 2026-10-16 artifact hashes"
+    },
+    {
+      "prefix": "MN",
+      "ids": "MN-1..4",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/researchIntegrity.unit.test.js",
+      "covers": "Manuscript number checker"
+    },
+    {
+      "prefix": "SC",
+      "ids": "SC-1..3",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/researchIntegrity.unit.test.js",
+      "covers": "Satellite case-study provenance"
+    },
+    {
+      "prefix": "AR",
+      "ids": "AR-1..10",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/acceptance.report.unit.test.js",
+      "covers": "Acceptance report generator and runner. AR-1..6 per design-testing (parsing, ID extraction, collisions, missing scenario, blocked live item, schema validity); AR-7..10 added: triage merge, rerun reproducibility, Markdown columns plus shipped-matrix consistency, runner helpers"
+    },
+    {
+      "prefix": "PC",
+      "ids": "PC-7",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/satelliteAdapter.unit.test.js",
+      "covers": "discovery.scenesByWindow",
+      "existing": "PC-1..6"
+    },
+    {
+      "prefix": "VC",
+      "ids": "VC-26",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/verificationComponents.unit.test.js",
+      "covers": "resolveSatellite ignores review-case rows",
+      "existing": "VC-1..25"
+    },
+    {
+      "prefix": "EV",
+      "ids": "EV-16",
+      "repo": "backend",
+      "suite": "backend-vitest",
+      "file": "tests/eval.harness.test.js",
+      "covers": "Existing fusion rows byte-identical after adding v1.1",
+      "existing": "EV-1..15"
+    },
+    {
+      "prefix": "RT",
+      "ids": "RT-1..8",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/routing/hashRoute.test.ts, src/routing/useHashRoute.test.tsx, src/App.routing.test.tsx",
+      "covers": "Hash routing"
+    },
+    {
+      "prefix": "UI",
+      "ids": "UI-1..14",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/components/ui/ui.test.tsx and others",
+      "covers": "Design primitives and accessibility pass"
+    },
+    {
+      "prefix": "CT",
+      "ids": "CT-1..3",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/utils/claimProgress.test.ts",
+      "covers": "progress-v1 contract parsing"
+    },
+    {
+      "prefix": "POLL",
+      "ids": "POLL-1..17",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/utils/progressPolling.test.ts, src/hooks/useClaimProgress.test.tsx",
+      "covers": "Polling schedule and hook",
+      "renamedFrom": "PL (collides with backend PL-1..12)"
+    },
+    {
+      "prefix": "TRK",
+      "ids": "TRK-1..16",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/components/claims/ClaimTracker.test.tsx",
+      "covers": "Tracker, including no verify button and verifyClaimRequest never called",
+      "renamedFrom": "TR"
+    },
+    {
+      "prefix": "WZ",
+      "ids": "WZ-1..17",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/components/ClaimWizard.test.tsx, src/utils/claimFlow.test.ts",
+      "covers": "Five-step wizard"
+    },
+    {
+      "prefix": "SUB",
+      "ids": "SUB-1..8",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/utils/claimSubmission.test.ts",
+      "covers": "Submission orchestrator"
+    },
+    {
+      "prefix": "DRF",
+      "ids": "DRF-1..8",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/utils/claimDraftStorage.test.ts",
+      "covers": "Draft persistence",
+      "renamedFrom": "DS (collides with backend DS-1..5)"
+    },
+    {
+      "prefix": "LOC",
+      "ids": "LOC-1..13",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/services/tnClassifier.test.ts and others",
+      "covers": "Farm-first location; Pulicat 13.55N inside, Bengaluru outside"
+    },
+    {
+      "prefix": "I18N",
+      "ids": "I18N-1..5",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/i18n.test.ts",
+      "covers": "i18n parity and registry keys"
+    },
+    {
+      "prefix": "I18N-P",
+      "ids": "I18N-P1..P3",
+      "repo": "frontend",
+      "suite": "frontend-vitest",
+      "file": "src/contracts/progressContract.test.ts",
+      "covers": "Every contract key has en and ta strings"
+    },
+    {
+      "prefix": "E2E",
+      "ids": "E2E-01..25 (+08a, 08b, 19a, 19b; E2E-04 reserved)",
+      "repo": "frontend",
+      "suite": "e2e-playwright",
+      "file": "e2e/*.spec.ts",
+      "covers": "Playwright journeys against the hermetic harness; results carry an @<project> suffix"
+    }
+  ],
+  "reservedPrefixes": [
+    {
+      "prefix": "PG",
+      "where": "tests/parcelGeometry.range.test.js PG-1..3",
+      "note": "progress uses PRG"
+    },
+    {
+      "prefix": "MG",
+      "where": "tests/migration.verificationComponents.test.js MG-1..8",
+      "note": "new migration uses MGA"
+    },
+    {
+      "prefix": "PL",
+      "where": "backend PL-1..12",
+      "note": "FE polling uses POLL"
+    },
+    {
+      "prefix": "TR",
+      "where": "frontend design draft",
+      "note": "FE tracker uses TRK"
+    }
+  ],
+  "knownCollisions": [
+    {
+      "id": "CR-1",
+      "files": [
+        "tests/chat.regressions.test.js",
+        "tests/verificationComponents.unit.test.js"
+      ],
+      "note": "Pre-existing; left alone per design-testing X1. The report namespaces it by file."
+    },
+    {
+      "id": "CR-2",
+      "files": [
+        "tests/chat.regressions.test.js",
+        "tests/verificationComponents.unit.test.js"
+      ],
+      "note": "Pre-existing; see CR-1."
+    },
+    {
+      "id": "CR-3",
+      "files": [
+        "tests/chat.regressions.test.js",
+        "tests/verificationComponents.unit.test.js"
+      ],
+      "note": "Pre-existing; see CR-1."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "S01",
+      "name": "Valid submission and automatic job",
+      "tests": {
+        "U": [
+          "VJ-2",
+          "VJ-20"
+        ],
+        "I/API": [
+          "EQ-1",
+          "VJ-4",
+          "VJ-10",
+          "DC-1",
+          "MK-3",
+          "DS-1"
+        ],
+        "E2E": [
+          "E2E-01",
+          "E2E-02",
+          "E2E-05"
+        ]
+      },
+      "mocks": [
+        "FG(damage)",
+        "MS",
+        "MMS",
+        "SAT-M",
+        "WX-M"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D1",
+        "D5",
+        "D7"
+      ],
+      "notes": "DC-1: create -> photos -> submit -> worker -> verified with no POST /verify. E2E-01 asserts zero POST /verify requests; E2E-02 asserts no verify button; E2E-05 fits 10 photos + 2 documents inside the D5 defaults. VJ-20 asserts satellite is non-blocking under all three policies (critique B1)."
+    },
+    {
+      "id": "S02",
+      "name": "Claim persisted when AI fails",
+      "tests": {
+        "U": [
+          "PE-2"
+        ],
+        "I/API": [
+          "EQ-4",
+          "P6-22b",
+          "SA-2",
+          "SA-3",
+          "PE-4"
+        ],
+        "E2E": [
+          "E2E-07"
+        ]
+      },
+      "mocks": [
+        "FG(q503)",
+        "vi.mock(ensurePlan)"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2",
+        "D7"
+      ],
+      "notes": "EQ-4: plan enqueue throws -> 503, claim stays submitted, a repeat submit recovers. E2E-07: claim still listed after reload; tracker shows the technical wait."
+    },
+    {
+      "id": "S03",
+      "name": "Duplicate submit and idempotent retries",
+      "tests": {
+        "I/API": [
+          "ADV-7",
+          "P6-19",
+          "P6-35",
+          "EQ-2",
+          "EQ-3",
+          "EQ-6",
+          "EQ-10"
+        ],
+        "E2E": [
+          "E2E-03"
+        ]
+      },
+      "mocks": [
+        "MS",
+        "PR"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D7"
+      ],
+      "notes": "EQ-2: 10 concurrent submits. EQ-10: a submit repeated after the worker already decided the claim (lost response + fast worker, found by E2E-03) is 200 idempotent, writes nothing. E2E-03: double click, then the first /submit is aborted with connectionreset and the retry gets 200 idempotent; one submitted audit and one job per step via /__e2e/claims/:id/inspect."
+    },
+    {
+      "id": "S04",
+      "name": "Worker crash recovery",
+      "tests": {
+        "I/API": [
+          "VJ-6",
+          "VJ-14",
+          "VJ-15",
+          "VJ-24",
+          "P4-37",
+          "P4-38",
+          "WK-7",
+          "WK-8",
+          "VJ-24b",
+          "VJ-24c",
+          "MK-3b"
+        ],
+        "E2E": [
+          "E2E-11"
+        ]
+      },
+      "mocks": [
+        "slowWorkerBootstrap",
+        "MMS"
+      ],
+      "severity": "S2",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D7"
+      ],
+      "notes": "WK-7 is the release-blocking proof (SIGKILL a child worker mid-step; second worker completes; one decision, attempts=2). E2E-11 runs the process-mode worker; design-testing marks it optional (P1) but critique B3 requires at least one e2e spec with the process worker, so it is listed as required here."
+    },
+    {
+      "id": "S05",
+      "name": "Concurrent verification",
+      "tests": {
+        "I/API": [
+          "P6-23",
+          "P6-24",
+          "P6-25",
+          "VJ-8",
+          "EQ-9",
+          "CV-1",
+          "CV-2",
+          "CV-3"
+        ]
+      },
+      "mocks": [
+        "FG(damage)"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D7"
+      ],
+      "notes": "CV-1: two drains + POST /verify + GET in parallel -> one decision audit and one assessment decision. CV-2: resubmit racing the engine. CV-3: two workers on one claim's engine."
+    },
+    {
+      "id": "S06",
+      "name": "Gemini 429 (quota)",
+      "tests": {
+        "U": [
+          "PE-1",
+          "VJ-16"
+        ],
+        "I/API": [
+          "PE-4",
+          "SA-3",
+          "VJ-23",
+          "SA-6",
+          "VJ-23b",
+          "SA-10"
+        ],
+        "E2E": [
+          "E2E-06"
+        ]
+      },
+      "mocks": [
+        "FG(q429 -> recover)"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "E2E-06: photos stage shows waiting with nextCheckAt, then the decision arrives; 'rejected' and 'more evidence' never appear."
+    },
+    {
+      "id": "S07",
+      "name": "Gemini 503 (overload)",
+      "tests": {
+        "U": [
+          "PE-1",
+          "PE-2"
+        ],
+        "I/API": [
+          "SA-3",
+          "PE-6",
+          "PE-5",
+          "AI-503-*"
+        ],
+        "E2E": [
+          "E2E-07"
+        ]
+      },
+      "mocks": [
+        "FG(q503)"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "PE-6 keeps the existing AI-503-A*/B* statuses and messages unchanged; AI-503-* is required to stay green."
+    },
+    {
+      "id": "S08",
+      "name": "AI timeout and malformed output",
+      "tests": {
+        "U": [
+          "PE-1"
+        ],
+        "I/API": [
+          "P4-35",
+          "P4-36",
+          "SA-2",
+          "P4-08b",
+          "ADV-12"
+        ],
+        "E2E": [
+          "E2E-08a",
+          "E2E-08b"
+        ]
+      },
+      "mocks": [
+        "FG(timeout)",
+        "FG(malformed)"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "E2E-08b: malformed output -> held as technical, never 'more evidence'. P4-08b keeps v1-legacy parity (malformed -> UNSURE)."
+    },
+    {
+      "id": "S09",
+      "name": "Missing or invalid land documents",
+      "tests": {
+        "I/API": [
+          "OW-03",
+          "OW-04",
+          "OW-05",
+          "OW-06",
+          "LD-2",
+          "LD-3",
+          "LD-4",
+          "LD-5",
+          "LD-6",
+          "LD-7",
+          "LD-8",
+          "LD-9",
+          "LD-10",
+          "LD-11",
+          "LD-12",
+          "LD-13",
+          "LD-14",
+          "LD-15",
+          "VJ-18",
+          "VJ-19",
+          "EQ-7"
+        ],
+        "E2E": [
+          "E2E-09"
+        ]
+      },
+      "mocks": [
+        "FG(landdoc)",
+        "LR-M"
+      ],
+      "severity": "S2",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "LD-15 is the renamed design-backend LD-1 (per-document failures record kind and retryable). E2E-09: PDF refused on the client and with a server 400; an image document completes the land_documents stage."
+    },
+    {
+      "id": "S10",
+      "name": "Missing claimant-rights evidence",
+      "tests": {
+        "U": [
+          "CG-3"
+        ],
+        "I/API": [
+          "HD-1",
+          "ADV-5",
+          "PRG-7",
+          "DC-4"
+        ],
+        "E2E": [
+          "E2E-10"
+        ]
+      },
+      "mocks": [
+        "FG",
+        "LR-M"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "PRG-7: v2 required:true, v1.1 required:false. E2E-10: optional action shown; decision proceeds."
+    },
+    {
+      "id": "S11",
+      "name": "Invalid geometry and area limits",
+      "tests": {
+        "U": [
+          "GB-1",
+          "GB-2",
+          "GB-3",
+          "GB-4",
+          {
+            "repo": "backend",
+            "file": "tests/claimSpatial.test.js",
+            "label": "E9-S9 claimSpatial suite"
+          }
+        ],
+        "I/API": [
+          "ADV-2",
+          "ADV-9",
+          "P6-16",
+          {
+            "repo": "backend",
+            "file": "tests/parcel.geometry.test.js",
+            "label": "parcel.geometry tests"
+          },
+          "DC-5"
+        ],
+        "FE-U": [
+          {
+            "repo": "frontend",
+            "file": "src/utils/parcelGeometry.test.ts",
+            "label": "FE parcelGeometry (drawing)"
+          }
+        ],
+        "E2E": [
+          "E2E-12"
+        ]
+      },
+      "mocks": [
+        "MMS"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "E2E-12 seeds an over-limit claim through the API; the decision card renders out_of_limit in EN and TA. Drawing itself is covered by FE parcelGeometry.test.ts."
+    },
+    {
+      "id": "S12",
+      "name": "Duplicate or overlapping claims",
+      "tests": {
+        "U": [
+          "CG-10"
+        ],
+        "I/API": [
+          "XF-1",
+          "XF-2",
+          "XF-3",
+          "XF-4",
+          "XF-5",
+          "XF-6",
+          "ADV-6",
+          "DC-6"
+        ],
+        "E2E": [
+          "E2E-13"
+        ]
+      },
+      "mocks": [
+        "FG"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "Critique E2: under v1.1 a cross-farmer overlap is decided verified, plus the cross_farmer_overlap_flagged audit row, with no farmer-A data in farmer B's view (DC-6, E2E-13 expect verified, not held)."
+    },
+    {
+      "id": "S13",
+      "name": "Suitable satellite imagery",
+      "tests": {
+        "U": [
+          "PC-3",
+          "SD-*"
+        ],
+        "I/API": [
+          "SV-3",
+          "MK-2",
+          "PV-5"
+        ],
+        "E2E": [
+          "E2E-14"
+        ]
+      },
+      "mocks": [
+        "SAT-M"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D1"
+      ],
+      "notes": "Satellite is supporting only and never blocks the decision (D1). Critique E1: E2E-14 uses eventDaysAgo 0 computed as a UTC date so the post-event window is not yet open (satellite pending with nextCheckAt while the decision is shown)."
+    },
+    {
+      "id": "S14",
+      "name": "Cloudy or insufficient imagery",
+      "tests": {
+        "U": [
+          "PC-4",
+          "PC-5",
+          "NS-*",
+          "SD-*"
+        ],
+        "I/API": [
+          "ADV-10",
+          "MK-2"
+        ],
+        "E2E": [
+          "E2E-15"
+        ]
+      },
+      "mocks": [
+        "SAT-M"
+      ],
+      "severity": "S2",
+      "releaseBlocking": false,
+      "decisionRefs": [
+        "D1"
+      ],
+      "notes": "Cloud cover, no imagery or too few images -> inconclusive."
+    },
+    {
+      "id": "S15",
+      "name": "Satellite false support or inconclusive",
+      "tests": {
+        "U": [
+          "SD-*"
+        ],
+        "I/API": [
+          "PV-5",
+          "CG-11",
+          "SA-7",
+          "SA-8"
+        ],
+        "E2E": [
+          "E2E-16"
+        ]
+      },
+      "mocks": [
+        "SAT-M"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D1"
+      ],
+      "notes": "NO_CHANGE -> inconclusive, never failed. PV-5: 0/1536 flips under v1.1. SA-7: AI no damage + SUPPORTS_LOSS stays held. SA-8: AI damage + NO_CHANGE still verified."
+    },
+    {
+      "id": "S16",
+      "name": "Missing weather",
+      "tests": {
+        "U": [
+          "WA-5",
+          "MK-1"
+        ],
+        "I/API": [
+          "ADV-13",
+          "SA-9",
+          "PRG-*"
+        ],
+        "E2E": [
+          "E2E-17"
+        ]
+      },
+      "mocks": [
+        "WX-M(WEATHER_MOCK_OUTCOME=unavailable)"
+      ],
+      "severity": "S2",
+      "releaseBlocking": false,
+      "decisionRefs": [
+        "D1"
+      ],
+      "notes": "SA-9: weather unavailable does not change the v1.1 decision. The PRG case for 'weather unavailable, supporting only counts as complete' has no fixed number in the design, so the whole PRG family is required."
+    },
+    {
+      "id": "S17",
+      "name": "Unauthorized access to another farmer's claim or evidence",
+      "tests": {
+        "I/API": [
+          "ADV-14",
+          "P6-03",
+          "P6-36",
+          "OW-05",
+          "OW-06",
+          "LR-4",
+          "XF-5",
+          "PRG-1",
+          "VF-1",
+          "DS-2",
+          "AD-1",
+          "AZ-1",
+          "AZ-2",
+          "AZ-3",
+          "AZ-4",
+          "VL-5",
+          "DS-5",
+          "HX-5"
+        ],
+        "E2E": [
+          "E2E-18"
+        ]
+      },
+      "mocks": [
+        "MMS"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D9"
+      ],
+      "notes": "AZ-1..4: table-driven sweep over every /claims/:id/* route, /progress and /admin/* with a farmer token; 404/403 with no side effects. DS-2 here is the backend dev-storage test (the FE draft-storage family is DRF)."
+    },
+    {
+      "id": "S18",
+      "name": "Human review and appeal",
+      "tests": {
+        "U": [
+          {
+            "repo": "backend",
+            "file": "tests/admin.unit.test.js",
+            "title": "appeal",
+            "label": "admin.unit appeal tests"
+          }
+        ],
+        "I/API": [
+          "MR-1",
+          "MR-2",
+          "MR-3",
+          "MR-4",
+          "MR-5",
+          "MR-6",
+          "MR-7",
+          "MR-8",
+          "HD-4",
+          "SA-1",
+          "AD-2",
+          "AD-3",
+          {
+            "repo": "backend",
+            "file": "tests/admin.api.test.js",
+            "title": "appeal",
+            "label": "admin.api appeal tests"
+          },
+          "AD-4"
+        ],
+        "E2E": [
+          "E2E-19a",
+          "E2E-19b"
+        ]
+      },
+      "mocks": [
+        "FG(no_damage)"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D8",
+        "D9"
+      ],
+      "notes": "Critique B2/E3: E2E-19a uses the admin override from a held claim (D8, owner decision recorded in the plan), not review-case resolution. E2E-19b: out_of_limit -> farmer appeals -> admin resolves."
+    },
+    {
+      "id": "S19",
+      "name": "Tamil and English statuses",
+      "tests": {
+        "U": [
+          "PRG-10"
+        ],
+        "FE-U": [
+          {
+            "repo": "frontend",
+            "file": "src/i18n.test.ts",
+            "label": "FE i18n parity (existing)"
+          },
+          "I18N-P1",
+          "I18N-P2",
+          "I18N-P3"
+        ],
+        "E2E": [
+          "E2E-20"
+        ]
+      },
+      "mocks": [],
+      "severity": "S3",
+      "releaseBlocking": true,
+      "decisionRefs": [],
+      "notes": "I18N-P1..3: every contract key has en and ta strings and the ta string differs from en. PRG-10: builder keys are a subset of docs/architecture/progress-contract-v1.json. E2E-20: Tamil-script ratio >= 0.5, no raw progress./action./PROVIDER_ strings. Tamil copy still needs native-speaker review (external)."
+    },
+    {
+      "id": "S20",
+      "name": "Mobile and desktop tracker",
+      "tests": {
+        "FE-U": [
+          "TRK-*"
+        ],
+        "E2E": [
+          "E2E-21"
+        ]
+      },
+      "mocks": [],
+      "severity": "S3",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D4"
+      ],
+      "notes": "E2E-21 runs on desktop-chromium (1440x900) and mobile-chromium (Pixel 7): no horizontal overflow, every stage visible, accessible nav names, screenshots."
+    },
+    {
+      "id": "S21",
+      "name": "Refresh or reopen while processing",
+      "tests": {
+        "FE-U": [
+          "POLL-*",
+          "RT-*"
+        ],
+        "E2E": [
+          "E2E-22"
+        ]
+      },
+      "mocks": [
+        "PR"
+      ],
+      "severity": "S2",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D7"
+      ],
+      "notes": "POLL-* covers resume on mount. RT-* (hash routing) is added beyond the design table because the deep link surviving a reload is what makes reopen possible (plan B2). E2E-22: pause the worker, submit, reload lands on the same tracker, resume and the tracker advances with no user action."
+    },
+    {
+      "id": "S22",
+      "name": "API failure and status recovery",
+      "tests": {
+        "I/API": [
+          "EQ-4"
+        ],
+        "FE-U": [
+          "POLL-*"
+        ],
+        "E2E": [
+          "E2E-23"
+        ]
+      },
+      "mocks": [
+        "PR"
+      ],
+      "severity": "S2",
+      "releaseBlocking": true,
+      "decisionRefs": [],
+      "notes": "E2E-23: /progress routed to 503 three times -> refresh-error state, last-updated unchanged, no stage goes backwards; unroute and it recovers."
+    },
+    {
+      "id": "S23",
+      "name": "No fake progress and no premature completion",
+      "tests": {
+        "U": [
+          "SD-*"
+        ],
+        "I/API": [
+          "PRG-2",
+          "PRG-3",
+          "VF-2",
+          "VF-4"
+        ],
+        "E2E": [
+          "E2E-24"
+        ]
+      },
+      "mocks": [
+        "PR",
+        "control"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D1"
+      ],
+      "notes": "SD: IMAGERY_FOUND with processing off is never passed. VF-4 is rewritten to assert satellite is non-blocking under all three policies (critique B1). E2E-24: MutationObserver DOM statuses always equal the latest /progress response; completion only after the API reports decided."
+    },
+    {
+      "id": "S24",
+      "name": "Final decision matches the deterministic policy",
+      "tests": {
+        "U": [
+          "PV-1",
+          "PV-2",
+          "PV-3",
+          "PV-4",
+          "PV-5",
+          "PV-6",
+          "PV-7",
+          "CG-13"
+        ],
+        "I/API": [
+          "DC-1",
+          "DC-2",
+          "DC-3",
+          "DC-4",
+          "DC-5",
+          "DC-6",
+          "DC-7",
+          "DC-8",
+          "DC-9",
+          "DC-10",
+          "DC-11",
+          "DC-12",
+          "DC-13"
+        ],
+        "E2E": [
+          "E2E-25"
+        ]
+      },
+      "mocks": [
+        "all"
+      ],
+      "severity": "S1",
+      "releaseBlocking": true,
+      "decisionRefs": [
+        "D2"
+      ],
+      "notes": "DC-1..12: for each scripts/e2e/scenarios.json row, API + worker outcome equals decide() from scripts/eval/fusion.eval.js, and assessment.policy equals resolvePolicy('v1.1-safe-ai'). PV-7 (technical hold inside the engine) is included per plan A11. E2E-25: UI decision == API claim.state == scenarios.json expected.outcome."
+    }
+  ]
+}

@@ -12,3 +12,11 @@ docs
 vitest.config.js
 .vscode
 .DS_Store
+# Dev, evaluation and infrastructure material never runs in the Lambda image.
+scripts/e2e
+scripts/acceptance
+scripts/live
+scripts/eval
+.rag-local
+test-results
+infra

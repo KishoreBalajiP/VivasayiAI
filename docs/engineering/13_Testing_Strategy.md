@@ -5,12 +5,59 @@
 > - **Version:** 1.0
 > - **Status:** `[ACTIVE]`
 > - **Owner:** QA / Engineering
-> - **Last Reviewed:** 2026-08-07
+> - **Last Reviewed:** 2026-10-17 (§0 added; §1-§10 are the August 2026 plan)
 > - **Related Documents:** [10_User_Flows](../product/10_User_Flows.md) · [09_AI_Architecture](../architecture/09_AI_Architecture.md) · [12_Technical_Guidelines](12_Technical_Guidelines.md) · [14_Deployment](14_Deployment.md) · [15_Security](15_Security.md)
 
-> **Why this document exists:** There are **zero automated tests** in this codebase today (`npm test` errors out), yet this product's credibility depends on answer accuracy and security. This document defines the test strategy across the stack — including how to test an AI system, which is unusual — so quality is built, not retrofitted.
+> **Why this document exists:** When this was written (August 2026) there were **zero automated tests** (`npm test` errored out); §0 describes the suites that exist now. The product's credibility depends on answer accuracy and security. This document defines the test strategy across the stack — including how to test an AI system, which is unusual — so quality is built, not retrofitted.
 
 ---
+
+## 0. Current state (2026-10-17)
+
+The test suites below exist and pass. **All of them run with an in-memory or loopback MongoDB and mocked or fake providers.** A pass shows the code behaves as specified (automated-test verified); it does not show that Gemini, Copernicus, Cognito or S3 work live, or that decisions are accurate on real claims. Live status is in [LIVE_PROVIDER_REQUIREMENTS.md](LIVE_PROVIDER_REQUIREMENTS.md) and [ACCEPTANCE_MATRIX_2026-10-17.md](ACCEPTANCE_MATRIX_2026-10-17.md).
+
+### 0.1 Levels and commands
+
+| Level | Where | Command | Notes |
+|---|---|---|---|
+| Backend unit and integration | `tests/` (81 test files) | `npm test` (`vitest run`) | mongodb-memory-server; supertest against the real Express app; providers mocked or faked. Child-process tests kill a real worker (`tests/worker.crashRecovery.test.js`) |
+| Backend syntax | every `.js` file | part of `npm run acceptance` (`node --check`) | The backend has no lint or build step; both are recorded as N/A |
+| Frontend unit and component | `VivasayiAI-Frontend/src/**/*.test.ts(x)` | `npm test` in the frontend | jsdom, Testing Library |
+| Frontend static | | `npm run typecheck`, `npm run lint`, `npm run build`, `npm run contract:check` | `contract:check` compares the progress-contract copy with the backend's |
+| End to end | `VivasayiAI-Frontend/e2e/` | `npm run e2e` in the frontend (`npm run e2e:install` once) | Playwright 1.63.0, desktop and mobile Chromium, against the hermetic backend harness (below). See the frontend's [`e2e/README.md`](../../../VivasayiAI-Frontend/e2e/README.md) |
+| Synthetic benchmarks | `scripts/eval/` | `npm run eval` | Deterministic; results in `docs/research/evaluation/results/` |
+| Research integrity | | `npm run manuscript:numbers`; frozen-hash check in the acceptance run | Every manuscript number is generated; the 16 October live outputs are pinned by SHA-256 |
+| Live provider scripts | `scripts/live/` | run by hand, never in CI or the acceptance run | Write-once outputs; Gemini scripts BLOCKED until a billed key (D6) |
+
+### 0.2 Hermetic e2e harness (ADR-024)
+
+`npm run e2e:backend` (`scripts/e2e/hermeticBackend.js`) starts the real API and verification worker on a throw-away MongoDB with: the committed `scripts/e2e/e2e.env` (never `.env`); a fake Gemini that recognises the real prompts and plays scenarios from `scripts/e2e/scenarios.json`; mock storage, land records, weather and satellite; a loopback-only network guard that blocks and records every other connection; and a token-protected control server (sessions, scenarios, pause or kill the worker, read-only inspection). It refuses production, Lambda, live credentials and non-loopback databases. Playwright starts two harnesses (worker inline, and worker as a separate process for the crash test) and Vite, and fails any test with a network violation.
+
+### 0.3 Acceptance runner and report
+
+`npm run acceptance && npm run acceptance:report` (`scripts/acceptance/runAll.js`, `report.js`) runs, in order: backend vitest, the backend `node --check` sweep, frontend typecheck, lint and build, frontend vitest, Playwright, the manuscript-numbers check and the frozen-hash check, with blank live credentials and `VIVASAYI_SKIP_DOTENV=1`. It records both repositories' git state at the start and end. The report maps tests to the 24 scenarios S01-S24 (`scripts/acceptance/matrix.json`) and to acceptance items (`acceptanceItems.json`), separates code defects from external blockers (`triage.json`), and writes:
+
+- `test-results/acceptance/results-<runId>.json` (schema `vivasayi-test-results/v1`, `scripts/acceptance/results.schema.json`);
+- `test-results/acceptance/REPORT-<runId>.md`.
+
+Tests are matched to scenarios by an ID prefix in their title (`EQ-1: ...`). 789 tests have no prefix and 64 IDs are shared by more than one test (see [KNOWN_ISSUES.md](KNOWN_ISSUES.md) K-42).
+
+### 0.4 Latest results
+
+| Suite | Result | Source |
+|---|---|---|
+| Backend vitest | 1,133 of 1,133 in the run; **1,135 of 1,135** on the final tree after two audit gaps were closed | run `20261016T205016Z-6dbe6b8`; audit A re-run (`test-results/audit/A.json`) |
+| Frontend vitest | 726 of 726 | same run |
+| Playwright | 90 of 90 (45 desktop, 45 mobile), 0 flaky, 0 network violations, 21.9 min; re-run on the final tree 90 of 90 (21.4 min, exit 0) | same run; `test-results/audit/final-e2e.log` |
+| Frontend typecheck, lint, build; backend `node --check` (273 files) | passed | same run |
+| Manuscript numbers; frozen hashes (8 files) | passed (1 warning: source ledger unconfirmed) | same run |
+| **Total** | **1,949 of 1,949** in the run; 24 of 24 scenarios | [REPORT-20261016T205016Z-6dbe6b8.md](../../test-results/acceptance/REPORT-20261016T205016Z-6dbe6b8.md) |
+
+An independent audit (A: runner and code tracer; B: security, hermeticity and research integrity; C: mutation testing) checked the run; its findings are in [ACCEPTANCE_MATRIX_2026-10-17.md](ACCEPTANCE_MATRIX_2026-10-17.md).
+
+### 0.5 CI
+
+`.github/workflows/deploy-lambda.yml` runs `npx vitest run` on pushes to `main` and on pull requests to `main` and `develop`; the deploy job needs it. Frontend tests, Playwright and the acceptance run are **not** in CI, and the frontend repository has no CI.
 
 ## 1. Test pyramid (target)
 
@@ -107,7 +154,7 @@ The LLM is non-deterministic; test it with an **evaluation harness**, not assert
 - Staging: full stack with **real but rate-limited** AI providers + real Mongo (sanitized).
 - Production: never run tests against prod; use synthetic users in staging only.
 
-## 9. CI pipeline (planned)
+## 9. CI pipeline (planned; the CI that exists today is in §0.5)
 
 ```mermaid
 flowchart LR
