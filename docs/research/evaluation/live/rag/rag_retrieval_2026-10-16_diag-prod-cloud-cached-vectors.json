@@ -1,0 +1,2752 @@
+{
+  "name": "ragRetrievalLive",
+  "date": "2026-10-16",
+  "commit": "6dbe6b8",
+  "dirtyWorkingTree": true,
+  "dirty": true,
+  "backend": "chroma-cloud",
+  "condition": "diag-prod-cloud-cached-vectors",
+  "tag": "diag-prod-cloud-cached-vectors",
+  "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specPinned": true,
+  "pinnedSpecSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specGitChecked": true,
+  "indexManifestSha256": null,
+  "queryVectorsSha256": "4891e91276de40e487d8bccc70e70eadbb513c1be503838e6d635ae05319e098",
+  "description": "Live retrieval from a Chroma Cloud collection with production Cohere embeddings. Read-only.",
+  "config": {
+    "backend": "chroma-cloud",
+    "collection": "farming-documents",
+    "index": null,
+    "queryVectors": "docs/research/evaluation/live/rag/query_vectors_embed-english-v3.0.json",
+    "embeddingModel": "embed-english-v3.0",
+    "productionTopK": 3,
+    "evaluatedK": 5,
+    "distanceNote": "Chroma distance as returned by the collection (lower = closer); the collection's space was not altered or inspected beyond the query."
+  },
+  "corpus": {
+    "chunks": 450,
+    "files": 60,
+    "chunksByFileKind": {
+      "csv_statistics": 196,
+      "xls_html_table": 17,
+      "kml_geography": 237
+    },
+    "chunksByFile": {
+      "RICE_PestPredictionKnowledgeBase.csv": 13,
+      "Soil data.csv": 7,
+      "Tamilnadu agriculture yield data.csv": 9,
+      "acorus_vasambu.csv": 3,
+      "alovera.csv": 3,
+      "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv": 3,
+      "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv": 3,
+      "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv": 3,
+      "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv": 7,
+      "arecanut_curednuts_2016_17.csv": 3,
+      "bamboo_2016_17.csv": 3,
+      "betelvine_2016_17.csv": 3,
+      "cashewnut_2016_17.csv": 3,
+      "cocoa_2016_17.csv": 3,
+      "coconut_2016_17.csv": 3,
+      "coffee_2016_17.csv": 3,
+      "geranuim.csv": 3,
+      "gloriousa_superba.csv": 3,
+      "horizontal_crop_vertical_year_report (1).xls": 6,
+      "horizontal_year_vertical_crop_report.xls": 11,
+      "lemon_grass.csv": 3,
+      "medicinal_coleus.csv": 3,
+      "medicinal_crops_1.csv": 3,
+      "neem.csv": 3,
+      "oilpalm_2016_17.csv": 3,
+      "othermedicinal_plants.csv": 3,
+      "palmorosa.csv": 3,
+      "palmyrah_2016_17.csv": 3,
+      "peri_winkle.csv": 3,
+      "production_of_bajra_in_2017_18.csv": 3,
+      "production_of_bengal_gram_in_2017_18.csv": 3,
+      "production_of_black_gram_in_2017_18.csv": 3,
+      "production_of_cowpea_in_2017_18.csv": 3,
+      "production_of_green_gram_in_2017_18.csv": 3,
+      "production_of_horse_gram_in_2017_18.csv": 3,
+      "production_of_jowar_in_2017_18.csv": 3,
+      "production_of_korra_in_2017_18.csv": 3,
+      "production_of_maize_in_2017_18.csv": 3,
+      "production_of_other_cereals_in_2017_18.csv": 3,
+      "production_of_other_pulses_in_2017_18.csv": 3,
+      "production_of_ragi_in_2017_18.csv": 3,
+      "production_of_red_gram_in_2017_18.csv": 3,
+      "production_of_rice_in_2017_18.csv": 4,
+      "production_of_samai_in_2017_18.csv": 3,
+      "production_of_total_cereals_in_2017_18.csv": 3,
+      "production_of_total_pulses_in_2017_18.csv": 2,
+      "production_of_varagu_in_2017_18.csv": 3,
+      "rose_mary.csv": 3,
+      "rubber_2016_17.csv": 3,
+      "senna.csv": 3,
+      "silveroak_2016_17.csv": 3,
+      "tamil-nadu.kml": 237,
+      "tea_2016_17.csv": 3,
+      "thulasi_basil.csv": 3,
+      "timeseriesdata_prodtyandproduction_2.csv": 3,
+      "total_2016_17.csv": 3,
+      "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv": 4,
+      "total_aromatic_plants.csv": 3,
+      "total_medicinal_and_aromatic_plants.csv": 3,
+      "vanilla.csv": 3
+    }
+  },
+  "relevanceRule": "Answerable: relevant iff filename matches the a-priori expected-file pattern AND chunk text contains each required term group (district, and crop where stated). Advisory: answer-bearing is impossible by construction (no advisory text ingested); 'topical' = chunk text contains the topic term group. Labels are author-defined and mechanical; not human-judged.",
+  "queries": {
+    "total": 22,
+    "answerable": 13,
+    "advisory": 9,
+    "errors": 0
+  },
+  "summaryAtProductionTopK": {
+    "answerable": {
+      "hitRateAnyRelevant": {
+        "k": 2,
+        "n": 13,
+        "value": 0.1538
+      },
+      "top1Relevant": {
+        "k": 1,
+        "n": 13,
+        "value": 0.0769
+      },
+      "precisionOfChunks": {
+        "k": 2,
+        "n": 39,
+        "value": 0.0513
+      },
+      "anyExpectedFile": {
+        "k": 10,
+        "n": 13,
+        "value": 0.7692
+      }
+    },
+    "advisory": {
+      "answerBearingChunks": {
+        "k": 0,
+        "n": 27,
+        "value": 0
+      },
+      "topicalChunks": {
+        "k": 9,
+        "n": 27,
+        "value": 0.3333
+      },
+      "queriesWithAnyTopicalChunk": {
+        "k": 5,
+        "n": 9,
+        "value": 0.5556
+      }
+    },
+    "retrievedFileKinds": {
+      "csv_statistics": 61,
+      "xls_html_table": 5
+    },
+    "answerableExpectedFileHitsThatAreHeaderOnly": {
+      "k": 9,
+      "n": 11,
+      "value": 0.8182
+    },
+    "kmlChunksRetrieved": {
+      "k": 0,
+      "n": 66,
+      "value": 0
+    }
+  },
+  "summaryAtK5": {
+    "answerable": {
+      "hitRateAnyRelevant": {
+        "k": 2,
+        "n": 13,
+        "value": 0.1538
+      },
+      "top1Relevant": {
+        "k": 1,
+        "n": 13,
+        "value": 0.0769
+      },
+      "precisionOfChunks": {
+        "k": 4,
+        "n": 65,
+        "value": 0.0615
+      },
+      "anyExpectedFile": {
+        "k": 11,
+        "n": 13,
+        "value": 0.8462
+      }
+    },
+    "advisory": {
+      "answerBearingChunks": {
+        "k": 0,
+        "n": 45,
+        "value": 0
+      },
+      "topicalChunks": {
+        "k": 11,
+        "n": 45,
+        "value": 0.2444
+      },
+      "queriesWithAnyTopicalChunk": {
+        "k": 5,
+        "n": 9,
+        "value": 0.5556
+      }
+    },
+    "retrievedFileKinds": {
+      "csv_statistics": 100,
+      "kml_geography": 2,
+      "xls_html_table": 8
+    },
+    "answerableExpectedFileHitsThatAreHeaderOnly": {
+      "k": 11,
+      "n": 16,
+      "value": 0.6875
+    },
+    "kmlChunksRetrieved": {
+      "k": 2,
+      "n": 110,
+      "value": 0.0182
+    }
+  },
+  "sensitivity": {
+    "rowTextOnly": {
+      "rule": "Same frozen rule, applied to the chunk text without its File:/Table:/Columns:/Headers:/Data: lines, so a term counts only when it occurs in row text. Header names repeated inside 'header: value' pairs still count.",
+      "summaryAtProductionTopK": {
+        "answerable": {
+          "hitRateAnyRelevant": {
+            "k": 2,
+            "n": 13,
+            "value": 0.1538
+          },
+          "top1Relevant": {
+            "k": 1,
+            "n": 13,
+            "value": 0.0769
+          },
+          "precisionOfChunks": {
+            "k": 2,
+            "n": 39,
+            "value": 0.0513
+          },
+          "anyExpectedFile": {
+            "k": 10,
+            "n": 13,
+            "value": 0.7692
+          }
+        },
+        "advisory": {
+          "answerBearingChunks": {
+            "k": 0,
+            "n": 27,
+            "value": 0
+          },
+          "topicalChunks": {
+            "k": 5,
+            "n": 27,
+            "value": 0.1852
+          },
+          "queriesWithAnyTopicalChunk": {
+            "k": 3,
+            "n": 9,
+            "value": 0.3333
+          }
+        },
+        "retrievedFileKinds": {
+          "csv_statistics": 61,
+          "xls_html_table": 5
+        },
+        "answerableExpectedFileHitsThatAreHeaderOnly": {
+          "k": 9,
+          "n": 11,
+          "value": 0.8182
+        },
+        "kmlChunksRetrieved": {
+          "k": 0,
+          "n": 66,
+          "value": 0
+        }
+      },
+      "summaryAtK5": {
+        "answerable": {
+          "hitRateAnyRelevant": {
+            "k": 2,
+            "n": 13,
+            "value": 0.1538
+          },
+          "top1Relevant": {
+            "k": 1,
+            "n": 13,
+            "value": 0.0769
+          },
+          "precisionOfChunks": {
+            "k": 4,
+            "n": 65,
+            "value": 0.0615
+          },
+          "anyExpectedFile": {
+            "k": 11,
+            "n": 13,
+            "value": 0.8462
+          }
+        },
+        "advisory": {
+          "answerBearingChunks": {
+            "k": 0,
+            "n": 45,
+            "value": 0
+          },
+          "topicalChunks": {
+            "k": 7,
+            "n": 45,
+            "value": 0.1556
+          },
+          "queriesWithAnyTopicalChunk": {
+            "k": 3,
+            "n": 9,
+            "value": 0.3333
+          }
+        },
+        "retrievedFileKinds": {
+          "csv_statistics": 100,
+          "kml_geography": 2,
+          "xls_html_table": 8
+        },
+        "answerableExpectedFileHitsThatAreHeaderOnly": {
+          "k": 11,
+          "n": 16,
+          "value": 0.6875
+        },
+        "kmlChunksRetrieved": {
+          "k": 2,
+          "n": 110,
+          "value": 0.0182
+        }
+      }
+    }
+  },
+  "distances": {
+    "top1Answerable": {
+      "n": 13,
+      "mean": 1,
+      "median": 1.0305,
+      "p95": 1.2844,
+      "min": 0.7207,
+      "max": 1.2844,
+      "sum": 12.9986
+    },
+    "top1Advisory": {
+      "n": 9,
+      "mean": 1.31,
+      "median": 1.3406,
+      "p95": 1.4539,
+      "min": 1.1005,
+      "max": 1.4539,
+      "sum": 11.8283
+    },
+    "relevantChunks": {
+      "n": 4,
+      "mean": 1.1,
+      "median": 1.1439,
+      "p95": 1.286,
+      "min": 0.7207,
+      "max": 1.286,
+      "sum": 4.3992
+    },
+    "irrelevantChunksAnswerable": {
+      "n": 61,
+      "mean": 1.12,
+      "median": 1.1328,
+      "p95": 1.2928,
+      "min": 0.7525,
+      "max": 1.3067,
+      "sum": 68.3029
+    }
+  },
+  "latencyMs": {
+    "embed": {
+      "n": 0,
+      "mean": null,
+      "median": null,
+      "p95": null,
+      "min": null,
+      "max": null,
+      "sum": null
+    },
+    "query": {
+      "n": 22,
+      "mean": 416.32,
+      "median": 277,
+      "p95": 851,
+      "min": 265,
+      "max": 990,
+      "sum": 9159
+    }
+  },
+  "rows": [
+    {
+      "id": "A1",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "rice production in Thanjavur district 2017-18",
+      "embedMs": null,
+      "queryMs": 851,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 0.7525,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam"
+        },
+        {
+          "rank": 2,
+          "filename": "timeseriesdata_prodtyandproduction_2.csv",
+          "chunkIndex": 0,
+          "distance": 1.0365,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: timeseriesdata_prodtyandproduction_2.csv Headers: Year,PADDY (RICE)Productivity Kg./Hec.,PADDY (RICE)Production �000 Tonnes,CHOLAM Productivity Kg./Hec.,C"
+        },
+        {
+          "rank": 3,
+          "filename": "cocoa_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.0929,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,TamilNadu,Thanjavur,364,218.4,0.60 Row 20: 20,TamilNadu,Theni,86,5.16,0.06 Row 21: 21,TamilNadu,The Nilgiris,70,70,1.00 Row 22: 22,TamilNadu,Tiruvall"
+        },
+        {
+          "rank": 4,
+          "filename": "bamboo_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.0958,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 18: 18,TamilNadu,Sivagangai,4,80.64,20.16 Row 19: 19,TamilNadu,Thanjavur,81,1632.96,20.16 Row 20: 20,TamilNadu,Theni,6,120.96,20.16 Row 21: 21,TamilNadu,The"
+        },
+        {
+          "rank": 5,
+          "filename": "betelvine_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.0968,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,TamilNadu,Thanjavur,177,3026.7,17.10 Row 20: 20,TamilNadu,Theni,35,490,14.00 Row 21: 21,TamilNadu,The Nilgiris,0,0,0.00 Row 22: 22,TamilNadu,Tiruvall"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A2",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "maize production in Dindigul district",
+      "embedMs": null,
+      "queryMs": 614,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_maize_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 1.034,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: production_of_maize_in_2017_18.csv Headers: S.No,State,District,Production of Maize in Kharif Season (in Tonnes),Production of Maize in Rabi Season (in To"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 6,
+          "distance": 1.1131,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0 Row 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,1"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 4,
+          "distance": 1.1222,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 39: Tamil Nadu,ARIYALUR,2009,Whole Year,Ragi,47,130 Row 40: Tamil Nadu,ARIYALUR,2009,Whole Year,Sesamum,1652,452 Row 41: Tamil Nadu,ARIYALUR,2009,Whole Year"
+        },
+        {
+          "rank": 4,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 6,
+          "distance": 1.1263,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 66: Tamil Nadu,ARIYALUR,2011,Rabi,Cotton(lint),150,413 Row 67: Tamil Nadu,ARIYALUR,2011,Rabi,Groundnut,3028,18093 Row 68: Tamil Nadu,ARIYALUR,2011,Rabi,Jowa"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 3,
+          "distance": 1.1328,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A3",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "ragi production in Krishnagiri",
+      "embedMs": null,
+      "queryMs": 265,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_ragi_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 1.1121,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: production_of_ragi_in_2017_18.csv Headers: S.No,State,District,Production of Ragi in Kharif Season (in Tonnes),Production of Ragi in Rabi Season (in Tonne"
+        },
+        {
+          "rank": 2,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 1,
+          "distance": 1.2181,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: Tamil Nadu,ARIYALUR,2008,Kharif,Rice,24574, Row 2: Tamil Nadu,ARIYALUR,2008,Whole Year,Arhar/Tur,209, Row 3: Tamil Nadu,ARIYALUR,2008,Whole Year,Ba"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 4,
+          "distance": 1.2382,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 39: Tamil Nadu,ARIYALUR,2009,Whole Year,Ragi,47,130 Row 40: Tamil Nadu,ARIYALUR,2009,Whole Year,Sesamum,1652,452 Row 41: Tamil Nadu,ARIYALUR,2009,Whole Year"
+        },
+        {
+          "rank": 4,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 5,
+          "distance": 1.2513,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 52: Tamil Nadu,ARIYALUR,2010,Kharif,Moong(Green Gram),4,2 Row 53: Tamil Nadu,ARIYALUR,2010,Kharif,Ragi,42,109 Row 54: Tamil Nadu,ARIYALUR,2010,Kharif,Rice,2"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 7,
+          "distance": 1.2551,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 79: Tamil Nadu,ARIYALUR,2011,Whole Year,Onion,26,329 Row 80: Tamil Nadu,ARIYALUR,2011,Whole Year,Small millets,259,705 Row 81: Tamil Nadu,ARIYALUR,2011,Whol"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A4",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "soil nitrogen phosphorus potassium and pH values for Coimbatore",
+      "embedMs": null,
+      "queryMs": 488,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "Soil data.csv",
+          "chunkIndex": 0,
+          "distance": 1.0305,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: Soil data.csv Headers: District,Nitrogen Value,Phosphorous value,Potassium value,pH"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 4,
+          "distance": 1.1361,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0 Row 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.2366,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,98,0,98,98,0,98,1.00 Row 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11 Row 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27 Row 4: 4"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.2555,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        },
+        {
+          "rank": 5,
+          "filename": "tamil-nadu.kml",
+          "chunkIndex": 1,
+          "distance": 1.2556,
+          "fileKind": "kml_geography",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: <kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" xmlns:kml=\"http://www.opengis.net/kml/2.2\" xmlns:atom=\"htt"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A5",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "area irrigated by wells in Villupuram district",
+      "embedMs": null,
+      "queryMs": 521,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 0.8885,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Headers: S.No,District,Gross Area irrigated by Government Tube Wells / Bore Wells (in ha),Gross Area irrigated by Private Tube Wells / Bore Wells (in ha),Total "
+        },
+        {
+          "rank": 2,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 0.9324,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv Headers: S.No,District,Total Gross Area irrigated (excluding Supplementary Wells) (in h"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 0.9584,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Other Sources (Springs, Jungle S"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 0.9706,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Tanks (Lakes, Ponds, Fords, Streams) (in"
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 0.9759,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_canals_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Canals (Rivers, System Tanks etc.) (in "
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A6",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "area irrigated by tanks in Ramanathapuram",
+      "embedMs": null,
+      "queryMs": 277,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 0.9112,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Tanks (Lakes, Ponds, Fords, Streams) (in"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 0.9499,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_canals_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Canals (Rivers, System Tanks etc.) (in "
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 1.0892,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Other Sources (Springs, Jungle S"
+        },
+        {
+          "rank": 4,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 1.1189,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv Headers: S.No,District,Total Gross Area irrigated (excluding Supplementary Wells) (in h"
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.1565,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Headers: S.No,District,Gross Area irrigated by Government Tube Wells / Bore Wells (in ha),Gross Area irrigated by Private Tube Wells / Bore Wells (in ha),Total "
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A7",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "tea area and production in the Nilgiris",
+      "embedMs": null,
+      "queryMs": 297,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "arecanut_curednuts_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.1414,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,TamilNadu,Theni,30,26,0.87 Row 21: 21,TamilNadu,The Nilgiris,343,709,2.07 Row 22: 22,TamilNadu,Tiruvallur,0,0,0.00 Row 23: 23,TamilNadu,Tiruvannamala"
+        },
+        {
+          "rank": 2,
+          "filename": "palmyrah_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.1432,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,TamilNadu,Theni,10,120,12 Row 21: 21,TamilNadu,The Nilgiris,0,0,12 Row 22: 22,TamilNadu,Tiruvallur,53,636,12 Row 23: 23,TamilNadu,Tiruvannamalai,2,24"
+        },
+        {
+          "rank": 3,
+          "filename": "tea_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.1439,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,TamilNadu,Theni,1672,17556,10.50 Row 21: 21,TamilNadu,The Nilgiris,56036,526738.4,9.40 Row 22: 22,TamilNadu,Tiruvallur,0,0,0.00 Row 23: 23,TamilNadu,"
+        },
+        {
+          "rank": 4,
+          "filename": "rubber_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.1447,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,TamilNadu,Theni,0,0,0.00 Row 21: 21,TamilNadu,The Nilgiris,158,176.96,1.12 Row 22: 22,TamilNadu,Tiruvallur,0,0,0.00 Row 23: 23,TamilNadu,Tiruvannamal"
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 6,
+          "distance": 1.1453,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0 Row 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,1"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A8",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "black gram production in Tiruvarur district",
+      "embedMs": null,
+      "queryMs": 279,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_black_gram_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 0.9505,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: production_of_black_gram_in_2017_18.csv Headers: S.No,State,District,Production of Black Gram in Kharif Season (in Tonnes),Production of Black Gram in Rab"
+        },
+        {
+          "rank": 2,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 7,
+          "distance": 1.131,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 79: Tamil Nadu,ARIYALUR,2011,Whole Year,Onion,26,329 Row 80: Tamil Nadu,ARIYALUR,2011,Whole Year,Small millets,259,705 Row 81: Tamil Nadu,ARIYALUR,2011,Whol"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 2,
+          "distance": 1.1394,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 14: Tamil Nadu,ARIYALUR,2008,Whole Year,Moong(Green Gram),39, Row 15: Tamil Nadu,ARIYALUR,2008,Whole Year,Onion,21, Row 16: Tamil Nadu,ARIYALUR,2008,Whole Y"
+        },
+        {
+          "rank": 4,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 1,
+          "distance": 1.1426,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: Tamil Nadu,ARIYALUR,2008,Kharif,Rice,24574, Row 2: Tamil Nadu,ARIYALUR,2008,Whole Year,Arhar/Tur,209, Row 3: Tamil Nadu,ARIYALUR,2008,Whole Year,Ba"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 4,
+          "distance": 1.1582,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 39: Tamil Nadu,ARIYALUR,2009,Whole Year,Ragi,47,130 Row 40: Tamil Nadu,ARIYALUR,2009,Whole Year,Sesamum,1652,452 Row 41: Tamil Nadu,ARIYALUR,2009,Whole Year"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A9",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "sugarcane area and production in Erode district",
+      "embedMs": null,
+      "queryMs": 268,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 1.0983,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 4,
+          "distance": 1.1046,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0 Row 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549"
+        },
+        {
+          "rank": 3,
+          "filename": "coconut_2016_17.csv",
+          "chunkIndex": 0,
+          "distance": 1.1227,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: coconut_2016_17.csv Headers: S.No,State,District,area(HA),production(in lakh nuts),production(MT),productivity(MT/HA)"
+        },
+        {
+          "rank": 4,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 0,
+          "distance": 1.1265,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: Tamilnadu agriculture yield data.csv Headers: State_Name,District_Name,Crop_Year,Season,Crop,Area,Production"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 3,
+          "distance": 1.1383,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A10",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "coconut production in Salem district",
+      "embedMs": null,
+      "queryMs": 277,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "coconut_2016_17.csv",
+          "chunkIndex": 0,
+          "distance": 0.9883,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": true,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: coconut_2016_17.csv Headers: S.No,State,District,area(HA),production(in lakh nuts),production(MT),productivity(MT/HA)"
+        },
+        {
+          "rank": 2,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 1.1334,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 3,
+          "distance": 1.1347,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+        },
+        {
+          "rank": 4,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 6,
+          "distance": 1.1552,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 66: Tamil Nadu,ARIYALUR,2011,Rabi,Cotton(lint),150,413 Row 67: Tamil Nadu,ARIYALUR,2011,Rabi,Groundnut,3028,18093 Row 68: Tamil Nadu,ARIYALUR,2011,Rabi,Jowa"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 1,
+          "distance": 1.1677,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: Tamil Nadu,ARIYALUR,2008,Kharif,Rice,24574, Row 2: Tamil Nadu,ARIYALUR,2008,Whole Year,Arhar/Tur,209, Row 3: Tamil Nadu,ARIYALUR,2008,Whole Year,Ba"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A11",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "area under neem cultivation in Madurai",
+      "embedMs": null,
+      "queryMs": 990,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 6,
+          "distance": 1.0862,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0 Row 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,1"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.0933,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 4,
+          "distance": 1.1263,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0 Row 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.147,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12 Row 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00 Row 20: 20,Thanjavur,21"
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.1477,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10 Row 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01 Row 20: 20,Thanjavur,98,0,98,98,0,98,1.00 Row 21: 2"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A12",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "rice pest incidence and weather observations (pest prediction data)",
+      "embedMs": null,
+      "queryMs": 277,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 0,
+          "distance": 0.7207,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: RICE_PestPredictionKnowledgeBase.csv Headers: Observation Year,Standard Week,Pest Value,Collection Type,MaxT,MinT,RH1(%),RH2(%),RF(mm),WS(kmph),SSH(hrs),E"
+        },
+        {
+          "rank": 2,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 1.2013,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam"
+        },
+        {
+          "rank": 3,
+          "filename": "timeseriesdata_prodtyandproduction_2.csv",
+          "chunkIndex": 0,
+          "distance": 1.207,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": true,
+          "snippet": "File: timeseriesdata_prodtyandproduction_2.csv Headers: Year,PADDY (RICE)Productivity Kg./Hec.,PADDY (RICE)Production �000 Tonnes,CHOLAM Productivity Kg./Hec.,C"
+        },
+        {
+          "rank": 4,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 1,
+          "distance": 1.2486,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 2003,1,0,Number/hill,27.9,14.8,94.7,51.3,0,3.1,8.7,2.7,Brownplanthopper,Cuttack Row 2: 2003,2,0,Number/hill,27.2,15,93.9,53.1,0,2.1,8.7,2.4,Brownpl"
+        },
+        {
+          "rank": 5,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 3,
+          "distance": 1.286,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 2003,19,0,Number/hill,34.5,25.3,88.3,62.3,28,7.5,8,4.9,Brownplanthopper,Cuttack Row 20: 2003,20,0,Number/hill,35.4,26.2,86.9,49.3,0,6.3,11.1,6.5,Brownpl"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "A13",
+      "kind": "answerable",
+      "lang": "ta",
+      "query": "தஞ்சாவூர் மாவட்ட நெல் உற்பத்தி",
+      "embedMs": null,
+      "queryMs": 516,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.2844,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 6,
+          "distance": 1.2928,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0 Row 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,1"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 5,
+          "distance": 1.2983,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 52: Tamil Nadu,ARIYALUR,2010,Kharif,Moong(Green Gram),4,2 Row 53: Tamil Nadu,ARIYALUR,2010,Kharif,Ragi,42,109 Row 54: Tamil Nadu,ARIYALUR,2010,Kharif,Rice,2"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.3024,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,Thanjavur,0,0,0,0,0,0,0.00 Row 21: 21,Tiruvarur,0,0,0,0,0,0,0.00 Row 22: 22,Nagapattinam,0,790,790,0,738,738,1.07 Row 23: 23,Madurai,0,0,0,0,0,0,0.00"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 6,
+          "distance": 1.3067,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 66: Tamil Nadu,ARIYALUR,2011,Rabi,Cotton(lint),150,413 Row 67: Tamil Nadu,ARIYALUR,2011,Rabi,Groundnut,3028,18093 Row 68: Tamil Nadu,ARIYALUR,2011,Rabi,Jowa"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ]
+    },
+    {
+      "id": "B1",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how to control stem borer in paddy",
+      "embedMs": null,
+      "queryMs": 275,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 0,
+          "distance": 1.2856,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": true,
+          "snippet": "File: RICE_PestPredictionKnowledgeBase.csv Headers: Observation Year,Standard Week,Pest Value,Collection Type,MaxT,MinT,RH1(%),RH2(%),RF(mm),WS(kmph),SSH(hrs),E"
+        },
+        {
+          "rank": 2,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 3,
+          "distance": 1.3223,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 19: 2003,19,0,Number/hill,34.5,25.3,88.3,62.3,28,7.5,8,4.9,Brownplanthopper,Cuttack Row 20: 2003,20,0,Number/hill,35.4,26.2,86.9,49.3,0,6.3,11.1,6.5,Brownpl"
+        },
+        {
+          "rank": 3,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 2,
+          "distance": 1.3252,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 10: 2003,10,0,Number/hill,31.1,21.5,95.3,54.7,0,3.5,7.5,4.2,Brownplanthopper,Cuttack Row 11: 2003,11,0,Number/hill,31.7,22.8,93.4,58.1,41.1,4.7,7,3.9,Brownp"
+        },
+        {
+          "rank": 4,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 6,
+          "distance": 1.3349,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 43: 2003,43,4.4,Number/hill,31.4,24.9,94.7,68.3,45.4,2.3,6.7,3,Brownplanthopper,Cuttack Row 44: 2003,44,1.3,Number/hill,29.1,23.1,94.7,75.4,39.8,4.8,4.9,2.7"
+        },
+        {
+          "rank": 5,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 4,
+          "distance": 1.3395,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 27: 2003,27,0,Number/hill,31,26.1,93.9,83.4,115.8,5.5,1.9,2.2,Brownplanthopper,Cuttack Row 28: 2003,28,0,Number/hill,30.7,24.9,96.3,82.3,115.2,5.2,0.9,1.7,B"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        }
+      ]
+    },
+    {
+      "id": "B2",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "when should I irrigate sugarcane in summer",
+      "embedMs": null,
+      "queryMs": 265,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.3406,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Headers: S.No,District,Gross Area irrigated by Government Tube Wells / Bore Wells (in ha),Gross Area irrigated by Private Tube Wells / Bore Wells (in ha),Total "
+        },
+        {
+          "rank": 2,
+          "filename": "horizontal_year_vertical_crop_report.xls",
+          "chunkIndex": 2,
+          "distance": 1.3941,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 4: <th rowspan=\"2\">State/Crop/District</th> Row 5: <th rowspan=\"2\">Season</th> Row 6: <th colspan=\"3\">1997 - 1998</th><th colspan=\"3\">1998 - 1999</th><th co"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 1.4327,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Other Sources (Springs, Jungle S"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 1.439,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_canals_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Canals (Rivers, System Tanks etc.) (in "
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 1.4396,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Tanks (Lakes, Ponds, Fords, Streams) (in"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        }
+      ]
+    },
+    {
+      "id": "B3",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how much urea per acre should I apply for paddy",
+      "embedMs": null,
+      "queryMs": 274,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "timeseriesdata_prodtyandproduction_2.csv",
+          "chunkIndex": 0,
+          "distance": 1.2302,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": true,
+          "snippet": "File: timeseriesdata_prodtyandproduction_2.csv Headers: Year,PADDY (RICE)Productivity Kg./Hec.,PADDY (RICE)Production �000 Tonnes,CHOLAM Productivity Kg./Hec.,C"
+        },
+        {
+          "rank": 2,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 1.2643,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": true,
+          "snippet": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam"
+        },
+        {
+          "rank": 3,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 0,
+          "distance": 1.282,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv Headers: S.No,District,Total Gross Area irrigated (excluding Supplementary Wells) (in h"
+        },
+        {
+          "rank": 4,
+          "filename": "horizontal_year_vertical_crop_report.xls",
+          "chunkIndex": 6,
+          "distance": 1.3074,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "<br>(Hectare)</th><th count=\"14\">Production <br> (Tonnes)</th><th count=\"14\">Yield <br> (Ton./Ha.)</th><th count=\"15\">Area <br>(Hectare)</th><th count=\"15\">Prod"
+        },
+        {
+          "rank": 5,
+          "filename": "horizontal_year_vertical_crop_report.xls",
+          "chunkIndex": 7,
+          "distance": 1.3153,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "(Tonnes)</th><th count=\"20\">Yield <br> (Ton./Ha.)</th><th count=\"21\">Area <br>(Hectare)</th><th count=\"21\">Production <br> (Tonnes)</th><th count=\"21\">Yield <br"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        }
+      ]
+    },
+    {
+      "id": "B4",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "my banana leaves are turning yellow, what should I do",
+      "embedMs": null,
+      "queryMs": 509,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 7,
+          "distance": 1.4112,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 52: 2003,52,0,Number/hill,26.8,12.9,93.6,37.9,0,1.6,8.7,2.9,Brownplanthopper,Cuttack Row 53: 1959,1,1,Number/Light trap,26.8,12.2,83.6,44,0,2.7,10,3,Gallmid"
+        },
+        {
+          "rank": 2,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 2,
+          "distance": 1.4618,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": false,
+          "snippet": "Row 14: Tamil Nadu,ARIYALUR,2008,Whole Year,Moong(Green Gram),39, Row 15: Tamil Nadu,ARIYALUR,2008,Whole Year,Onion,21, Row 16: Tamil Nadu,ARIYALUR,2008,Whole Y"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 3,
+          "distance": 1.462,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": false,
+          "snippet": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+        },
+        {
+          "rank": 4,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 11,
+          "distance": 1.4712,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 88: 1959,36,49,Number/Light trap,30.7,25.2,92.6,76,47.5,4.7,2.7,1.4,Gallmidge,Cuttack Row 89: 1959,37,8,Number/Light trap,30.6,25.4,89,76,34,5,4.3,2.8,Gallm"
+        },
+        {
+          "rank": 5,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 3,
+          "distance": 1.4724,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 19: 2003,19,0,Number/hill,34.5,25.3,88.3,62.3,28,7.5,8,4.9,Brownplanthopper,Cuttack Row 20: 2003,20,0,Number/hill,35.4,26.2,86.9,49.3,0,6.3,11.1,6.5,Brownpl"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": true
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": true
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        }
+      ]
+    },
+    {
+      "id": "B5",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "which crop should I grow after samba paddy in the Cauvery delta",
+      "embedMs": null,
+      "queryMs": 271,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 0,
+          "distance": 1.1005,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": true,
+          "snippet": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam"
+        },
+        {
+          "rank": 2,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 6,
+          "distance": 1.1616,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 66: Tamil Nadu,ARIYALUR,2011,Rabi,Cotton(lint),150,413 Row 67: Tamil Nadu,ARIYALUR,2011,Rabi,Groundnut,3028,18093 Row 68: Tamil Nadu,ARIYALUR,2011,Rabi,Jowa"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 4,
+          "distance": 1.1672,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": false,
+          "snippet": "Row 39: Tamil Nadu,ARIYALUR,2009,Whole Year,Ragi,47,130 Row 40: Tamil Nadu,ARIYALUR,2009,Whole Year,Sesamum,1652,452 Row 41: Tamil Nadu,ARIYALUR,2009,Whole Year"
+        },
+        {
+          "rank": 4,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 3,
+          "distance": 1.1711,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 1,
+          "distance": 1.1742,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: Tamil Nadu,ARIYALUR,2008,Kharif,Rice,24574, Row 2: Tamil Nadu,ARIYALUR,2008,Whole Year,Arhar/Tur,209, Row 3: Tamil Nadu,ARIYALUR,2008,Whole Year,Ba"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": true
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": true
+        }
+      ]
+    },
+    {
+      "id": "B6",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how to store harvested groundnut to avoid aflatoxin",
+      "embedMs": null,
+      "queryMs": 265,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 3,
+          "distance": 1.3753,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": false,
+          "snippet": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+        },
+        {
+          "rank": 2,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 1,
+          "distance": 1.382,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: Tamil Nadu,ARIYALUR,2008,Kharif,Rice,24574, Row 2: Tamil Nadu,ARIYALUR,2008,Whole Year,Arhar/Tur,209, Row 3: Tamil Nadu,ARIYALUR,2008,Whole Year,Ba"
+        },
+        {
+          "rank": 3,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 2,
+          "distance": 1.3989,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 14: Tamil Nadu,ARIYALUR,2008,Whole Year,Moong(Green Gram),39, Row 15: Tamil Nadu,ARIYALUR,2008,Whole Year,Onion,21, Row 16: Tamil Nadu,ARIYALUR,2008,Whole Y"
+        },
+        {
+          "rank": 4,
+          "filename": "arecanut_curednuts_2016_17.csv",
+          "chunkIndex": 0,
+          "distance": 1.4024,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: arecanut_curednuts_2016_17.csv Headers: S.No,State,District,Area (Ha),production (Tonnes),productivity (Tonnes/Ha)"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 6,
+          "distance": 1.4216,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": true,
+          "headerOnly": false,
+          "snippet": "Row 66: Tamil Nadu,ARIYALUR,2011,Rabi,Cotton(lint),150,413 Row 67: Tamil Nadu,ARIYALUR,2011,Rabi,Groundnut,3028,18093 Row 68: Tamil Nadu,ARIYALUR,2011,Rabi,Jowa"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": true
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": true
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": true
+        }
+      ]
+    },
+    {
+      "id": "B7",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how do I file a crop insurance claim under PMFBY",
+      "embedMs": null,
+      "queryMs": 274,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "horizontal_year_vertical_crop_report.xls",
+          "chunkIndex": 0,
+          "distance": 1.3495,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: horizontal_year_vertical_crop_report.xls Headers: <table border=\"2px\" id=\"apyreport\" class=\"table table-hover table-bordered text-center\">"
+        },
+        {
+          "rank": 2,
+          "filename": "medicinal_crops_1.csv",
+          "chunkIndex": 0,
+          "distance": 1.3783,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: medicinal_crops_1.csv Headers: Sl. No.,District,Area ,Prodn,Ptvy."
+        },
+        {
+          "rank": 3,
+          "filename": "horizontal_crop_vertical_year_report (1).xls",
+          "chunkIndex": 0,
+          "distance": 1.3836,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: horizontal_crop_vertical_year_report (1).xls Headers: <table border=\"2px\" id=\"apyreport\" class=\"table table-hover table-bordered text-center\">"
+        },
+        {
+          "rank": 4,
+          "filename": "timeseriesdata_prodtyandproduction_2.csv",
+          "chunkIndex": 0,
+          "distance": 1.4071,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: timeseriesdata_prodtyandproduction_2.csv Headers: Year,PADDY (RICE)Productivity Kg./Hec.,PADDY (RICE)Production �000 Tonnes,CHOLAM Productivity Kg./Hec.,C"
+        },
+        {
+          "rank": 5,
+          "filename": "Tamilnadu agriculture yield data.csv",
+          "chunkIndex": 0,
+          "distance": 1.4213,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": true,
+          "snippet": "File: Tamilnadu agriculture yield data.csv Headers: State_Name,District_Name,Crop_Year,Season,Crop,Area,Production"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        }
+      ]
+    },
+    {
+      "id": "B8",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "neem oil spray dose for tomato fruit borer",
+      "embedMs": null,
+      "queryMs": 516,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 4,
+          "distance": 1.2815,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0 Row 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549"
+        },
+        {
+          "rank": 2,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 3,
+          "distance": 1.2964,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 19: 2003,19,0,Number/hill,34.5,25.3,88.3,62.3,28,7.5,8,4.9,Brownplanthopper,Cuttack Row 20: 2003,20,0,Number/hill,35.4,26.2,86.9,49.3,0,6.3,11.1,6.5,Brownpl"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.298,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        },
+        {
+          "rank": 4,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 7,
+          "distance": 1.3049,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 52: 2003,52,0,Number/hill,26.8,12.9,93.6,37.9,0,1.6,8.7,2.9,Brownplanthopper,Cuttack Row 53: 1959,1,1,Number/Light trap,26.8,12.2,83.6,44,0,2.7,10,3,Gallmid"
+        },
+        {
+          "rank": 5,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 2,
+          "distance": 1.3126,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 10: 2003,10,0,Number/hill,31.1,21.5,95.3,54.7,0,3.5,7.5,4.2,Brownplanthopper,Cuttack Row 11: 2003,11,0,Number/hill,31.7,22.8,93.4,58.1,41.1,4.7,7,3.9,Brownp"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        }
+      ]
+    },
+    {
+      "id": "B9",
+      "kind": "advisory",
+      "lang": "ta",
+      "query": "நெல் இலை மஞ்சள் ஆகிறது என்ன செய்வது",
+      "embedMs": null,
+      "queryMs": 590,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "horizontal_year_vertical_crop_report.xls",
+          "chunkIndex": 8,
+          "distance": 1.4539,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 10: </thead> Row 11: <tbody> Row 12: <tr> Row 13: <th>Tamil Nadu</th> Row 14: <td></td> Row 15: <td></td> Row 16: <td></td> Row 17: <td></td> Row 18: <td></"
+        },
+        {
+          "rank": 2,
+          "filename": "horizontal_crop_vertical_year_report (1).xls",
+          "chunkIndex": 2,
+          "distance": 1.4576,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 23: ) Row 24: [R] => Array Row 25: ( Row 26: [session_id] => R Row 27: [session_name] => Rabi Row 28: ) Row 29: ) Row 30: ) Row 31: [4] => Array Row 32: ( R"
+        },
+        {
+          "rank": 3,
+          "filename": "Soil data.csv",
+          "chunkIndex": 5,
+          "distance": 1.4621,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 70: Vadodara,20.018,73.235,22.91,7.0204 Row 71: Uttara Kannada,25.016,62,49.082,6.8794 Row 72: Uttara Kannada,22.703,51.652,61.304,6.8262 Row 73: Uttara Kan"
+        },
+        {
+          "rank": 4,
+          "filename": "horizontal_crop_vertical_year_report (1).xls",
+          "chunkIndex": 3,
+          "distance": 1.4744,
+          "fileKind": "xls_html_table",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "Row 44: [session_name] => Kharif Row 45: ) Row 46: [R] => Array Row 47: ( Row 48: [session_id] => R Row 49: [session_name] => Rabi Row 50: ) Row 51: ) Row 52: )"
+        },
+        {
+          "rank": 5,
+          "filename": "tamil-nadu.kml",
+          "chunkIndex": 173,
+          "distance": 1.476,
+          "fileKind": "kml_geography",
+          "relevant": false,
+          "fileMatch": null,
+          "termsMatch": null,
+          "topical": false,
+          "headerOnly": false,
+          "snippet": "79.66609062156482,12.38899749443835,0 79.66476688413535,12.38802092290567,0 79.66443067120126,12.38777288217427,0 79.66419613295187,12.38768248778506,0 79.66403"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": null,
+          "topical": false
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "The corpus is district-level agricultural STATISTICS (CSV/XLS tables) plus a Tamil Nadu KML geography file; it contains no agronomic advisory text, so advisory questions cannot be grounded in it whatever the retriever does.",
+    "Relevance labels come from an author-written mechanical rule (filename pattern + term match), not human relevance judgements; a chunk can contain the district name and still not hold the requested number (chunking splits tables).",
+    "Embeddings are English-only (embed-english-v3.0); the Tamil queries are included to show the effect, n=2.",
+    "~20 queries; rates have wide uncertainty."
+  ]
+}

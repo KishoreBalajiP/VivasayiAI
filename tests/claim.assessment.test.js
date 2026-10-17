@@ -599,4 +599,149 @@ describe("agricultural loss claim — Phase 4 AI evidence assessment", () => {
       expect(serialized).not.toMatch(/s3|bucket|key|cognito|url|buffer/i);
     });
   });
+
+  // ADR-022 (plan A4): in the queue every image gets its own budget, progress is checkpointed after
+  // each image, and a `processing` run whose slot lease lapsed is taken over and resumed.
+  describe("I. per-image budget, checkpoint and slot lease", () => {
+    let user, claimId;
+    beforeEach(async () => {
+      user = nextUser("i");
+      const parcel = await seedParcel(user);
+      claimId = (await createClaimOk(user, parcel.parcelId, nextKey())).id;
+      await submitClaim(user, claimId);
+    });
+
+    // Stored photos written directly (the evidence API is rate limited to a few calls per test user).
+    const seedImages = async (count) => {
+      for (let i = 0; i < count; i += 1) {
+        const uploadId = `img_00000000-0000-4000-8000-${String(testSeq).padStart(6, "0")}${String(i).padStart(6, "0")}`;
+        const s3Key = `uploads/claims/${claimId}/${uploadId}/image.png`;
+        await putObject({ key: s3Key, buffer: TRANSPARENT_PNG_BUFFER, mediaType: "image/png" });
+        await ClaimEvidence.create({
+          claimId, uploadId, s3Key, mediaType: "image/png", size: TRANSPARENT_PNG_BUFFER.length, status: "stored",
+          uploadedAt: new Date(Date.now() + i), width: 1, height: 1,
+        });
+      }
+      return storedEvidence(claimId);
+    };
+    const withEnv = async (values, run) => {
+      const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
+      Object.assign(process.env, values);
+      try {
+        return await run();
+      } finally {
+        for (const [key, value] of Object.entries(previous)) {
+          if (value === undefined) delete process.env[key];
+          else process.env[key] = value;
+        }
+      }
+    };
+
+    it("P4-35: ten photos in the queue — every model call gets its own per-image budget, not a share of one total", async () => {
+      await seedImages(10);
+      const result = await assess(claimId, user, { mode: "job" });
+      expect(result.status).toBe("completed");
+      expect(mockAnalyze).toHaveBeenCalledTimes(10);
+      expect(mockAnalyze.mock.calls.map(([args]) => args.timeoutMs)).toEqual(Array(10).fill(25000));
+
+      // Configurable, and never more than the job's deadline leaves.
+      await ClaimAssessment.deleteMany({ claimId });
+      mockAnalyze.mockClear();
+      await withEnv({ CLAIM_ASSESSMENT_PER_IMAGE_TIMEOUT_MS: "4000" }, () => assess(claimId, user, { mode: "job", deadline: Date.now() + 60_000 }));
+      expect(mockAnalyze.mock.calls.map(([args]) => args.timeoutMs)).toEqual(Array(10).fill(4000));
+      const tight = mockAnalyze.mock.calls.length;
+      await ClaimAssessment.deleteMany({ claimId });
+      mockAnalyze.mockClear();
+      await assess(claimId, user, { mode: "job", deadline: Date.now() + 12_000 });
+      expect(mockAnalyze.mock.calls[0][0].timeoutMs).toBeLessThanOrEqual(12_000);
+      expect(tight).toBe(10);
+
+      // Inside an HTTP request the historical single budget still bounds the whole loop.
+      await ClaimAssessment.deleteMany({ claimId });
+      mockAnalyze.mockClear();
+      await withEnv({ CLAIM_ASSESSMENT_TIMEOUT_MS: "9000" }, () => assess(claimId, user));
+      for (const [args] of mockAnalyze.mock.calls) expect(args.timeoutMs).toBeLessThanOrEqual(9000);
+    });
+
+    it("P4-36: a deadline that runs out checkpoints the photos done so far; the next run resumes without re-calling them", async () => {
+      await seedImages(3);
+      mockAnalyze.mockImplementationOnce(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return { ...CLEAR };
+      });
+      // 9.0 s left: image 1 runs (1.5 s), then less than the 8 s minimum is left for image 2.
+      const partial = await assess(claimId, user, { mode: "job", deadline: Date.now() + 9000 });
+      expect(partial).toMatchObject({ status: "processing", partial: true });
+      expect(mockAnalyze).toHaveBeenCalledTimes(1);
+      const checkpoint = await assessmentDoc(claimId);
+      expect(checkpoint.status).toBe("processing");
+      expect(checkpoint.aiImageAssessments).toHaveLength(1);
+      expect(checkpoint.slotLeaseUntil.getTime()).toBe(0); // released for the next run
+
+      mockAnalyze.mockResolvedValue({ ...DROUGHT });
+      const resumed = await assess(claimId, user, { mode: "job" });
+      expect(resumed.status).toBe("completed");
+      expect(mockAnalyze).toHaveBeenCalledTimes(3); // images 2 and 3 only
+      const done = await assessmentDoc(claimId);
+      expect(done.aiImageAssessments.map((image) => image.observation.damageType)).toEqual(["flood", "drought", "drought"]);
+      const stored = await storedEvidence(claimId);
+      expect(done.aiImageAssessments.map((image) => image.uploadId)).toEqual(stored.map((row) => row.uploadId));
+      expect(done.slotLeaseUntil).toBeNull();
+      expect(await ClaimAudit.countDocuments({ claimId, action: "ai_completed" })).toBe(1);
+
+      // A failed run keeps its finished photos too: the retry calls the model only for the rest.
+      const fresh = nextUser("i-failed");
+      const parcel = await seedParcel(fresh);
+      claimId = (await createClaimOk(fresh, parcel.parcelId, nextKey())).id;
+      await submitClaim(fresh, claimId);
+      await seedImages(3);
+      mockAnalyze.mockReset();
+      mockAnalyze.mockResolvedValueOnce({ ...CLEAR }).mockRejectedValueOnce(ApiError.internal("Failed to analyze claim evidence image"));
+      await expect(assess(claimId, fresh, { mode: "job" })).rejects.toMatchObject({ statusCode: 500 });
+      expect((await assessmentDoc(claimId)).aiImageAssessments).toHaveLength(1);
+      mockAnalyze.mockResolvedValue({ ...CLEAR });
+      expect((await assess(claimId, fresh, { mode: "job" })).status).toBe("completed");
+      expect(mockAnalyze).toHaveBeenCalledTimes(4); // 1 + failed 1 + the remaining 2
+    });
+
+    it("P4-37: a photo check stuck in processing with a lapsed lease is taken over; one with a live lease is left to its owner", async () => {
+      await seedImages(1);
+      // Live lease: someone is working on it right now.
+      await ClaimAssessment.create({ claimId, status: "processing", evidenceVersion: "x", startedAt: new Date(), slotLeaseUntil: new Date(Date.now() + 60_000) });
+      expect((await assess(claimId, user, { mode: "job" })).status).toBe("processing");
+      expect(mockAnalyze).not.toHaveBeenCalled();
+
+      // Lapsed lease: the run crashed. The next caller takes the slot over and completes it.
+      await ClaimAssessment.updateOne({ claimId }, { $set: { slotLeaseUntil: new Date(Date.now() - 1000) } });
+      expect((await assess(claimId, user)).status).toBe("completed");
+      expect(mockAnalyze).toHaveBeenCalledTimes(1);
+
+      // A row written before slot leases existed (and crashed before its first checkpoint): stale
+      // after CLAIM_ASSESSMENT_STALE_MS.
+      await ClaimAssessment.updateOne(
+        { claimId },
+        { $set: { status: "processing", slotLeaseUntil: null, aiImageAssessments: [], startedAt: new Date(Date.now() - 2 * 60_000) } }
+      );
+      expect((await assess(claimId, user)).status).toBe("processing"); // 2 minutes: still alive
+      await withEnv({ CLAIM_ASSESSMENT_STALE_MS: "60000" }, async () => {
+        expect((await assess(claimId, user)).status).toBe("completed");
+      });
+      expect(mockAnalyze).toHaveBeenCalledTimes(2);
+    });
+
+    it("P4-38: concurrent takeovers of an abandoned photo check — exactly one runs it", async () => {
+      await seedImages(2);
+      await ClaimAssessment.create({ claimId, status: "processing", evidenceVersion: "crashed", startedAt: new Date(Date.now() - 3600_000), slotLeaseUntil: new Date(Date.now() - 1000) });
+      mockAnalyze.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return { ...CLEAR };
+      });
+      const results = await Promise.all(Array.from({ length: 5 }, () => assess(claimId, user, { mode: "job" })));
+      expect(results.filter((result) => result.status === "completed")).toHaveLength(1);
+      expect(results.filter((result) => result.status === "processing")).toHaveLength(4);
+      expect(mockAnalyze).toHaveBeenCalledTimes(2); // two photos, once each
+      expect(await ClaimAudit.countDocuments({ claimId, action: "ai_completed" })).toBe(1);
+      expect((await assessmentDoc(claimId)).status).toBe("completed");
+    });
+  });
 });

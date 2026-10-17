@@ -1,81 +1,139 @@
-import { writeFileSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isolateSharedInfrastructure, redact, stats, gitInfo } from "./lib/liveCommon.js";
+import { writeJsonOnce, writeResultOnce, ResultExistsError } from "./lib/writeOnce.js";
+import { QUERIES, fileOf, kind, labelHits, labelHitsRowTextOnly, summarizer, summarizeRows } from "./lib/ragEvalSpec.js";
+import { specSha256, verifyRagSpec } from "./verifyRagSpec.js";
+import { ragCollectionName } from "../../config/ragConfig.js";
 
-// Live RAG retrieval evaluation. READ-ONLY: one Cohere query embedding per query and one Chroma
-// similarity query per query against the production collection "farming-documents". No writes.
+// Live RAG retrieval evaluation. READ-ONLY on every backend:
+//   --backend=chroma-cloud (default): one Cohere query embedding per query (unless --query-vectors is
+//     given) and one similarity query per query against the Chroma Cloud collection (--collection,
+//     default RAG_COLLECTION, i.e. the production "farming-documents"). No writes.
+//   --backend=json: the same queries against a local index directory (--index=<dir>, built by
+//     rag/buildLocalIndex.js or scripts/live/ragSnapshotProd.js) with exact squared-L2 search
+//     (rag/localIndex.js). Needs --query-vectors=<file> (scripts/live/ragEmbedQueries.js), so every
+//     condition uses identical query vectors and no provider is called at all.
 // Embedding and query parameters are the production ones (services/chat.service.js performRAG:
 // Cohere AIConfig.embeddingModel, Chroma query, ragTopK); we request k=5 and also report the
 // production top-3 prefix.
 //
-// Relevance rule (transparent, AUTHOR-DEFINED a priori, applied mechanically):
+// Relevance rule (transparent, AUTHOR-DEFINED a priori, applied mechanically). The rule is frozen in
+// scripts/live/lib/ragEvalSpec.js (moved verbatim from this file at 6dbe6b8; its sha256 is recorded
+// in every result as specSha256):
 //   - Answerable query: a chunk is RELEVANT iff its filename matches the query's expected-file pattern
 //     AND its text contains every required term group (case-insensitive substring; a group is a list of
 //     spelling variants, any one of which counts). Groups are typically the district.
 //   - Advisory query (the corpus has no advisory/how-to text): no chunk can be answer-bearing by
 //     construction. We additionally report TOPICAL = chunk text contains the topic term group
 //     (e.g. the crop), to show whether retrieval at least lands on the right crop.
-// Usage: node scripts/live/ragRetrieval.live.js --date=2026-10-16
+// Each result also carries a row-text-only sensitivity summary: the same rule applied to the chunk
+// text without its File:/Table:/Columns:/Headers:/Data: lines (design critique E5).
+// Before any provider or index work the spec is checked against its pin
+// (scripts/live/lib/ragEvalSpec.provenance.json, via verifyRagSpec.js); a run on an edited rule is
+// refused, so every result is labelled by the rule pinned against 6dbe6b8.
+//
+// Results are write-once (scripts/live/lib/writeOnce.js). A tag is required for --backend=json and
+// for the date 2026-10-16, so the frozen baseline rag_retrieval_2026-10-16.{json,md} can never be
+// overwritten. Tagged results go to docs/research/evaluation/live/rag/rag_retrieval_<date>_<tag>.*.
+// Usage: node scripts/live/ragRetrieval.live.js --date=2026-10-20 [--backend=json --index=<dir>
+//        --query-vectors=<file>] [--collection=<name>] [--tag=<tag>] [--condition=<label>]
+//        [--out-dir=<dir>] (default docs/research/evaluation/live[/rag])
 
 isolateSharedInfrastructure();
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const dateArg = process.argv.find((a) => a.startsWith("--date="));
-const date = dateArg ? dateArg.slice(7) : new Date().toISOString().slice(0, 10);
+const FROZEN_BASELINE_DATE = "2026-10-16";
+const arg = (name) => {
+  const found = process.argv.find((a) => a.startsWith(`--${name}=`));
+  return found === undefined ? undefined : found.slice(name.length + 3);
+};
+const fail = (message, code = 1) => {
+  console.error(message);
+  process.exit(code);
+};
+const sha256 = (data) => createHash("sha256").update(data).digest("hex");
+
+const date = arg("date") || new Date().toISOString().slice(0, 10);
+const backend = arg("backend") || "chroma-cloud";
+const tag = arg("tag");
+const indexArg = arg("index");
+const queryVectorsArg = arg("query-vectors");
 const K = 5;
+
+if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail(`--date must be YYYY-MM-DD, got "${date}"`);
+if (!["chroma-cloud", "json"].includes(backend)) fail(`--backend must be chroma-cloud or json, got "${backend}"`);
+if (tag !== undefined && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(tag)) fail(`--tag must be 1-100 characters of [A-Za-z0-9._-], got "${tag}"`);
+if (backend === "json" && !tag) fail("--backend=json needs --tag=<tag>");
+if (date === FROZEN_BASELINE_DATE && !tag) fail(`--date=${FROZEN_BASELINE_DATE} is the frozen baseline; pass --tag=<tag> for any new run`, 2);
+if (backend === "json" && !indexArg) fail("--backend=json needs --index=<dir>");
+if (backend === "json" && !queryVectorsArg) fail("--backend=json needs --query-vectors=<file> so every condition uses the same query vectors");
+const condition = arg("condition") || tag || "production";
+
+const outDir = arg("out-dir") ? resolve(arg("out-dir")) : tag ? join(root, "docs", "research", "evaluation", "live", "rag") : join(root, "docs", "research", "evaluation", "live");
+const stem = tag ? `rag_retrieval_${date}_${tag}` : `rag_retrieval_${date}`;
+const jsonPath = join(outDir, `${stem}.json`);
+const mdPath = join(outDir, `${stem}.md`);
+// Refuse before any provider call.
+for (const path of [jsonPath, mdPath]) if (existsSync(path)) fail(new ResultExistsError(path).message, 2);
+// Refuse an unpinned rule, also before any provider call. Git history is compared when available.
+let specCheck;
+try {
+  specCheck = verifyRagSpec();
+} catch (error) {
+  fail(`Could not verify the frozen RAG rule: ${error.message}`);
+}
+if (!specCheck.ok) fail(`The RAG evaluation rule does not match its pin (run node scripts/live/verifyRagSpec.js): ${specCheck.errors.join("; ")}`);
 
 const { env } = await import("../../config/env.js");
 const AIConfig = (await import("../../src/ai/AIConfig.js")).default;
-const { CohereEmbeddings } = await import("@langchain/cohere");
-const { CloudClient } = await import("chromadb");
 
-const T = {
-  thanjavur: ["thanjavur", "tanjore", "thanjavoor"],
-  dindigul: ["dindigul"],
-  krishnagiri: ["krishnagiri"],
-  coimbatore: ["coimbatore"],
-  villupuram: ["villupuram", "viluppuram", "vilupuram"],
-  ramanathapuram: ["ramanathapuram", "ramnad"],
-  nilgiris: ["nilgiris", "nilgiri"],
-  tiruvarur: ["tiruvarur", "thiruvarur", "tiruvaru"],
-  erode: ["erode"],
-  salem: ["salem"],
-  madurai: ["madurai"],
-};
+// Cached query vectors: checked against the frozen QUERIES so a stale cache can never be used.
+let queryVectors = null;
+let queryVectorsSha256 = null;
+if (queryVectorsArg) {
+  const raw = readFileSync(resolve(queryVectorsArg));
+  queryVectorsSha256 = sha256(raw);
+  const cache = JSON.parse(raw.toString("utf8"));
+  if (cache.model !== AIConfig.embeddingModel) fail(`Query vectors were made with ${cache.model}, not ${AIConfig.embeddingModel}`);
+  if (cache.inputType !== "search_query") fail(`Query vectors have inputType ${cache.inputType}, expected search_query`);
+  queryVectors = new Map();
+  for (const item of QUERIES) {
+    const entry = (cache.queries || []).find((q) => q.id === item.id);
+    if (!entry || entry.qSha256 !== sha256(item.q)) fail(`Query vectors do not match the frozen query ${item.id}`);
+    queryVectors.set(item.id, entry.vector);
+  }
+}
 
-const QUERIES = [
-  // answerable from the statistics corpus
-  { id: "A1", kind: "answerable", q: "rice production in Thanjavur district 2017-18", file: /production_of_rice|production_of_total_cereals/i, groups: [T.thanjavur] },
-  { id: "A2", kind: "answerable", q: "maize production in Dindigul district", file: /production_of_maize/i, groups: [T.dindigul] },
-  { id: "A3", kind: "answerable", q: "ragi production in Krishnagiri", file: /production_of_ragi/i, groups: [T.krishnagiri] },
-  { id: "A4", kind: "answerable", q: "soil nitrogen phosphorus potassium and pH values for Coimbatore", file: /soil data/i, groups: [T.coimbatore] },
-  { id: "A5", kind: "answerable", q: "area irrigated by wells in Villupuram district", file: /irrigated_by_wells|total_area_irrigated/i, groups: [T.villupuram] },
-  { id: "A6", kind: "answerable", q: "area irrigated by tanks in Ramanathapuram", file: /irrigated_by_tanks|total_area_irrigated/i, groups: [T.ramanathapuram] },
-  { id: "A7", kind: "answerable", q: "tea area and production in the Nilgiris", file: /tea_2016/i, groups: [T.nilgiris] },
-  { id: "A8", kind: "answerable", q: "black gram production in Tiruvarur district", file: /black_gram|total_pulses/i, groups: [T.tiruvarur] },
-  { id: "A9", kind: "answerable", q: "sugarcane area and production in Erode district", file: /yield data|horizontal_|timeseries/i, groups: [T.erode, ["sugarcane"]] },
-  { id: "A10", kind: "answerable", q: "coconut production in Salem district", file: /coconut/i, groups: [T.salem] },
-  { id: "A11", kind: "answerable", q: "area under neem cultivation in Madurai", file: /neem/i, groups: [T.madurai] },
-  { id: "A12", kind: "answerable", q: "rice pest incidence and weather observations (pest prediction data)", file: /RICE_PestPrediction/i, groups: [] },
-  { id: "A13", kind: "answerable", q: "தஞ்சாவூர் மாவட்ட நெல் உற்பத்தி", lang: "ta", file: /production_of_rice|production_of_total_cereals/i, groups: [T.thanjavur] },
-  // advisory questions the corpus cannot answer (no agronomic how-to text is ingested)
-  { id: "B1", kind: "advisory", q: "how to control stem borer in paddy", topic: ["paddy", "rice", "stem borer"] },
-  { id: "B2", kind: "advisory", q: "when should I irrigate sugarcane in summer", topic: ["sugarcane"] },
-  { id: "B3", kind: "advisory", q: "how much urea per acre should I apply for paddy", topic: ["paddy", "rice", "urea"] },
-  { id: "B4", kind: "advisory", q: "my banana leaves are turning yellow, what should I do", topic: ["banana"] },
-  { id: "B5", kind: "advisory", q: "which crop should I grow after samba paddy in the Cauvery delta", topic: ["paddy", "rice", "samba"] },
-  { id: "B6", kind: "advisory", q: "how to store harvested groundnut to avoid aflatoxin", topic: ["groundnut"] },
-  { id: "B7", kind: "advisory", q: "how do I file a crop insurance claim under PMFBY", topic: ["insurance", "pmfby"] },
-  { id: "B8", kind: "advisory", q: "neem oil spray dose for tomato fruit borer", topic: ["tomato"] },
-  { id: "B9", kind: "advisory", q: "நெல் இலை மஞ்சள் ஆகிறது என்ன செய்வது", lang: "ta", topic: ["paddy", "rice", "நெல்"] },
-];
-
-const containsAny = (text, variants) => variants.some((v) => text.includes(v.toLowerCase()));
-const fileOf = (m) => (m && (m.filename || String(m.source || "").split("/").pop())) || null;
-
-const embeddings = new CohereEmbeddings({ apiKey: env.cohereApiKey, model: AIConfig.embeddingModel });
-const client = new CloudClient({ apiKey: env.chromaApiKey, tenant: env.chromaTenant, database: env.chromaDatabase });
-const collection = await client.getCollection({ name: "farming-documents" });
+let collection;
+let collectionName = null;
+let indexInfo = null;
+if (backend === "json") {
+  const { loadLocalIndex } = await import("../../rag/localIndex.js");
+  const index = loadLocalIndex(resolve(indexArg));
+  collection = index;
+  indexInfo = {
+    path: relative(root, index.dir),
+    manifestSha256: index.manifestSha256,
+    tag: index.manifest.tag ?? null,
+    chunker: index.manifest.chunker ?? null,
+    corpus: index.manifest.corpus ?? null,
+    source: index.manifest.source ?? null,
+    model: index.manifest.model ?? null,
+    count: index.manifest.count,
+  };
+} else {
+  const { CloudClient } = await import("chromadb");
+  collectionName = arg("collection") ? ragCollectionName(arg("collection")) : ragCollectionName();
+  const client = new CloudClient({ apiKey: env.chromaApiKey, tenant: env.chromaTenant, database: env.chromaDatabase });
+  collection = await client.getCollection({ name: collectionName });
+}
+let embeddings = null;
+if (!queryVectors) {
+  const { CohereEmbeddings } = await import("@langchain/cohere");
+  embeddings = new CohereEmbeddings({ apiKey: env.cohereApiKey, model: AIConfig.embeddingModel });
+}
 const chunkCount = await collection.count();
 
 // Corpus composition (read-only paged get of metadata only).
@@ -84,7 +142,6 @@ for (let offset = 0; offset < chunkCount; offset += 250) {
   const page = await collection.get({ include: ["metadatas"], limit: 250, offset });
   for (const m of page.metadatas) { const f = fileOf(m); fileCounts[f] = (fileCounts[f] || 0) + 1; }
 }
-const kind = (f) => (/\.kml$/i.test(f) ? "kml_geography" : /\.xls$/i.test(f) ? "xls_html_table" : /\.csv$/i.test(f) ? "csv_statistics" : "other");
 const composition = {};
 for (const [f, c] of Object.entries(fileCounts)) composition[kind(f)] = (composition[kind(f)] || 0) + c;
 
@@ -92,71 +149,68 @@ const rows = [];
 for (const item of QUERIES) {
   const t0 = performance.now();
   try {
-    const vector = await embeddings.embedQuery(item.q);
+    const vector = queryVectors ? queryVectors.get(item.id) : await embeddings.embedQuery(item.q);
     const t1 = performance.now();
     const res = await collection.query({ queryEmbeddings: [vector], nResults: K, include: ["documents", "metadatas", "distances"] });
     const t2 = performance.now();
     const docs = res.documents?.[0] || [];
     const metas = res.metadatas?.[0] || [];
     const dists = res.distances?.[0] || [];
-    const hits = docs.map((doc, i) => {
-      const text = String(doc || "").toLowerCase();
-      const filename = fileOf(metas[i]);
-      const fileOk = item.file ? item.file.test(filename || "") : false;
-      const termsOk = (item.groups || []).every((g) => containsAny(text, g));
-      return {
-        rank: i + 1,
-        filename,
-        chunkIndex: metas[i] ? metas[i].chunk_index ?? null : null,
-        distance: dists[i] !== undefined ? Math.round(dists[i] * 10000) / 10000 : null,
-        fileKind: kind(filename || ""),
-        relevant: item.kind === "answerable" ? fileOk && termsOk : false,
-        fileMatch: item.kind === "answerable" ? fileOk : null,
-        termsMatch: item.kind === "answerable" ? termsOk : null,
-        topical: item.kind === "advisory" ? containsAny(text, item.topic) : null,
-        headerOnly: /^File:/.test(String(doc || "").trim()) && !/Row \d+:/.test(String(doc || "")),
-        snippet: String(doc || "").replace(/\s+/g, " ").slice(0, 160),
-      };
-    });
-    rows.push({ id: item.id, kind: item.kind, lang: item.lang || "en", query: item.q, embedMs: Math.round(t1 - t0), queryMs: Math.round(t2 - t1), hits });
+    const hits = labelHits(item, docs, metas, dists);
+    const rowTextOnly = labelHitsRowTextOnly(item, docs, metas, dists);
+    rows.push({ id: item.id, kind: item.kind, lang: item.lang || "en", query: item.q, embedMs: queryVectors ? null : Math.round(t1 - t0), queryMs: Math.round(t2 - t1), hits, rowTextOnly });
   } catch (error) {
     rows.push({ id: item.id, kind: item.kind, query: item.q, error: redact(error && error.message) });
   }
 }
 
-const ok = rows.filter((r) => !r.error);
-const ans = ok.filter((r) => r.kind === "answerable");
-const adv = ok.filter((r) => r.kind === "advisory");
-const at = (r, k) => r.hits.slice(0, k);
-const frac = (num, den) => ({ k: num, n: den, value: den ? Math.round((num / den) * 10000) / 10000 : null });
-const summarize = (k) => ({
-  answerable: {
-    hitRateAnyRelevant: frac(ans.filter((r) => at(r, k).some((h) => h.relevant)).length, ans.length),
-    top1Relevant: frac(ans.filter((r) => r.hits[0] && r.hits[0].relevant).length, ans.length),
-    precisionOfChunks: frac(ans.reduce((s, r) => s + at(r, k).filter((h) => h.relevant).length, 0), ans.reduce((s, r) => s + at(r, k).length, 0)),
-    anyExpectedFile: frac(ans.filter((r) => at(r, k).some((h) => h.fileMatch)).length, ans.length),
-  },
-  advisory: {
-    answerBearingChunks: frac(0, adv.reduce((s, r) => s + at(r, k).length, 0)),
-    topicalChunks: frac(adv.reduce((s, r) => s + at(r, k).filter((h) => h.topical).length, 0), adv.reduce((s, r) => s + at(r, k).length, 0)),
-    queriesWithAnyTopicalChunk: frac(adv.filter((r) => at(r, k).some((h) => h.topical)).length, adv.length),
-  },
-  retrievedFileKinds: ok.flatMap((r) => at(r, k)).reduce((acc, h) => ({ ...acc, [h.fileKind]: (acc[h.fileKind] || 0) + 1 }), {}),
-  answerableExpectedFileHitsThatAreHeaderOnly: frac(ans.flatMap((r) => at(r, k)).filter((h) => h.fileMatch && h.headerOnly).length, ans.flatMap((r) => at(r, k)).filter((h) => h.fileMatch).length),
-  kmlChunksRetrieved: frac(ok.flatMap((r) => at(r, k)).filter((h) => h.fileKind === "kml_geography").length, ok.flatMap((r) => at(r, k)).length),
-});
+const { ok, ans, adv } = summarizer(rows);
+// Sensitivity rows: the same hits with the term-dependent labels taken from row text only.
+const rowTextRows = rows.map((r) => (r.error ? r : { ...r, hits: r.hits.map((h, i) => ({ ...h, ...r.rowTextOnly[i] })) }));
 
+const gitState = await gitInfo();
+const ruleSha256 = specSha256(); // re-read: an edit during the run shows up as specPinned false
 const result = {
   name: "ragRetrievalLive",
   date,
-  ...(await gitInfo()),
-  description: "Live retrieval from the production Chroma collection with production Cohere embeddings. Read-only.",
-  config: { collection: "farming-documents", embeddingModel: AIConfig.embeddingModel, productionTopK: AIConfig.ragTopK, evaluatedK: K, distanceNote: "Chroma distance as returned by the collection (lower = closer); the collection's space was not altered or inspected beyond the query." },
+  ...gitState,
+  dirty: gitState.dirtyWorkingTree,
+  backend,
+  condition,
+  tag: tag || null,
+  specSha256: ruleSha256,
+  specPinned: specCheck.ok && ruleSha256 === specCheck.pinnedSpecSha256,
+  pinnedSpecSha256: specCheck.pinnedSpecSha256,
+  specGitChecked: specCheck.git.checked,
+  indexManifestSha256: indexInfo ? indexInfo.manifestSha256 : null,
+  queryVectorsSha256,
+  description: backend === "json"
+    ? "Retrieval from a local index (rag/localIndex.js, exact squared L2) with cached Cohere query vectors. No provider was called and nothing was written."
+    : "Live retrieval from a Chroma Cloud collection with production Cohere embeddings. Read-only.",
+  config: {
+    backend,
+    collection: collectionName,
+    index: indexInfo,
+    queryVectors: queryVectorsArg ? relative(root, resolve(queryVectorsArg)) : null,
+    embeddingModel: AIConfig.embeddingModel,
+    productionTopK: AIConfig.ragTopK,
+    evaluatedK: K,
+    distanceNote: backend === "json"
+      ? "Squared L2 over the stored float32 vectors, computed locally (Chroma's default l2 space); lower = closer; ties broken by index order."
+      : "Chroma distance as returned by the collection (lower = closer); the collection's space was not altered or inspected beyond the query.",
+  },
   corpus: { chunks: chunkCount, files: Object.keys(fileCounts).length, chunksByFileKind: composition, chunksByFile: fileCounts },
   relevanceRule: "Answerable: relevant iff filename matches the a-priori expected-file pattern AND chunk text contains each required term group (district, and crop where stated). Advisory: answer-bearing is impossible by construction (no advisory text ingested); 'topical' = chunk text contains the topic term group. Labels are author-defined and mechanical; not human-judged.",
   queries: { total: QUERIES.length, answerable: QUERIES.filter((q) => q.kind === "answerable").length, advisory: QUERIES.filter((q) => q.kind === "advisory").length, errors: rows.filter((r) => r.error).length },
-  summaryAtProductionTopK: summarize(AIConfig.ragTopK),
-  summaryAtK5: summarize(K),
+  summaryAtProductionTopK: summarizeRows(rows, AIConfig.ragTopK),
+  summaryAtK5: summarizeRows(rows, K),
+  sensitivity: {
+    rowTextOnly: {
+      rule: "Same frozen rule, applied to the chunk text without its File:/Table:/Columns:/Headers:/Data: lines, so a term counts only when it occurs in row text. Header names repeated inside 'header: value' pairs still count.",
+      summaryAtProductionTopK: summarizeRows(rowTextRows, AIConfig.ragTopK),
+      summaryAtK5: summarizeRows(rowTextRows, K),
+    },
+  },
   distances: {
     top1Answerable: stats(ans.map((r) => r.hits[0] && r.hits[0].distance)),
     top1Advisory: stats(adv.map((r) => r.hits[0] && r.hits[0].distance)),
@@ -170,20 +224,27 @@ const result = {
     "Relevance labels come from an author-written mechanical rule (filename pattern + term match), not human relevance judgements; a chunk can contain the district name and still not hold the requested number (chunking splits tables).",
     "Embeddings are English-only (embed-english-v3.0); the Tamil queries are included to show the effect, n=2.",
     "~20 queries; rates have wide uncertainty.",
+    ...(backend === "json" ? ["Local exact search, not the production HNSW index; the parity check (scripts/live/ragParity.js) shows whether local search reproduces the production baseline."] : []),
   ],
 };
 
-const outDir = join(root, "docs", "research", "evaluation", "live");
-mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, `rag_retrieval_${date}.json`), `${JSON.stringify(result, null, 2)}\n`);
+try {
+  writeJsonOnce(jsonPath, result);
+} catch (error) {
+  fail(error.message, error.exitCode || 1);
+}
 
 const s3k = result.summaryAtProductionTopK; const s5 = result.summaryAtK5;
+const r3 = result.sensitivity.rowTextOnly.summaryAtProductionTopK; const r5 = result.sensitivity.rowTextOnly.summaryAtK5;
 const pct = (f) => (f.value === null ? "n/a" : `${(f.value * 100).toFixed(1)}% (${f.k}/${f.n})`);
-const md = `# Live RAG retrieval — ${date}
+const where = backend === "json"
+  ? `Local index \`${indexInfo.path}\` (${indexInfo.chunker || "unknown chunker"}, ${chunkCount} chunks, ${Object.keys(fileCounts).length} files), cached query vectors, exact squared-L2 search`
+  : `Chroma Cloud collection \`${collectionName}\` (${chunkCount} chunks, ${Object.keys(fileCounts).length} files), Cohere \`${AIConfig.embeddingModel}\`, read-only queries`;
+const md = `# RAG retrieval — ${date}${tag ? ` — ${tag}` : ""}
 
-Production collection \`farming-documents\` (${chunkCount} chunks, ${Object.keys(fileCounts).length} files), Cohere \`${AIConfig.embeddingModel}\`, read-only queries. Commit ${result.commit}${result.dirtyWorkingTree ? " (dirty tree)" : ""}.
+${where}. Condition: ${condition}. Commit ${result.commit}${result.dirtyWorkingTree ? " (dirty tree)" : ""}. Rule specSha256 \`${result.specSha256}\` (${result.specPinned ? "matches the pin" : "DOES NOT match the pin"}).
 
-**Corpus composition (chunks):** ${Object.entries(composition).map(([k, v]) => `${k} ${v}`).join(", ")}. The corpus is statistical tables and a geography file, not advisory text.
+**Corpus composition (chunks):** ${Object.entries(composition).map(([k, v]) => `${k} ${v}`).join(", ")}.
 
 Relevance is a mechanical, author-defined rule (expected filename pattern + district/crop terms), not human judgement.
 
@@ -197,14 +258,19 @@ Relevance is a mechanical, author-defined rule (expected filename pattern + dist
 | Advisory: chunks merely topical (crop term present) | ${pct(s3k.advisory.topicalChunks)} | ${pct(s5.advisory.topicalChunks)} |
 | Answerable: expected-file hits that are header-only chunks (no data rows) | ${pct(s3k.answerableExpectedFileHitsThatAreHeaderOnly)} | ${pct(s5.answerableExpectedFileHitsThatAreHeaderOnly)} |
 | All retrieved chunks from the KML geography file | ${pct(s3k.kmlChunksRetrieved)} | ${pct(s5.kmlChunksRetrieved)} |
-
-**Main observed failure mode:** ingestion splits each table into a header chunk ("File: … Headers: …", no rows) and row chunks that carry neither the file name nor the crop. Queries find the right *file* through its header chunk, but the row naming the requested district is a separate chunk with no crop context, so it is rarely retrieved together with it. The model therefore usually receives column headers, or district rows of an unrelated crop table.
+| Sensitivity, row text only: answerable any relevant chunk | ${pct(r3.answerable.hitRateAnyRelevant)} | ${pct(r5.answerable.hitRateAnyRelevant)} |
+| Sensitivity, row text only: answerable chunk precision | ${pct(r3.answerable.precisionOfChunks)} | ${pct(r5.answerable.precisionOfChunks)} |
+| Sensitivity, row text only: advisory topical chunks | ${pct(r3.advisory.topicalChunks)} | ${pct(r5.advisory.topicalChunks)} |
 
 Top-1 distance: answerable median ${result.distances.top1Answerable.median}, advisory median ${result.distances.top1Advisory.median}.
-Errors: ${result.queries.errors}. Full rows (filenames, distances, labels) in \`rag_retrieval_${date}.json\`.
+Errors: ${result.queries.errors}. Full rows (filenames, distances, labels) in \`${stem}.json\`.
 
 Limitations: ${result.limitations.join(" ")}
 `;
-writeFileSync(join(outDir, `rag_retrieval_${date}.md`), md);
+try {
+  writeResultOnce(mdPath, md);
+} catch (error) {
+  fail(error.message, error.exitCode || 1);
+}
 console.log(md);
 process.exit(0);

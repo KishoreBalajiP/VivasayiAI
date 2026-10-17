@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: "2010-09-09"
+# ADR-022 (owner decision D7) — scheduled verification worker for VivasayiAI.
+#
+# NOT DEPLOYED, and not used by CI. Deploying it, copying the API's environment to it and enabling the
+# schedule are owner decisions; follow docs/engineering/WORKER_RUNBOOK.md step by step.
+#
+# The worker is the SAME container image as the API Lambda (tnFarmingAssistant), started with the
+# `index.worker` handler: it drains due verification jobs and runs the recovery sweeps (stuck claims,
+# lost plans, dead-job recovery, stale holds), stopping 10 s before its timeout. Reserved concurrency
+# 1 keeps a single worker at a time; the queue's leases make overlapping runs safe anyway.
+#
+# The schedule is created DISABLED. Intrinsic functions use the long form (Ref, Fn::GetAtt, ...) so
+# the file is plain YAML that any parser (and the WK-6 static test) can read.
+Description: VivasayiAI verification worker (ADR-022). Same image as the API Lambda; schedule DISABLED by default. Not deployed by CI.
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: ECR image URI of the API image to run (the tag CI pushed for the release being deployed).
+  ScheduleExpression:
+    Type: String
+    Default: rate(1 minute)
+    Description: How often EventBridge invokes the worker.
+  ScheduleState:
+    Type: String
+    AllowedValues:
+      - ENABLED
+      - DISABLED
+    Default: DISABLED
+    Description: Leave DISABLED until the runbook preflight has passed and the owner approves.
+  WorkerMaxJobs:
+    Type: String
+    Default: "25"
+    Description: Most jobs one invocation runs (WORKER_MAX_JOBS).
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional SNS topic for the error alarm. Empty creates no alarm.
+
+Conditions:
+  HasAlarmTopic:
+    Fn::Not:
+      - Fn::Equals:
+          - Ref: AlarmTopicArn
+          - ""
+
+Resources:
+  WorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  WorkerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: vivasayi-verification-worker
+      PackageType: Image
+      Code:
+        ImageUri:
+          Ref: ImageUri
+      ImageConfig:
+        Command:
+          - index.worker
+      Role:
+        Fn::GetAtt:
+          - WorkerRole
+          - Arn
+      Timeout: 300
+      MemorySize: 1024
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          NODE_ENV: production
+          WORKER_MAX_JOBS:
+            Ref: WorkerMaxJobs
+          # Every other variable (MONGO_URI, GOOGLE_API_KEY, CHROMA_*, S3 settings, ...) is copied from
+          # the API function out of band, through a temp file that is never printed (runbook step 3).
+          # No secret is ever written into this template.
+          # CloudFormation owns THIS block only: any stack deploy that updates the function (new
+          # ImageUri, any parameter change, enabling the schedule) can replace the whole environment
+          # with the two variables above. Re-run runbook step 3 (then step 4) after EVERY deploy.
+
+  WorkerSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Runs the VivasayiAI verification worker. DISABLED until the owner enables it.
+      ScheduleExpression:
+        Ref: ScheduleExpression
+      State:
+        Ref: ScheduleState
+      Targets:
+        - Id: verification-worker
+          Arn:
+            Fn::GetAtt:
+              - WorkerFunction
+              - Arn
+          RetryPolicy:
+            MaximumRetryAttempts: 0
+            MaximumEventAgeInSeconds: 60
+
+  WorkerInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: WorkerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - WorkerSchedule
+          - Arn
+
+  WorkerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: HasAlarmTopic
+    Properties:
+      AlarmDescription: The verification worker Lambda reported errors.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value:
+            Ref: WorkerFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - Ref: AlarmTopicArn
+
+Outputs:
+  WorkerFunctionName:
+    Value:
+      Ref: WorkerFunction
+  WorkerScheduleName:
+    Value:
+      Ref: WorkerSchedule

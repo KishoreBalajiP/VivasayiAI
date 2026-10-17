@@ -6,24 +6,41 @@
 // read query), weather (Open-Meteo) and satellite (Copernicus) stay live when configured in .env.
 // The browser's direct S3 PUT is simulated by writing to the mock bucket, as the test suite does.
 //
-// Usage: node scripts/live/localAcceptance.js [v1-legacy|v2-components]
-// Output: docs/research/evaluation/live/acceptance_<policy>_2026-10-16.json (no secrets, no tokens).
+// Usage: node scripts/live/localAcceptance.js [<policy id>] [--date=YYYY-MM-DD] [--tag=<name>]
+// Output: docs/research/evaluation/live/acceptance_<policy>_<date>[_<tag>].json (no secrets, no tokens).
+// The date defaults to today (UTC). Results are write-once: an existing file for the same policy, date
+// and tag is never replaced (scripts/live/lib/writeOnce.js), so re-running needs a new --date or --tag.
 
-import { writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import http from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import { gitInfo } from "./lib/liveCommon.js";
+import { ResultExistsError, writeJsonOnce } from "./lib/writeOnce.js";
 
-const policy = process.argv[2] || "v1-legacy";
+const arg = (name) => { const a = process.argv.find((x) => x.startsWith(`--${name}=`)); return a ? a.slice(name.length + 3) : null; };
+const policy = process.argv.slice(2).find((a) => !a.startsWith("--")) || "v1-legacy";
+const fileDate = arg("date") || new Date().toISOString().slice(0, 10);
+const tag = arg("tag");
+if (!/^\d{4}-\d{2}-\d{2}$/.test(fileDate)) throw new Error("--date must be YYYY-MM-DD");
+if (tag && !/^[A-Za-z0-9-]+$/.test(tag)) throw new Error("--tag may contain only letters, digits and '-'");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const outFile = join(root, "docs", "research", "evaluation", "live", `acceptance_${policy}_${fileDate}${tag ? `_${tag}` : ""}.json`);
+// Checked before the journey starts so a duplicate run spends no provider quota; writeJsonOnce checks again.
+if (existsSync(outFile)) {
+  const error = new ResultExistsError(outFile);
+  console.error(error.message);
+  process.exit(error.exitCode);
+}
 const mongo = await MongoMemoryServer.create();
 
 // Set before config/env.js loads; dotenv never overrides a variable that is already set.
 Object.assign(process.env, {
   NODE_ENV: "development",
   LOG_LEVEL: process.env.ACCEPTANCE_LOG_LEVEL || "silent",
-  // The real per-user write budget (5/hour) is shorter than this scripted journey; the budget is
-  // reported separately (see the claim-write finding in the acceptance summary).
+  // The real per-user claim-write budget (config/env.js claimRateLimitMax) can be shorter than this
+  // scripted journey; the budget is reported separately (see the claim-write finding in the summary).
   CLAIM_RATE_LIMIT_MAX: "1000",
   MONGO_URI: mongo.getUri(),
   IMAGE_STORAGE_MODE: "mock",
@@ -190,16 +207,18 @@ await step("withdraw the second claim", 200, () => call("POST", `/claims/${secon
   (r) => ({ state: r.data?.claim?.state }));
 await step("list claims", 200, () => call("GET", "/claims"), (r) => ({ count: r.data?.claims?.length }));
 
+const git = await gitInfo();
 const out = {
   runDate: new Date().toISOString(),
   policy,
+  tag,
+  provenance: { commit: git.commit, dirtyWorkingTree: git.dirtyWorkingTree, node: process.version },
   environment: "local Express app, mongodb-memory-server, mock image storage, mock image AI, mock land records; live Gemini/Cohere/Chroma(read)/Open-Meteo/Copernicus where configured",
   passed: steps.filter((s) => s.pass).length,
   total: steps.length,
   steps,
 };
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-writeFileSync(join(root, "docs", "research", "evaluation", "live", `acceptance_${policy}_2026-10-16.json`), `${JSON.stringify(out, null, 2)}\n`);
+writeJsonOnce(outFile, out);
 for (const s of steps) console.log(`${s.pass ? "PASS" : "FAIL"} ${s.status ?? ""} ${s.name}${s.pass ? "" : ` — ${s.message ?? s.error ?? ""}`}`);
 console.log(`${out.passed}/${out.total} passed (${policy})`);
 

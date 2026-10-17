@@ -1,0 +1,957 @@
+{
+  "name": "ragParity",
+  "date": "2026-10-16",
+  "tag": "baseline60-rebuild",
+  "verdict": "FAIL",
+  "baseline": {
+    "path": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+    "sha256": "7572a51b53a46e97f55a858f32f5f47bcc9ea5b28ad24f182d6335e8a05d0d22"
+  },
+  "candidate": {
+    "path": "docs/research/evaluation/live/rag/rag_retrieval_2026-10-16_parity-baseline60-rebuild.json",
+    "sha256": "03e045a6f1a1382bfb0397f4f6cc5a2de80af3194529bf32df5b877c0db0d3c0",
+    "backend": "json",
+    "condition": "parity-baseline60-rebuild",
+    "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+    "indexManifestSha256": "4f05c366148a8500ef9bd67002551478ea5c6fe3a1d4c7486097c60a21438785",
+    "queryVectorsSha256": "4891e91276de40e487d8bccc70e70eadbb513c1be503838e6d635ae05319e098"
+  },
+  "specSha256Now": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specMatchesCandidate": true,
+  "pinnedSpecSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specMatchesPin": true,
+  "pass": false,
+  "tolerance": 0.001,
+  "k": 5,
+  "diffs": [
+    {
+      "id": "A1",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 0.7525,
+      "candidate": 0.7569,
+      "delta": 0.0044000000000000705
+    },
+    {
+      "id": "A1",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.0365,
+      "candidate": 1.0351,
+      "delta": 0.0014000000000000679
+    },
+    {
+      "id": "A1",
+      "rank": 3,
+      "field": "filename",
+      "baseline": "cocoa_2016_17.csv",
+      "candidate": "betelvine_2016_17.csv"
+    },
+    {
+      "id": "A1",
+      "rank": 3,
+      "field": "snippet",
+      "baseline": "Row 19: 19,TamilNadu,Thanjavur,364,218.4,0.60 Row 20: 20,TamilNadu,Theni,86,5.16,0.06 Row 21: 21,TamilNadu,The Nilgiris,70,70,1.00 Row 22: 22,TamilNadu,Tiruvall",
+      "candidate": "Row 19: 19,TamilNadu,Thanjavur,177,3026.7,17.10 Row 20: 20,TamilNadu,Theni,35,490,14.00 Row 21: 21,TamilNadu,The Nilgiris,0,0,0.00 Row 22: 22,TamilNadu,Tiruvall"
+    },
+    {
+      "id": "A1",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.0929,
+      "candidate": 1.0912,
+      "delta": 0.0017000000000000348
+    },
+    {
+      "id": "A1",
+      "rank": 4,
+      "field": "filename",
+      "baseline": "bamboo_2016_17.csv",
+      "candidate": "cocoa_2016_17.csv"
+    },
+    {
+      "id": "A1",
+      "rank": 4,
+      "field": "snippet",
+      "baseline": "Row 18: 18,TamilNadu,Sivagangai,4,80.64,20.16 Row 19: 19,TamilNadu,Thanjavur,81,1632.96,20.16 Row 20: 20,TamilNadu,Theni,6,120.96,20.16 Row 21: 21,TamilNadu,The",
+      "candidate": "Row 19: 19,TamilNadu,Thanjavur,364,218.4,0.60 Row 20: 20,TamilNadu,Theni,86,5.16,0.06 Row 21: 21,TamilNadu,The Nilgiris,70,70,1.00 Row 22: 22,TamilNadu,Tiruvall"
+    },
+    {
+      "id": "A1",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.0958,
+      "candidate": 1.0931,
+      "delta": 0.0027000000000001467
+    },
+    {
+      "id": "A1",
+      "rank": 5,
+      "field": "filename",
+      "baseline": "betelvine_2016_17.csv",
+      "candidate": "bamboo_2016_17.csv"
+    },
+    {
+      "id": "A1",
+      "rank": 5,
+      "field": "snippet",
+      "baseline": "Row 19: 19,TamilNadu,Thanjavur,177,3026.7,17.10 Row 20: 20,TamilNadu,Theni,35,490,14.00 Row 21: 21,TamilNadu,The Nilgiris,0,0,0.00 Row 22: 22,TamilNadu,Tiruvall",
+      "candidate": "Row 18: 18,TamilNadu,Sivagangai,4,80.64,20.16 Row 19: 19,TamilNadu,Thanjavur,81,1632.96,20.16 Row 20: 20,TamilNadu,Theni,6,120.96,20.16 Row 21: 21,TamilNadu,The"
+    },
+    {
+      "id": "A1",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.0968,
+      "candidate": 1.0985,
+      "delta": 0.0017000000000000348
+    },
+    {
+      "id": "A2",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.0346,
+      "candidate": 1.0327,
+      "delta": 0.0019000000000000128
+    },
+    {
+      "id": "A3",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.2179,
+      "candidate": 1.2194,
+      "delta": 0.0015000000000000568
+    },
+    {
+      "id": "A3",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.2391,
+      "candidate": 1.2375,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "A3",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.2562,
+      "candidate": 1.2579,
+      "delta": 0.0017000000000000348
+    },
+    {
+      "id": "A4",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.2366,
+      "candidate": 1.2379,
+      "delta": 0.0013000000000000789
+    },
+    {
+      "id": "A4",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.2555,
+      "candidate": 1.2536,
+      "delta": 0.0019000000000000128
+    },
+    {
+      "id": "A4",
+      "rank": 5,
+      "field": "filename",
+      "baseline": "tamil-nadu.kml",
+      "candidate": "total_aromatic_plants.csv"
+    },
+    {
+      "id": "A4",
+      "rank": 5,
+      "field": "fileKind",
+      "baseline": "kml_geography",
+      "candidate": "csv_statistics"
+    },
+    {
+      "id": "A4",
+      "rank": 5,
+      "field": "termsMatch",
+      "baseline": false,
+      "candidate": true
+    },
+    {
+      "id": "A4",
+      "rank": 5,
+      "field": "snippet",
+      "baseline": "Data: Row 1: <kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" xmlns:kml=\"http://www.opengis.net/kml/2.2\" xmlns:atom=\"htt",
+      "candidate": "Data: Row 1: 1,Ariyalur,NA,NA,NA Row 2: 2,Coimbatore,52,349,6.72 Row 3: 3,Cuddalore,1,11,10.78 Row 4: 4,Dharmapuri,65,1625,25.00 Row 5: 5,Dindigul,5,196,39.20 R"
+    },
+    {
+      "id": "A4",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.2556,
+      "candidate": 1.254,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "A5",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 0.9324,
+      "candidate": 0.931,
+      "delta": 0.0013999999999999568
+    },
+    {
+      "id": "A5",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 0.9584,
+      "candidate": 0.9557,
+      "delta": 0.0027000000000000357
+    },
+    {
+      "id": "A5",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 0.9706,
+      "candidate": 0.9716,
+      "delta": 0.0010000000000000009
+    },
+    {
+      "id": "A6",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 0.9112,
+      "candidate": 0.9129,
+      "delta": 0.0017000000000000348
+    },
+    {
+      "id": "A6",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 0.9499,
+      "candidate": 0.9485,
+      "delta": 0.0013999999999999568
+    },
+    {
+      "id": "A6",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.0892,
+      "candidate": 1.0857,
+      "delta": 0.0034999999999998366
+    },
+    {
+      "id": "A6",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.1189,
+      "candidate": 1.1176,
+      "delta": 0.0013000000000000789
+    },
+    {
+      "id": "A6",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.1565,
+      "candidate": 1.153,
+      "delta": 0.0035000000000000586
+    },
+    {
+      "id": "A7",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.1414,
+      "candidate": 1.1398,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "A7",
+      "rank": 2,
+      "field": "filename",
+      "baseline": "palmyrah_2016_17.csv",
+      "candidate": "tea_2016_17.csv"
+    },
+    {
+      "id": "A7",
+      "rank": 2,
+      "field": "relevant",
+      "baseline": false,
+      "candidate": true
+    },
+    {
+      "id": "A7",
+      "rank": 2,
+      "field": "fileMatch",
+      "baseline": false,
+      "candidate": true
+    },
+    {
+      "id": "A7",
+      "rank": 2,
+      "field": "snippet",
+      "baseline": "Row 20: 20,TamilNadu,Theni,10,120,12 Row 21: 21,TamilNadu,The Nilgiris,0,0,12 Row 22: 22,TamilNadu,Tiruvallur,53,636,12 Row 23: 23,TamilNadu,Tiruvannamalai,2,24",
+      "candidate": "Row 20: 20,TamilNadu,Theni,1672,17556,10.50 Row 21: 21,TamilNadu,The Nilgiris,56036,526738.4,9.40 Row 22: 22,TamilNadu,Tiruvallur,0,0,0.00 Row 23: 23,TamilNadu,"
+    },
+    {
+      "id": "A7",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.1432,
+      "candidate": 1.1442,
+      "delta": 0.001000000000000112
+    },
+    {
+      "id": "A7",
+      "rank": 3,
+      "field": "filename",
+      "baseline": "tea_2016_17.csv",
+      "candidate": "palmyrah_2016_17.csv"
+    },
+    {
+      "id": "A7",
+      "rank": 3,
+      "field": "relevant",
+      "baseline": true,
+      "candidate": false
+    },
+    {
+      "id": "A7",
+      "rank": 3,
+      "field": "fileMatch",
+      "baseline": true,
+      "candidate": false
+    },
+    {
+      "id": "A7",
+      "rank": 3,
+      "field": "snippet",
+      "baseline": "Row 20: 20,TamilNadu,Theni,1672,17556,10.50 Row 21: 21,TamilNadu,The Nilgiris,56036,526738.4,9.40 Row 22: 22,TamilNadu,Tiruvallur,0,0,0.00 Row 23: 23,TamilNadu,",
+      "candidate": "Row 20: 20,TamilNadu,Theni,10,120,12 Row 21: 21,TamilNadu,The Nilgiris,0,0,12 Row 22: 22,TamilNadu,Tiruvallur,53,636,12 Row 23: 23,TamilNadu,Tiruvannamalai,2,24"
+    },
+    {
+      "id": "A7",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.1447,
+      "candidate": 1.146,
+      "delta": 0.0012999999999998568
+    },
+    {
+      "id": "A7",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.1453,
+      "candidate": 1.1482,
+      "delta": 0.0029000000000001247
+    },
+    {
+      "id": "A8",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 0.9505,
+      "candidate": 0.949,
+      "delta": 0.0015000000000000568
+    },
+    {
+      "id": "A8",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.1394,
+      "candidate": 1.1378,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "A8",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.1426,
+      "candidate": 1.1412,
+      "delta": 0.0014000000000000679
+    },
+    {
+      "id": "A8",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.1582,
+      "candidate": 1.1571,
+      "delta": 0.0010999999999998789
+    },
+    {
+      "id": "A9",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.0983,
+      "candidate": 1.1019,
+      "delta": 0.0036000000000000476
+    },
+    {
+      "id": "A9",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.1046,
+      "candidate": 1.103,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "A9",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.1265,
+      "candidate": 1.1245,
+      "delta": 0.0020000000000000018
+    },
+    {
+      "id": "A10",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 0.987,
+      "candidate": 0.989,
+      "delta": 0.0020000000000000018
+    },
+    {
+      "id": "A10",
+      "rank": 2,
+      "field": "filename",
+      "baseline": "production_of_rice_in_2017_18.csv",
+      "candidate": "Tamilnadu agriculture yield data.csv"
+    },
+    {
+      "id": "A10",
+      "rank": 2,
+      "field": "chunkIndex",
+      "baseline": 0,
+      "candidate": 3
+    },
+    {
+      "id": "A10",
+      "rank": 2,
+      "field": "headerOnly",
+      "baseline": true,
+      "candidate": false
+    },
+    {
+      "id": "A10",
+      "rank": 2,
+      "field": "snippet",
+      "baseline": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam",
+      "candidate": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+    },
+    {
+      "id": "A10",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.1334,
+      "candidate": 1.135,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "A10",
+      "rank": 3,
+      "field": "filename",
+      "baseline": "Tamilnadu agriculture yield data.csv",
+      "candidate": "production_of_rice_in_2017_18.csv"
+    },
+    {
+      "id": "A10",
+      "rank": 3,
+      "field": "chunkIndex",
+      "baseline": 3,
+      "candidate": 0
+    },
+    {
+      "id": "A10",
+      "rank": 3,
+      "field": "headerOnly",
+      "baseline": false,
+      "candidate": true
+    },
+    {
+      "id": "A10",
+      "rank": 3,
+      "field": "snippet",
+      "baseline": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh",
+      "candidate": "File: production_of_rice_in_2017_18.csv Headers: S.No,State,District,Production of Kar/Kuruvai /Sornavari Rice (in Tonnes),Production of Samba/Thaladi/ Pishanam"
+    },
+    {
+      "id": "A10",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.1346,
+      "candidate": 1.138,
+      "delta": 0.0033999999999998476
+    },
+    {
+      "id": "A10",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.1676,
+      "candidate": 1.1654,
+      "delta": 0.0021999999999999797
+    },
+    {
+      "id": "A11",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.0933,
+      "candidate": 1.0905,
+      "delta": 0.0027999999999999137
+    },
+    {
+      "id": "A11",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.1263,
+      "candidate": 1.124,
+      "delta": 0.0022999999999999687
+    },
+    {
+      "id": "A11",
+      "rank": 4,
+      "field": "filename",
+      "baseline": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+      "candidate": "production_of_green_gram_in_2017_18.csv"
+    },
+    {
+      "id": "A11",
+      "rank": 4,
+      "field": "snippet",
+      "baseline": "Row 17: 17,Perambalur,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12 Row 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00 Row 20: 20,Thanjavur,21",
+      "candidate": "Row 19: 19,Tamil Nadu,Thanjavur,1,1406,1407 Row 20: 20,Tamil Nadu,Tiruvarur,12,11963,11975 Row 21: 21,Tamil Nadu,Nagapattinam,0,14271,14271 Row 22: 22,Tamil Nad"
+    },
+    {
+      "id": "A11",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.147,
+      "candidate": 1.1447,
+      "delta": 0.0022999999999999687
+    },
+    {
+      "id": "A11",
+      "rank": 5,
+      "field": "filename",
+      "baseline": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+      "candidate": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv"
+    },
+    {
+      "id": "A11",
+      "rank": 5,
+      "field": "snippet",
+      "baseline": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10 Row 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01 Row 20: 20,Thanjavur,98,0,98,98,0,98,1.00 Row 21: 2",
+      "candidate": "Row 17: 17,Perambalur,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12 Row 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00 Row 20: 20,Thanjavur,21"
+    },
+    {
+      "id": "A12",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 0.721,
+      "candidate": 0.7172,
+      "delta": 0.0038000000000000256
+    },
+    {
+      "id": "A12",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.2013,
+      "candidate": 1.2037,
+      "delta": 0.0023999999999999577
+    },
+    {
+      "id": "A12",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.2479,
+      "candidate": 1.2491,
+      "delta": 0.0012000000000000899
+    },
+    {
+      "id": "A13",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.2846,
+      "candidate": 1.2814,
+      "delta": 0.0031999999999998696
+    },
+    {
+      "id": "A13",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.2992,
+      "candidate": 1.2972,
+      "delta": 0.0020000000000000018
+    },
+    {
+      "id": "B1",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.2856,
+      "candidate": 1.2839,
+      "delta": 0.0017000000000000348
+    },
+    {
+      "id": "B1",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.3252,
+      "candidate": 1.3241,
+      "delta": 0.0010999999999998789
+    },
+    {
+      "id": "B2",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.3406,
+      "candidate": 1.3384,
+      "delta": 0.0021999999999999797
+    },
+    {
+      "id": "B2",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.3941,
+      "candidate": 1.3911,
+      "delta": 0.0029999999999998916
+    },
+    {
+      "id": "B2",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.4327,
+      "candidate": 1.4304,
+      "delta": 0.0023000000000001908
+    },
+    {
+      "id": "B2",
+      "rank": 4,
+      "field": "filename",
+      "baseline": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+      "candidate": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+    },
+    {
+      "id": "B2",
+      "rank": 4,
+      "field": "snippet",
+      "baseline": "File: area_irrigated_by_canals_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Canals (Rivers, System Tanks etc.) (in ",
+      "candidate": "File: area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Tanks (Lakes, Ponds, Fords, Streams) (in"
+    },
+    {
+      "id": "B2",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.439,
+      "candidate": 1.4403,
+      "delta": 0.0012999999999998568
+    },
+    {
+      "id": "B2",
+      "rank": 5,
+      "field": "filename",
+      "baseline": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+      "candidate": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv"
+    },
+    {
+      "id": "B2",
+      "rank": 5,
+      "field": "snippet",
+      "baseline": "File: area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Tanks (Lakes, Ponds, Fords, Streams) (in",
+      "candidate": "File: area_irrigated_by_canals_by_districts_in_tn_2018_19.csv Headers: S.No,District,\"Gross Area irrigated by Government Canals (Rivers, System Tanks etc.) (in "
+    },
+    {
+      "id": "B2",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.4396,
+      "candidate": 1.4409,
+      "delta": 0.0013000000000000789
+    },
+    {
+      "id": "B3",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.2302,
+      "candidate": 1.2278,
+      "delta": 0.0023999999999999577
+    },
+    {
+      "id": "B3",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.2643,
+      "candidate": 1.2653,
+      "delta": 0.001000000000000112
+    },
+    {
+      "id": "B3",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.3074,
+      "candidate": 1.3063,
+      "delta": 0.0010999999999998789
+    },
+    {
+      "id": "B3",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.3153,
+      "candidate": 1.3168,
+      "delta": 0.0015000000000000568
+    },
+    {
+      "id": "B4",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.4112,
+      "candidate": 1.4128,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "B4",
+      "rank": 2,
+      "field": "chunkIndex",
+      "baseline": 2,
+      "candidate": 3
+    },
+    {
+      "id": "B4",
+      "rank": 2,
+      "field": "snippet",
+      "baseline": "Row 14: Tamil Nadu,ARIYALUR,2008,Whole Year,Moong(Green Gram),39, Row 15: Tamil Nadu,ARIYALUR,2008,Whole Year,Onion,21, Row 16: Tamil Nadu,ARIYALUR,2008,Whole Y",
+      "candidate": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh"
+    },
+    {
+      "id": "B4",
+      "rank": 3,
+      "field": "chunkIndex",
+      "baseline": 3,
+      "candidate": 2
+    },
+    {
+      "id": "B4",
+      "rank": 3,
+      "field": "snippet",
+      "baseline": "Row 27: Tamil Nadu,ARIYALUR,2009,Whole Year,Banana,134,5761 Row 28: Tamil Nadu,ARIYALUR,2009,Whole Year,Cashewnut,31188,9975 Row 29: Tamil Nadu,ARIYALUR,2009,Wh",
+      "candidate": "Row 14: Tamil Nadu,ARIYALUR,2008,Whole Year,Moong(Green Gram),39, Row 15: Tamil Nadu,ARIYALUR,2008,Whole Year,Onion,21, Row 16: Tamil Nadu,ARIYALUR,2008,Whole Y"
+    },
+    {
+      "id": "B5",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.1027,
+      "candidate": 1.1003,
+      "delta": 0.0023999999999999577
+    },
+    {
+      "id": "B5",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.1625,
+      "candidate": 1.1607,
+      "delta": 0.0018000000000000238
+    },
+    {
+      "id": "B5",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.1678,
+      "candidate": 1.1662,
+      "delta": 0.0016000000000000458
+    },
+    {
+      "id": "B5",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.1747,
+      "candidate": 1.1732,
+      "delta": 0.0015000000000000568
+    },
+    {
+      "id": "B6",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.382,
+      "candidate": 1.3802,
+      "delta": 0.0017999999999998018
+    },
+    {
+      "id": "B7",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.3502,
+      "candidate": 1.3492,
+      "delta": 0.001000000000000112
+    },
+    {
+      "id": "B7",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.378,
+      "candidate": 1.3761,
+      "delta": 0.0018999999999997907
+    },
+    {
+      "id": "B7",
+      "rank": 3,
+      "field": "distance",
+      "baseline": 1.3839,
+      "candidate": 1.3823,
+      "delta": 0.0015999999999998238
+    },
+    {
+      "id": "B7",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.408,
+      "candidate": 1.4061,
+      "delta": 0.0019000000000000128
+    },
+    {
+      "id": "B8",
+      "rank": 4,
+      "field": "distance",
+      "baseline": 1.3057,
+      "candidate": 1.3092,
+      "delta": 0.0034999999999998366
+    },
+    {
+      "id": "B8",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.3138,
+      "candidate": 1.3112,
+      "delta": 0.0026000000000001577
+    },
+    {
+      "id": "B9",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.4576,
+      "candidate": 1.4593,
+      "delta": 0.0017000000000000348
+    }
+  ],
+  "queries": [
+    {
+      "id": "A1",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A2",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A3",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A4",
+      "identical": false,
+      "sameSetAnyOrder": false
+    },
+    {
+      "id": "A5",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A6",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A7",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A8",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A9",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A10",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A11",
+      "identical": false,
+      "sameSetAnyOrder": false
+    },
+    {
+      "id": "A12",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A13",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B1",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B2",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B3",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B4",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B5",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B6",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B7",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B8",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B9",
+      "identical": false,
+      "sameSetAnyOrder": true
+    }
+  ],
+  "summaries": [
+    {
+      "name": "summaryAtProductionTopK",
+      "equal": true
+    },
+    {
+      "name": "summaryAtK5",
+      "equal": false
+    }
+  ],
+  "corpus": {
+    "chunksEqual": true,
+    "chunksByFileEqual": true
+  },
+  "note": "If ranks or distances drift because Cohere query embeddings are not bit-for-bit deterministic, the diffs show it; conditions (ii) and (iii) are only comparable with the baseline when the verdict is PASS."
+}

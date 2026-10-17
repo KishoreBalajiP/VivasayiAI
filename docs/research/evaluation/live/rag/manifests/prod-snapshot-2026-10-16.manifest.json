@@ -1,0 +1,21 @@
+{
+  "format": "vivasayi-rag-local-index/1",
+  "name": "ragProdSnapshot",
+  "tag": "prod-snapshot-2026-10-16",
+  "source": "read-only snapshot of the production Chroma Cloud collection (count + paged get)",
+  "collection": "farming-documents",
+  "startedAt": "2026-10-16T18:23:59.607Z",
+  "createdAt": "2026-10-16T18:25:23.971Z",
+  "commit": "6dbe6b8",
+  "dirty": true,
+  "model": "embed-english-v3.0",
+  "modelNote": "The collection does not record its embedding model; this is the configured production model.",
+  "inputType": "search_document",
+  "chunker": "legacy-e9b779d (as ingested in production)",
+  "corpus": "production",
+  "expectedCount": 450,
+  "countMatchesExpected": true,
+  "count": 450,
+  "dimension": 1024,
+  "distance": "squared_l2"
+}

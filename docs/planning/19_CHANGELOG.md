@@ -5,16 +5,68 @@
 > - **Version:** 1.0
 > - **Status:** `[ACTIVE]`
 > - **Owner:** Everyone / Docs
-> - **Last Reviewed:** 2026-08-07
+> - **Last Reviewed:** 2026-10-17
 > - **Related Documents:** [05_Product_Roadmap](../product/05_Product_Roadmap.md) · [17_Backlog](17_Backlog.md) · [18_DECISIONS](../decisions/18_DECISIONS.md)
 
 > **Why this document exists:** A structured, human-readable history of what shipped, derived from git. It supports releases, onboarding, and audit. **Generated 2026-08-07** from both repository histories. Format follows [Keep a Changelog](https://keepachangelog.com/)-style grouping; versions are assigned retroactively (no tags exist yet).
 
-**Repos:** `tn-farming-assistant` (backend) · `tn-farming-assistant-frontend` (frontend). **Notable:** the current work is a **documentation system** (Phase 0) — it is tracked below as `[0.1.0]`.
+**Repos:** `tn-farming-assistant` (backend) · `tn-farming-assistant-frontend` (frontend); *note 2026-10-17:* the GitHub repositories are `VivasayiAI` and `VivasayiAI-Frontend` (backend package name `tn-farming-assistant`). **Notable:** the current work is a **documentation system** (Phase 0) — it is tracked below as `[0.1.0]`.
 
 > **Versioning note:** the release-level versions below (backend 1.0.0–1.4.0, frontend 1.0.0–1.6.0) are **retroactive release-history labels** derived from git; no git tags exist yet. They intentionally differ from the `version` fields in `package.json` (backend `1.0.0`, frontend `0.0.0`), which are package metadata, not release history. When release tagging begins (Phase 1, see [14_Deployment](../engineering/14_Deployment.md)), this file aligns to actual tags.
 
 ---
+
+## [Unreleased] — 2026-10 completion work (uncommitted working tree, not deployed)
+
+Backend `develop` after `6dbe6b8` and frontend `develop` after `56f26eb`, both uncommitted and pending owner review. Acceptance run `20261016T205016Z-6dbe6b8`: 1,949 of 1,949 tests passed (backend 1,133, frontend 726, Playwright 90), all with mocked providers; see [ACCEPTANCE_MATRIX_2026-10-17](../engineering/ACCEPTANCE_MATRIX_2026-10-17.md).
+
+**Added (backend)**
+- Policy `v1.1-safe-ai`, now the **default** (ADR-022, D2): an AI-only "no damage" reading or a technical failure holds the claim for a person; the claim window is measured at the first submission. `v1-legacy` and `v2-components` are unchanged and selectable.
+- Satellite never blocks or changes a decision under any policy (`NON_BLOCKING_STEPS`, D1).
+- Durable, idempotent enqueue at submit, resubmit and withdraw (compare-and-set; plan written before the response; 503 "saved, checks not scheduled" on failure); late-evidence plans; error taxonomy (`utils/providerErrors.js`); retries with backoff and jitter; lease heartbeats; dead-job recovery.
+- Verification worker: `npm run worker` (`--once`, `--requeue-dead`), the `worker` Lambda handler, `infra/verification-worker.yaml` (schedule DISABLED), recovery sweeps, [WORKER_RUNBOOK](../engineering/WORKER_RUNBOOK.md). **Not deployed.**
+- Farmer progress contract `progress-v1`: `GET /claims/:id/progress`, `data.progress` in `GET /verification`, machine-readable vocabulary `docs/architecture/progress-contract-v1.json`.
+- Admin: override of a held claim (D8), held filter in the queue, read-only verification diagnostics, dead-job re-queue (D9).
+- Additive schema: `LossClaim.firstSubmittedAt`, `submissionRound`; job lifecycle fields and the `{claimId, step, planKey}` index; `ClaimAssessment.slotLeaseUntil`; `AdminAction` `jobs_requeued`. Migration `scripts/migrations/2026-10-verification-automation.js` (dry run by default; dry-run against production on 2026-10-16, not applied).
+- Table-aware RAG chunker `table-v1` and local evaluation index (ADR-023); production chat unchanged.
+- Hermetic e2e harness (`npm run e2e:backend`) and dev-only seams refused in production (ADR-024); acceptance runner and report (`npm run acceptance`, `npm run acceptance:report`).
+
+**Changed (backend)**
+- Rate limits per user: claim writes 15/hour (was 5), evidence 60/hour (was 20), reads 600/hour (D5).
+- `POST /claims/:id/verify` checks ownership before running anything and decides only when no blocking step is pending.
+- The farmer's `GET /verification` rows no longer include review cases or internal fields.
+- CORS exposes `Retry-After`, `x-request-id` and `RateLimit-Reset`.
+
+**Fixed (backend, after the audit, 2026-10-17)**
+- The automation migration's `--apply` guard now refuses any non-local database, not only `mongodb+srv` (audit B-D1); the components migration refuses to write to a non-local database without `MIGRATION_ALLOW_REMOTE_APPLY=true` (B-D2, test MG-9).
+- Two test gaps found by mutation testing closed: SD-10 (a stale "supports loss" result never reads as passed while analysis is off) and VJ-14c (the lease-owner check alone refuses a stale success write); both verified by re-applying the mutations. Backend suite 1,135 of 1,135; Playwright re-run on the final tree 90 of 90.
+
+**Added (frontend)**
+- Five-step claim wizard with a submission orchestrator and draft saving; claim tracker driven only by the progress contract, with no verify button; hash routing with deep links (`#/claims/:id`); design-system primitives; English and Tamil copy (Tamil not yet reviewed); farm-district header; admin held-claim queue, diagnostics panel and re-queue.
+- Playwright e2e suite (`npm run e2e`, 90 tests on desktop and mobile Chromium) and `npm run contract:check`.
+
+**Not done:** worker deployment, migration apply, live Gemini evaluations (BLOCKED, billed key), RAG before/after evaluation (stopped by the owner; parity failed), native Tamil review, frontend hosting and CI. See [KNOWN_ISSUES](../engineering/KNOWN_ISSUES.md).
+
+### Verification hardening (October 2026): on `origin/develop` as `b760596` and `6dbe6b8`; not on `main`; not deployed
+
+> *Corrected 2026-10-17:* this section was first written for the branch `feat/verification-hardening-2026-10` and had been spliced into "Known gaps" below; it is moved here unchanged except for this heading. The work was committed to `develop` on 16 October 2026.
+
+**Added**
+- Component-based verification with versioned policies (ADR-020): per-component outcomes, a required-component gate, hold semantics, decision snapshots with policy hash and evidence references. Default policy at the time: `v1-legacy`, which leaves every decision unchanged (the default is `v1.1-safe-ai` since 2026-10-16; see below).
+- Durable verification job queue and scheduled worker (ADR-021).
+- Cross-farmer overlap review signal; admin-only match details.
+- Append-only evidence history; historical rainfall evidence (Open-Meteo); admin review-case endpoints.
+- Migration `scripts/migrations/2026-10-verification-components.js`.
+
+**Fixed**
+- Official land-record check always failed (bad import) and trusted the client body.
+- Admin override could leave a changed claim with no audit record; admin evidence links were always empty.
+- Review cases duplicated on every run and appeared in the farmer's ownership list.
+- Login mapped every failure to HTTP 500, logged the client secret, and linked accounts by unverified email.
+- Claim read endpoints shared the strict write rate limit.
+- A single Chroma failure disabled retrieval for the container's life; Tamil maize alias never matched; history trimming dropped extra messages.
+- Oversized request bodies returned 500; logger crashed on Lambda without `pino-pretty`; `npm run dev` never listened.
+- CI deployed without running tests.
 
 ## [Unreleased] — Phase 6 (in progress)
 
@@ -41,7 +93,7 @@
 - **Evidence layer hardened on the unchanged Phase 2 contract (no new public API).** Every evidence mutation now appends an append-only `ClaimAudit` row — `evidence_presigned` / `evidence_completed` / `evidence_deleted` (actor `farmer`, `requestId` correlation, metadata never contains `s3Key`/bucket/owner). `complete` became **atomic + idempotent**: a compare-and-swap on status (`pending → processing`) guarantees exactly one `ClaimEvidence` record per upload, repeated completes return the stored metadata, and a not-yet-uploaded object leaves the record `pending` so the same presigned capability retries cleanly. Verification of each specimen unchanged: S3 `headObject` (existence, server-measured size, S3 `Content-Type`), magic-byte signature vs the declared type, then the sharp decode/normalize/EXIF-strip pipeline — the browser MIME is never authoritative. Files: `services/claimEvidence.service.js`, `controllers/claim.controller.js` (requestId plumbed to evidence audits). Verification: new `tests/claims.evidence.test.js` — **17 deterministic scenarios** (P3-01..P3-17) covering read/delete/url IDOR, foreign-upload attachment, cognitoSub/state/S3-key body manipulation, terminal-state mutation guard (all 7 blocked states + HTTP 409), unsupported type, MIME/signature mismatch (bytes + header), oversize at presign (413) and complete (400), complete idempotency/duplication, missing-object retry, arbitrary S3-key rejection, evidence-limit 429 (harness now runs `EVIDENCE_RATE_LIMIT_MAX=6`), evidence audit trail, and submission-without-evidence preservation. Full regression: **125 passed, 0 failed** (10 parcel geometry + 31 parcel API + 9 claim state + 58 claims API + 17 evidence). Docs updated: 07 (evidence audit + atomic complete, audit action list), 08 (item 10 Phase 3 note), 15 (§5 evidence idempotency/audit), 17 (E9 table Phase 3 note), 18_DECISIONS (ADR-019 Phase 3 note), this changelog. **Boundary (explicitly NOT in Phase 3):** no AI/vision/weather/RAG calls, no deterministic verification, no pHash/duplicate-image/fraud detection, no `claimassessment` writes (persistence-only), no acreage from images (P4), no frontend claim wizard/admin UI. `vitest.config.js` also updated (`EVIDENCE_RATE_LIMIT_MAX` 1000 → 6). No package.json/.env changes; no commit/push/deploy.
 
 ### Added (Phase 2 — E9-S2, Agricultural Loss Claim lifecycle, F-49/ADR-019)
-- **Claim lifecycle API + claim-scoped evidence (E9-S1 parcel foundation carried forward).** New `lossclaims` / `claimevidence` / `claimaudit` collections and a `claimassessment` persistence-structure model under `/claims` (mounted after `requireAuth`): `POST /claims` (draft create with `idempotencyKey`), `GET /claims`, `GET /claims/:id` (detail + evidence + `assessment: null`), `POST /claims/:id/submit`, `POST /claims/:id/withdraw`, `POST /claims/:id/resubmit` (more_evidence_required only, P6), plus evidence `presign` / `complete` / `DELETE` / signed-GET `url` reusing the existing presigned-S3 pipeline (owner-scoped keys under `claims/<claimId>/`, EXIF stripped, MIME JPEG/PNG/WEBP only, no pHash yet). Centralized 10-state machine in `services/claimState.service.js` (terminal states immutable; farmer submit path is `draft → submitted` only — no simulated processing); `claimedAreaAcres` always server-calculated (P4); event date window enforced server-side (`CLAIM_WINDOW_DAYS`, P2); owner-scoped idempotency key (compound sparse unique; duplicate create/submit return the existing claim); append-only `ClaimAudit` on transitions; `claimLimiter` (5 claims/hour) + `evidenceLimiter` (20 uploads/hour); foreign → 404; responses never expose `s3Key`/bucket/`cognitoSub`/`idempotencyKey`. New files: `models/LossClaim.js`, `models/ClaimEvidence.js`, `models/ClaimAssessment.js`, `models/ClaimAudit.js`, `services/claimState.service.js`, `services/claim.service.js`, `services/claimEvidence.service.js`, `controllers/claim.controller.js`, `routes/claims.js`, `tests/claimState.test.js`, `tests/claims.api.test.js`; updated `config/env.js`, `.env.example` (verified existing `CLAIM_*`/`EVIDENCE_*`), `middlewares/rateLimit.js`, `services/s3.service.js` (signed-GET), `utils/validation.schemas.js`, `app.js`, `vitest.config.js`. Docs updated: 07 (collection statuses), 08 (item 10 status note), 15 (claim security controls), 17 (E9-S1/E9-S2 → DONE), 18_DECISIONS (ADR-019 Phase 2 note), this changelog. Verification: `tests/claimState.test.js` (9 unit) + `tests/claims.api.test.js` (58 scenarios) + full Phase 1 suite = **108 passed, 0 failed**. Deferred per frozen boundaries: AI/weather correlation, pHash dedup, `POST /claims/calculate-area` (P5 engine), admin endpoints (P7), draft `PATCH` endpoint (none in the finalized contract).
+- **Claim lifecycle API + claim-scoped evidence (E9-S1 parcel foundation carried forward).** New `lossclaims` / `claimevidence` / `claimaudit` collections and a `claimassessment` persistence-structure model under `/claims` (mounted after `requireAuth`): `POST /claims` (draft create with `idempotencyKey`), `GET /claims`, `GET /claims/:id` (detail + evidence + `assessment: null`), `POST /claims/:id/submit`, `POST /claims/:id/withdraw`, `POST /claims/:id/resubmit` (more_evidence_required only, P6), plus evidence `presign` / `complete` / `DELETE` / signed-GET `url` reusing the existing presigned-S3 pipeline (owner-scoped keys under `claims/<claimId>/`, EXIF stripped, MIME JPEG/PNG/WEBP only, no pHash yet). Centralized 10-state machine in `services/claimState.service.js` (terminal states immutable; farmer submit path is `draft → submitted` only — no simulated processing); `claimedAreaAcres` always server-calculated (P4); event date window enforced server-side (`CLAIM_WINDOW_DAYS`, P2); owner-scoped idempotency key (compound sparse unique; duplicate create/submit return the existing claim); append-only `ClaimAudit` on transitions; `claimLimiter` (5 claims/hour) + `evidenceLimiter` (20 uploads/hour) (the defaults at the time; 15 and 60 per hour since 2026-10-16); foreign → 404; responses never expose `s3Key`/bucket/`cognitoSub`/`idempotencyKey`. New files: `models/LossClaim.js`, `models/ClaimEvidence.js`, `models/ClaimAssessment.js`, `models/ClaimAudit.js`, `services/claimState.service.js`, `services/claim.service.js`, `services/claimEvidence.service.js`, `controllers/claim.controller.js`, `routes/claims.js`, `tests/claimState.test.js`, `tests/claims.api.test.js`; updated `config/env.js`, `.env.example` (verified existing `CLAIM_*`/`EVIDENCE_*`), `middlewares/rateLimit.js`, `services/s3.service.js` (signed-GET), `utils/validation.schemas.js`, `app.js`, `vitest.config.js`. Docs updated: 07 (collection statuses), 08 (item 10 status note), 15 (claim security controls), 17 (E9-S1/E9-S2 → DONE), 18_DECISIONS (ADR-019 Phase 2 note), this changelog. Verification: `tests/claimState.test.js` (9 unit) + `tests/claims.api.test.js` (58 scenarios) + full Phase 1 suite = **108 passed, 0 failed**. Deferred per frozen boundaries: AI/weather correlation, pHash dedup, `POST /claims/calculate-area` (P5 engine), admin endpoints (P7), draft `PATCH` endpoint (none in the finalized contract).
 
 ### Added (Phase 1/2 — E3-S2 backend, image-based agricultural diagnosis)
 - **E3 storage + vision + reasoning pipeline (D-22 Option 1, synchronous).** `POST /upload` now runs the full approved path — validate (existing transport/magic bytes) → **normalize** (sharp: strict decode guard, dimension cap `IMAGE_MAX_DIMENSION`=2048 default, EXIF-strip re-encode, orientation applied) → **private S3 store** (owner-scoped server-generated keys under `uploads/<cognitoSub>/<uploadId>/`, reusing `rag/ingest.js` S3 pattern; lazy config validation so servers without storage still boot) → **`ImageRecord` metadata document** (metadata only, never binary; `stored → processing → completed | failed` state machine, `s3Key` never exposed to clients, best-effort S3 rollback if the DB write fails after the object write). Response now includes `status: "stored"` and a `processed { mediaType, size, width, height }` block.
@@ -171,27 +223,10 @@
 
 ## Known gaps NOT yet released (see 04_Feature_List / 17_Backlog)
 
+> *Note 2026-10-17:* this is the August 2026 list. Verified authentication, image upload and diagnosis, and the automated test suite have since been implemented (see the Phase 1-6 entries above); nothing of the October work is released, and the frontend is still not deployed. Current gaps: [KNOWN_ISSUES](../engineering/KNOWN_ISSUES.md).
+
 - Verified authentication & authorization (SEC-01/02) — **unreleased, critical**.
 - Image upload/diagnosis — **UI only today**.
-### Verification hardening (October 2026, unreleased, branch `feat/verification-hardening-2026-10`)
-
-**Added**
-- Component-based verification with versioned policies (ADR-020): per-component outcomes, a required-component gate, hold semantics, decision snapshots with policy hash and evidence references. Default policy `v1-legacy` leaves every decision unchanged.
-- Durable verification job queue and scheduled worker (ADR-021).
-- Cross-farmer overlap review signal; admin-only match details.
-- Append-only evidence history; historical rainfall evidence (Open-Meteo); admin review-case endpoints.
-- Migration `scripts/migrations/2026-10-verification-components.js`.
-
-**Fixed**
-- Official land-record check always failed (bad import) and trusted the client body.
-- Admin override could leave a changed claim with no audit record; admin evidence links were always empty.
-- Review cases duplicated on every run and appeared in the farmer's ownership list.
-- Login mapped every failure to HTTP 500, logged the client secret, and linked accounts by unverified email.
-- Claim read endpoints shared the strict write rate limit.
-- A single Chroma failure disabled retrieval for the container's life; Tamil maize alias never matched; history trimming dropped extra messages.
-- Oversized request bodies returned 500; logger crashed on Lambda without `pino-pretty`; `npm run dev` never listened.
-- CI deployed without running tests.
-
 - Text-to-speech output — **unreleased**.
 - Weather/location/soil context injected into AI prompts — **unreleased**.
 - Streaming responses — **unreleased**.

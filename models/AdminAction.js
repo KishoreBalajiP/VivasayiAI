@@ -10,7 +10,8 @@ import mongoose from "mongoose";
 // Replay protection / idempotency: `idempotencyKey` is unique per claim+action (sparse), so the
 // same override request retried after a dropped response cannot double-apply.
 
-export const ADMIN_ACTIONS = ["override", "appeal_resolution", "manual_review"];
+// `jobs_requeued` (additive, ADR-022): an admin re-queued a claim's dead verification jobs.
+export const ADMIN_ACTIONS = ["override", "appeal_resolution", "manual_review", "jobs_requeued"];
 
 const adminActionSchema = new mongoose.Schema(
   {

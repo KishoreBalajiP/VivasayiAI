@@ -8,6 +8,8 @@ import ClaimAssessment from "../models/ClaimAssessment.js";
 import ClaimAudit from "../models/ClaimAudit.js";
 import * as s3Service from "./s3.service.js";
 import { analyzeClaimImage } from "./claimVision.service.js";
+import { resolvePolicy } from "../config/verificationPolicy.js";
+import { ProviderError, classifyProviderError, PROVIDER_ERROR_KINDS, PROVIDER_ERROR_CODES } from "../utils/providerErrors.js";
 import {
   CLAIM_LOSS_ASSESSMENT_VERSION,
   CLAIM_LOSS_OBSERVATION_FIELDS,
@@ -29,7 +31,9 @@ import AIConfig from "../src/ai/AIConfig.js";
 //   - is auditable: appends `ai_completed` / `assessment_failed` rows to `claimaudit` (actor
 //     "engine"), metadata never contains s3Key/bucket/owner/prompt/URLs/image content;
 //   - is retry-safe: failures are persisted as `status: "failed"` (retryable) and surfaced as
-//     sanitized ApiError envelopes (no provider/Mongo/S3 internals).
+//     sanitized ApiError envelopes (no provider/Mongo/S3 internals). The envelope is a
+//     ProviderError and the persisted `error` carries its `kind` and `code` (utils/providerErrors.js),
+//     so the queue and the reviewer can tell a quota refusal from a defect.
 //
 // The AI aggregate is deterministic (documented rules): damageDetected = any true; damageType /
 // severity = most frequent across images (severity tie → more severe); confidence = most
@@ -157,11 +161,46 @@ const serialize = (doc) => ({
   updatedAt: doc.updatedAt,
 });
 
+// ADR-022 — budgets and the slot lease.
+//   CLAIM_ASSESSMENT_PER_IMAGE_TIMEOUT_MS  the most one image's model call may take (default 25 s).
+//   CLAIM_ASSESSMENT_TIMEOUT_MS            the whole loop's budget inside an HTTP request (default
+//                                          25 s, see below); a queued job uses its own deadline.
+//   CLAIM_ASSESSMENT_STALE_MS              a `processing` row written before slot leases existed
+//                                          counts as abandoned this long after it started (10 min).
+const getPerImageTimeoutMs = () => Number(process.env.CLAIM_ASSESSMENT_PER_IMAGE_TIMEOUT_MS) || 25000;
+const getStaleAfterMs = () => Number(process.env.CLAIM_ASSESSMENT_STALE_MS) || 10 * 60 * 1000;
+// A job does not start another image with less than this left before its deadline: it saves its
+// progress and runs again instead of being cut off in the middle of a model call.
+export const MIN_IMAGE_BUDGET_MS = 8000;
+// The slot lease outlives one image's budget by this much (storage read, checkpoint write).
+const SLOT_LEASE_SLACK_MS = 10_000;
+const leaseAfter = (budgetMs, nowMs = Date.now()) => new Date(nowMs + budgetMs + SLOT_LEASE_SLACK_MS);
+// "Released": the slot is free for the next caller, which resumes from the checkpoint.
+const RELEASED_LEASE = new Date(0);
+
+// Is the run that set this row to `processing` still alive?
+const slotIsLive = (row, nowMs) => {
+  if (row.slotLeaseUntil) return new Date(row.slotLeaseUntil).getTime() > nowMs;
+  const started = row.startedAt ? new Date(row.startedAt).getTime() : 0;
+  return started + getStaleAfterMs() > nowMs;
+};
+
+// Images assessed earlier for the SAME evidence set and prompt version (a checkpoint of a run that ran
+// out of time, crashed or failed part-way): they are kept and not sent to the model again.
+const resumableImages = (row, fingerprint) =>
+  row && row.evidenceVersion === fingerprint && row.version === CLAIM_LOSS_ASSESSMENT_VERSION && Array.isArray(row.aiImageAssessments)
+    ? row.aiImageAssessments.map((image) => (image.toObject ? image.toObject() : image))
+    : [];
+
 // Atomic slot acquisition. Exactly one worker proceeds per claim (unique claimId + status CAS).
-// Returns { assessment, proceed }: `proceed: true` means THIS caller owns the slot and must run the
-// pipeline; `proceed: false` means an in-flight/reused/completed assessment is returned as-is so
-// concurrent requests never spawn a duplicate analysis run.
+// Returns { assessment, proceed, lease, resumeFrom }: `proceed: true` means THIS caller owns the slot
+// (until `lease`, renewed after each image) and must run the pipeline, starting from `resumeFrom`;
+// `proceed: false` means an in-flight/reused/completed assessment is returned as-is so concurrent
+// requests never spawn a duplicate analysis run. A `processing` row whose lease lapsed (its run
+// crashed or released the slot) is taken over by exactly one caller.
 const acquireProcessingSlot = async (claimId, fingerprint) => {
+  const nowMs = Date.now();
+  const lease = leaseAfter(getPerImageTimeoutMs(), nowMs);
   const existing = await ClaimAssessment.findOne({ claimId });
 
   if (!existing) {
@@ -173,9 +212,12 @@ const acquireProcessingSlot = async (claimId, fingerprint) => {
           version: CLAIM_LOSS_ASSESSMENT_VERSION,
           model: `${AIConfig.provider}/${AIConfig.model}`,
           evidenceVersion: fingerprint,
-          startedAt: new Date(),
+          startedAt: new Date(nowMs),
+          slotLeaseUntil: lease,
         }),
         proceed: true,
+        lease,
+        resumeFrom: [],
       };
     } catch (error) {
       if (error?.code === 11000) {
@@ -186,13 +228,41 @@ const acquireProcessingSlot = async (claimId, fingerprint) => {
   }
 
   if (existing.status === "processing") {
-    return { assessment: existing, proceed: false }; // concurrent in-flight request → reuse
+    if (slotIsLive(existing, nowMs)) {
+      return { assessment: existing, proceed: false }; // concurrent in-flight request → reuse
+    }
+    // Abandoned (or released) run: take it over. The filter is the lease we saw, so of several
+    // callers exactly one wins.
+    const resumeFrom = resumableImages(existing, fingerprint);
+    const takeover = await ClaimAssessment.findOneAndUpdate(
+      { claimId, status: "processing", slotLeaseUntil: existing.slotLeaseUntil ?? null },
+      {
+        $set: {
+          version: CLAIM_LOSS_ASSESSMENT_VERSION,
+          model: `${AIConfig.provider}/${AIConfig.model}`,
+          evidenceVersion: fingerprint,
+          aiImageAssessments: resumeFrom,
+          error: null,
+          failedAt: null,
+          slotLeaseUntil: lease,
+          ...(resumeFrom.length ? {} : { startedAt: new Date(nowMs) }),
+        },
+      },
+      { new: true }
+    );
+    if (takeover) {
+      logger.warn({ claimId: String(claimId), resumedImages: resumeFrom.length }, "assessment.slot_taken_over");
+      return { assessment: takeover, proceed: true, lease, resumeFrom };
+    }
+    return { assessment: await ClaimAssessment.findOne({ claimId }), proceed: false };
   }
   if (existing.status === "completed" && existing.evidenceVersion === fingerprint) {
     return { assessment: existing, proceed: false }; // same version/evidence set → reuse
   }
 
-  // pending / failed → take the slot; completed-with-different-evidence is handled below.
+  // pending / failed → take the slot; completed-with-different-evidence is handled below. A failed
+  // run of the same evidence set keeps the images it finished.
+  const resumeFrom = existing.status === "failed" ? resumableImages(existing, fingerprint) : [];
   const slot = await ClaimAssessment.findOneAndUpdate(
     { claimId, status: { $in: ["pending", "failed"] } },
     {
@@ -201,14 +271,16 @@ const acquireProcessingSlot = async (claimId, fingerprint) => {
         version: CLAIM_LOSS_ASSESSMENT_VERSION,
         model: `${AIConfig.provider}/${AIConfig.model}`,
         evidenceVersion: fingerprint,
+        aiImageAssessments: resumeFrom,
         error: null,
         failedAt: null,
-        startedAt: new Date(),
+        startedAt: new Date(nowMs),
+        slotLeaseUntil: lease,
       },
     },
     { new: true }
   );
-  if (slot) return { assessment: slot, proceed: true };
+  if (slot) return { assessment: slot, proceed: true, lease, resumeFrom };
 
   if (existing.status === "completed") {
     // Evidence set changed since completion → re-assess (new version boundary, same record).
@@ -218,55 +290,99 @@ const acquireProcessingSlot = async (claimId, fingerprint) => {
         $set: {
           status: "processing",
           evidenceVersion: fingerprint,
+          aiImageAssessments: [],
           error: null,
           failedAt: null,
-          startedAt: new Date(),
+          startedAt: new Date(nowMs),
+          slotLeaseUntil: lease,
         },
       },
       { new: true }
     );
-    if (restarted) return { assessment: restarted, proceed: true };
+    if (restarted) return { assessment: restarted, proceed: true, lease, resumeFrom: [] };
   }
 
   // Raced by another worker → return current state without running.
   return { assessment: await ClaimAssessment.findOne({ claimId }), proceed: false };
 };
 
-const failAssessment = async ({ claimId, version, stage, message, requestId }) => {
-  await ClaimAssessment.updateOne(
-    { claimId },
-    { $set: { status: "failed", failedAt: new Date(), error: { stage, message } } }
+// `lease` (ADR-022): the slot lease this run holds. The failure is then only recorded while the run
+// still owns the slot; a run that lost it to a takeover changes nothing and reports the current row.
+const failAssessment = async ({ claimId, version, stage, message, requestId, kind = PROVIDER_ERROR_KINDS.DEFECT, lease = null }) => {
+  const code = PROVIDER_ERROR_CODES[kind] || PROVIDER_ERROR_CODES.application_defect;
+  const filter = lease ? { claimId, status: "processing", slotLeaseUntil: lease } : { claimId };
+  const written = await ClaimAssessment.updateOne(
+    filter,
+    { $set: { status: "failed", failedAt: new Date(), error: { stage, message, kind, code }, slotLeaseUntil: null } }
   );
+  if (lease && written.matchedCount === 0) {
+    return { ...serialize(await ClaimAssessment.findOne({ claimId })), slotLost: true };
+  }
   await ClaimAudit.create({
     claimId,
     actor: "engine",
     action: "assessment_failed",
     reason: null,
-    metadata: { stage, version: version || CLAIM_LOSS_ASSESSMENT_VERSION },
+    metadata: { stage, version: version || CLAIM_LOSS_ASSESSMENT_VERSION, kind, code },
     requestId: requestId || null,
   });
-  throw ApiError.internal(message);
+  // Same sanitized 500 as before; the kind travels with it so the job's lastError records it.
+  throw new ProviderError({ kind, operation: "claim.assessment", statusCode: 500, message });
 };
 
+// Policy v1.1-safe-ai treats an unreadable model answer as a provider failure (retried, then held
+// for a person) instead of an "unsure" photo. Older policies keep the historical behaviour, and
+// their call to the vision service is unchanged.
+const visionOptionsForPolicy = () =>
+  resolvePolicy().aiMalformedOutput === "unavailable" ? { onUnparseable: "throw" } : {};
+
 // The evidence loop is SEQUENTIAL (one S3 GET + one multimodal Gemini call per image), so bounding
-// each call individually is not enough: two slow images would still overrun the API Gateway /
-// Lambda ceiling and be cut off with an opaque 503. Instead the whole loop runs against one
-// request-level deadline that stays under that ceiling, and each per-image AI call is shrunk to
-// whatever budget remains.
+// each call individually is not enough inside an HTTP request: two slow images would still overrun
+// the API Gateway / Lambda ceiling and be cut off with an opaque 503. In "request" mode the whole
+// loop therefore runs against one request-level deadline that stays under that ceiling, and each
+// per-image AI call is shrunk to whatever budget remains.
 //
 // Exceeding the budget is a REAL, retryable failure: it routes through the same `failAssessment`
 // path as any provider error, so the assessment is marked `failed` (never left stuck in
 // `processing`, which would make every later retry a no-op reuse) and the caller gets a sanitized
 // 5xx instead of a gateway 503. The claim itself stays `submitted` and its evidence is untouched.
+//
+// "job" mode (ADR-022, the queue): every image gets its own budget (the per-image timeout, never more
+// than what is left of the job's deadline), and progress is checkpointed after every image. When the
+// deadline leaves too little for another image the run releases its slot with the checkpoint saved
+// and returns `{ status: "processing", partial: true }`; the next run resumes after the last
+// image assessed. Without a deadline only the per-image timeout applies.
 const getAssessmentBudgetMs = () => Number(process.env.CLAIM_ASSESSMENT_TIMEOUT_MS) || 25000;
 
-const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, version, requestId }) => {
+const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, version, requestId, lease: initialLease, resumeFrom = [], mode = "request", deadline = null }) => {
+  const perImageMs = getPerImageTimeoutMs();
+  const overallDeadline =
+    mode === "job" ? (Number.isFinite(Number(deadline)) && deadline !== null ? Number(deadline) : null) : Date.now() + getAssessmentBudgetMs();
+  const visionOptions = visionOptionsForPolicy();
+  let lease = initialLease;
+  const owned = () => (lease ? { claimId, status: "processing", slotLeaseUntil: lease } : { claimId });
+  const lostSlot = async () => ({ ...serialize(await ClaimAssessment.findOne({ claimId })), slotLost: true });
+
+  // Already assessed for this evidence set (same upload, same evidence row): kept, in evidence order.
+  const done = new Map(resumeFrom.map((image) => [`${image.uploadId}:${String(image.evidenceId)}`, image]));
   const images = [];
-  const deadline = Date.now() + getAssessmentBudgetMs();
 
   try {
     for (const evidence of evidenceDocs) {
-      const remainingMs = deadline - Date.now();
+      const prior = done.get(`${evidence.uploadId}:${String(evidence._id)}`);
+      if (prior) {
+        images.push(prior);
+        continue;
+      }
+
+      const remainingMs = overallDeadline === null ? Number.POSITIVE_INFINITY : overallDeadline - Date.now();
+      if (mode === "job" && remainingMs < MIN_IMAGE_BUDGET_MS) {
+        // Out of time for another image: save the progress, free the slot and run again.
+        const released = await ClaimAssessment.updateOne(owned(), { $set: { aiImageAssessments: images, slotLeaseUntil: RELEASED_LEASE } });
+        if (lease && released.matchedCount === 0) return lostSlot();
+        logger.info({ claimId: String(claimId), assessed: images.length, imageCount: evidenceDocs.length }, "assessment.partial_checkpoint");
+        return { ...serialize(await ClaimAssessment.findOne({ claimId })), status: "processing", partial: true };
+      }
       if (remainingMs <= 0) {
         logger.warn(
           { claimId, uploadId: evidence.uploadId, imageCount: evidenceDocs.length },
@@ -278,6 +394,8 @@ const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, vers
           stage: "provider",
           message: "Claim evidence assessment exceeded its time budget",
           requestId,
+          kind: PROVIDER_ERROR_KINDS.TIMEOUT,
+          lease,
         });
       }
 
@@ -292,6 +410,8 @@ const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, vers
           stage: "storage",
           message: "Image storage unavailable",
           requestId,
+          kind: PROVIDER_ERROR_KINDS.STORAGE,
+          lease,
         });
       }
       if (!object) {
@@ -301,24 +421,34 @@ const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, vers
           stage: "storage",
           message: "Image storage unavailable",
           requestId,
+          kind: PROVIDER_ERROR_KINDS.STORAGE,
+          lease,
         });
       }
       const observation = await analyzeClaimImage({
         imageBuffer: object.buffer,
         mediaType: object.mediaType || evidence.mediaType,
-        timeoutMs: remainingMs,
+        timeoutMs: Math.min(perImageMs, remainingMs),
+        ...visionOptions,
       });
       images.push({
         evidenceId: evidence._id,
         uploadId: evidence.uploadId,
         observation: scrubObservation(observation),
       });
+
+      // Checkpoint: a crash or a takeover from here on never pays for this image again. The lease is
+      // renewed for the next image.
+      const nextLease = leaseAfter(perImageMs);
+      const kept = await ClaimAssessment.updateOne(owned(), { $set: { aiImageAssessments: images, slotLeaseUntil: nextLease } });
+      if (lease && kept.matchedCount === 0) return lostSlot();
+      lease = nextLease;
     }
 
     const aggregate = buildAggregate(images);
 
-    await ClaimAssessment.updateOne(
-      { claimId },
+    const completed = await ClaimAssessment.updateOne(
+      owned(),
       {
         $set: {
           status: "completed",
@@ -326,9 +456,11 @@ const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, vers
           aiImageAssessments: images,
           aiAggregate: aggregate,
           error: null,
+          slotLeaseUntil: null,
         },
       }
     );
+    if (lease && completed.matchedCount === 0) return lostSlot();
 
     await ClaimAudit.create({
       claimId,
@@ -344,9 +476,10 @@ const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, vers
       requestId: requestId || null,
     });
 
-    const completed = await ClaimAssessment.findOne({ claimId });
-    return serialize(completed);
+    const final = await ClaimAssessment.findOne({ claimId });
+    return serialize(final);
   } catch (error) {
+    const kind = classifyProviderError(error);
     if (error instanceof ApiError) {
       return failAssessment({
         claimId,
@@ -354,22 +487,28 @@ const processImagesAndFinish = async ({ claimId, evidenceDocs, fingerprint, vers
         stage: "provider",
         message: error.message,
         requestId,
+        kind,
+        lease,
       });
     }
-    logger.error({ err: error, claimId }, "Claim evidence assessment failed");
+    // Kind and error name only: a raw provider error message can carry a prompt or a URL.
+    logger.error({ claimId, kind, errName: error?.name || null }, "Claim evidence assessment failed");
     return failAssessment({
       claimId,
       version,
       stage: "provider",
       message: "Claim evidence assessment failed",
       requestId,
+      kind,
+      lease,
     });
   }
 };
 
 // Internal assessment entry point. Only { claimId, cognitoSub, requestId } are read — any other
-// supplied data (imageUrl, s3Key, body fields, claim state) is structurally ignored.
-export const assessClaimEvidence = async ({ claimId, cognitoSub, requestId }) => {
+// supplied data (imageUrl, s3Key, body fields, claim state) is structurally ignored. `mode` and
+// `deadline` are set by the queue's step executor only (ADR-022, see processImagesAndFinish).
+export const assessClaimEvidence = async ({ claimId, cognitoSub, requestId, mode = "request", deadline = null }) => {
   if (!claimId || !mongoose.isValidObjectId(String(claimId))) {
     throw ApiError.badRequest("Valid claim id is required");
   }
@@ -394,7 +533,7 @@ export const assessClaimEvidence = async ({ claimId, cognitoSub, requestId }) =>
   }
 
   const fingerprint = computeEvidenceVersion(evidenceDocs);
-  const { assessment, proceed } = await acquireProcessingSlot(claim._id, fingerprint);
+  const { assessment, proceed, lease, resumeFrom } = await acquireProcessingSlot(claim._id, fingerprint);
 
   if (!proceed) {
     return serialize(assessment); // already running or reused completed assessment
@@ -406,6 +545,10 @@ export const assessClaimEvidence = async ({ claimId, cognitoSub, requestId }) =>
     fingerprint,
     version: assessment.version,
     requestId,
+    lease,
+    resumeFrom,
+    mode: mode === "job" ? "job" : "request",
+    deadline,
   });
 };
 

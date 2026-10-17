@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vivasayi.invalid/schemas/vivasayi-test-results/v1.json",
+  "title": "Vivasayi acceptance test results",
+  "description": "Written by scripts/acceptance/report.js to test-results/acceptance/results-<runId>.json. Plan Part F; design-testing section 1 'Machine-readable results'.",
+  "type": "object",
+  "required": ["schema", "runId", "generatedAt", "repos", "environment", "suites", "tests", "scenarios", "failures", "blocked", "flaky", "idCollisions", "unlabelledCount", "networkViolations", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "vivasayi-test-results/v1" },
+    "runId": { "type": "string", "pattern": "^[0-9]{8}T[0-9]{6}Z-[A-Za-z0-9._-]+$" },
+    "generatedAt": { "type": "string", "minLength": 1 },
+    "generator": { "type": "object" },
+    "inputs": { "type": "object" },
+    "repos": {
+      "type": "object",
+      "required": ["backend", "frontend"],
+      "additionalProperties": false,
+      "properties": {
+        "backend": { "$ref": "#/$defs/repo" },
+        "frontend": { "$ref": "#/$defs/repo" }
+      }
+    },
+    "environment": { "type": "object" },
+    "suites": { "type": "array", "items": { "$ref": "#/$defs/suite" } },
+    "tests": { "type": "array", "items": { "$ref": "#/$defs/test" } },
+    "scenarios": { "type": "array", "items": { "$ref": "#/$defs/scenario" } },
+    "failures": { "type": "array", "items": { "$ref": "#/$defs/failure" } },
+    "blocked": { "type": "array", "items": { "$ref": "#/$defs/blocked" } },
+    "flaky": { "type": "array", "items": { "$ref": "#/$defs/flaky" } },
+    "idCollisions": { "type": "array", "items": { "$ref": "#/$defs/idCollision" } },
+    "unlabelledCount": { "type": "integer", "minimum": 0 },
+    "networkViolations": { "type": "array", "items": { "$ref": "#/$defs/networkViolation" } },
+    "screenshots": { "type": "array", "items": { "$ref": "#/$defs/attachment" } },
+    "acceptanceItems": { "type": "array", "items": { "$ref": "#/$defs/acceptanceItem" } },
+    "summary": { "$ref": "#/$defs/summary" }
+  },
+  "$defs": {
+    "nullableString": { "type": ["string", "null"] },
+    "severity": { "enum": ["S1", "S2", "S3", "S4"] },
+    "repo": {
+      "type": "object",
+      "required": ["path", "commit", "branch", "dirty"],
+      "properties": {
+        "path": { "type": ["string", "null"] },
+        "commit": { "type": ["string", "null"] },
+        "branch": { "type": ["string", "null"] },
+        "dirty": { "type": ["boolean", "null"] },
+        "available": { "type": "boolean" },
+        "git": { "type": ["object", "null"] }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": ["passed", "failed", "skipped", "todo"],
+      "additionalProperties": false,
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "todo": { "type": "integer", "minimum": 0 },
+        "flaky": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "suite": {
+      "type": "object",
+      "required": ["name", "command", "status", "exitCode", "durationMs", "rawReport", "counts"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string" },
+        "repo": { "enum": ["backend", "frontend"] },
+        "command": { "type": ["string", "null"] },
+        "cwd": { "type": ["string", "null"] },
+        "status": { "enum": ["passed", "failed", "error", "not_available", "not_run", "n/a"] },
+        "exitCode": { "type": ["integer", "null"] },
+        "durationMs": { "type": ["number", "null"], "minimum": 0 },
+        "rawReport": { "type": ["string", "null"] },
+        "counts": { "$ref": "#/$defs/counts" },
+        "reason": { "type": ["string", "null"] },
+        "stderrTail": { "type": ["string", "null"] },
+        "details": { "type": ["object", "null"] }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "required": ["name", "contentType", "path"],
+      "properties": {
+        "testId": { "type": "string" },
+        "project": { "type": ["string", "null"] },
+        "name": { "type": "string" },
+        "contentType": { "type": ["string", "null"] },
+        "path": { "type": ["string", "null"] }
+      }
+    },
+    "test": {
+      "type": "object",
+      "required": ["id", "title", "file", "suite", "level", "status", "durationMs", "scenarios", "attachments"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "baseId": { "type": ["string", "null"] },
+        "key": { "type": "string" },
+        "labelled": { "type": "boolean" },
+        "title": { "type": "string" },
+        "fullName": { "type": "string" },
+        "file": { "type": "string" },
+        "repo": { "enum": ["backend", "frontend"] },
+        "suite": { "type": "string" },
+        "project": { "type": ["string", "null"] },
+        "level": { "enum": ["U", "I/API", "FE-U", "E2E"] },
+        "status": { "enum": ["passed", "failed", "skipped", "todo", "flaky"] },
+        "durationMs": { "type": ["number", "null"], "minimum": 0 },
+        "scenarios": { "type": "array", "items": { "type": "string", "pattern": "^S[0-9]{2}$" } },
+        "attachments": { "type": "array", "items": { "$ref": "#/$defs/attachment" } }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["id", "name", "requiredTests", "status", "missingTests", "releaseBlocking", "severity"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^S[0-9]{2}$" },
+        "name": { "type": "string" },
+        "requiredTests": { "type": "array", "items": { "type": "string" } },
+        "status": { "enum": ["pass", "fail", "partial", "blocked", "missing"] },
+        "missingTests": { "type": "array", "items": { "type": "string" } },
+        "failedTests": { "type": "array", "items": { "type": "string" } },
+        "blockedTests": { "type": "array", "items": { "type": "string" } },
+        "incompleteTests": { "type": "array", "items": { "type": "string" } },
+        "passedTests": { "type": "array", "items": { "type": "string" } },
+        "releaseBlocking": { "type": "boolean" },
+        "severity": { "$ref": "#/$defs/severity" },
+        "mocks": { "type": "array", "items": { "type": "string" } },
+        "decisionRefs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "required": ["id", "command", "expected", "actual", "rootCause", "impact", "severity", "file", "function", "fix", "reproducible", "releaseBlocking", "signature", "evidence"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["test", "file", "suite"] },
+        "title": { "type": ["string", "null"] },
+        "suite": { "type": ["string", "null"] },
+        "repo": { "enum": ["backend", "frontend"] },
+        "cwd": { "type": ["string", "null"] },
+        "command": { "type": "string", "minLength": 1 },
+        "expected": { "type": "string" },
+        "actual": { "type": "string" },
+        "rootCause": { "type": "string", "minLength": 1 },
+        "impact": { "type": "string", "minLength": 1 },
+        "severity": { "$ref": "#/$defs/severity" },
+        "severitySource": { "type": "string" },
+        "file": { "type": ["string", "null"] },
+        "function": { "type": ["string", "null"] },
+        "fix": { "type": "string", "minLength": 1 },
+        "reproducible": { "type": "string", "pattern": "^(not rerun|yes \\([0-9]+/[0-9]+\\)|flaky \\([0-9]+/[0-9]+\\)|no \\(0/[0-9]+\\)|inconclusive \\([0-9]+/[0-9]+ found\\))$" },
+        "releaseBlocking": { "type": "boolean" },
+        "signature": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "category": { "enum": ["untriaged", "code_defect", "test_defect", "external_blocker", "environment"] },
+        "untriaged": { "type": "boolean" },
+        "scenarios": { "type": "array", "items": { "type": "string" } },
+        "firstLine": { "type": "string" },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "blocked": {
+      "type": "object",
+      "required": ["id", "kind", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["suite", "live_item", "external_failure", "scenario"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "decisionRef": { "type": ["string", "null"] },
+        "releaseBlocking": { "type": "boolean" },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "flaky": {
+      "type": "object",
+      "required": ["id", "source"],
+      "properties": {
+        "id": { "type": "string" },
+        "source": { "enum": ["playwright_retry", "rerun"] },
+        "detail": { "type": "string" }
+      }
+    },
+    "idCollision": {
+      "type": "object",
+      "required": ["id", "occurrences"],
+      "properties": {
+        "id": { "type": "string" },
+        "known": { "type": "boolean" },
+        "occurrences": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["suite", "file"],
+            "properties": {
+              "suite": { "type": "string" },
+              "file": { "type": "string" },
+              "titles": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "networkViolation": {
+      "type": "object",
+      "required": ["source", "detail"],
+      "properties": {
+        "source": { "type": "string" },
+        "testId": { "type": ["string", "null"] },
+        "detail": { "type": "string" }
+      }
+    },
+    "acceptanceItem": {
+      "type": "object",
+      "required": ["id", "title", "releaseBlocking", "testStatus"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^ACC-[0-9]{2,3}$" },
+        "title": { "type": "string" },
+        "decisionRef": { "type": ["string", "null"] },
+        "releaseBlocking": { "type": "boolean" },
+        "testStatus": { "enum": ["pass", "fail", "partial", "blocked", "missing", "no_tests"] },
+        "liveValidation": { "type": "string" },
+        "tests": { "type": "array", "items": { "type": "string" } },
+        "missingTests": { "type": "array", "items": { "type": "string" } },
+        "failedTests": { "type": "array", "items": { "type": "string" } },
+        "evidenceRequired": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["tests", "scenarios", "failures", "verdict"],
+      "properties": {
+        "tests": {
+          "type": "object",
+          "required": ["total", "passed", "failed", "skipped", "todo", "flaky"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "passed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 },
+            "skipped": { "type": "integer", "minimum": 0 },
+            "todo": { "type": "integer", "minimum": 0 },
+            "flaky": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "scenarios": {
+          "type": "object",
+          "required": ["pass", "fail", "partial", "blocked", "missing"],
+          "properties": {
+            "pass": { "type": "integer", "minimum": 0 },
+            "fail": { "type": "integer", "minimum": 0 },
+            "partial": { "type": "integer", "minimum": 0 },
+            "blocked": { "type": "integer", "minimum": 0 },
+            "missing": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "failures": {
+          "type": "object",
+          "required": ["total", "untriaged", "codeDefects", "externalBlockers", "releaseBlocking"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "untriaged": { "type": "integer", "minimum": 0 },
+            "codeDefects": { "type": "integer", "minimum": 0 },
+            "externalBlockers": { "type": "integer", "minimum": 0 },
+            "releaseBlocking": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "verdict": { "enum": ["READY", "NOT READY"] },
+        "verdictReasons": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

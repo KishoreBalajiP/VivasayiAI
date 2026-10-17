@@ -1,0 +1,45 @@
+{
+  "schema": "vivasayi-study-code-defaults/v1",
+  "description": "Code defaults in force during the 16 October 2026 study, extracted once from the code at studyCommit. The manuscript's Disclosures section quotes these study-time values; scripts/eval/manuscriptTables.js reads them from this file, so the check does not need the git history (a shallow CI clone or a copy without .git still works). When studyCommit is reachable, manuscriptTables.js also re-reads each value from the code at that commit and stops on any difference. Pinned in FROZEN_HASHES.json; never edit it. A value that changes later gets its own record and macro.",
+  "studyCommit": "6dbe6b8497cedef558fb912072787935d5565d19",
+  "extractedOn": "2026-10-16",
+  "extractedWith": "git show 6dbe6b8:<file>, the default literal of the line given",
+  "values": {
+    "CLAIM_RATE_LIMIT_MAX": {
+      "value": 5,
+      "unit": "claim writes per hour per user",
+      "file": "config/env.js",
+      "line": 79,
+      "code": "claimRateLimitMax: Number(process.env.CLAIM_RATE_LIMIT_MAX) || 5,",
+      "parser": "envDefault",
+      "blob": "84db80371a23b7caf4379165c0274466fd21ea56"
+    },
+    "GEMINI_TIMEOUT_MS": {
+      "value": 25000,
+      "unit": "milliseconds",
+      "file": "utils/aiTimeout.js",
+      "line": 22,
+      "code": "Number(process.env.GEMINI_TIMEOUT_MS) || 25000;",
+      "parser": "envDefault",
+      "blob": "055a23aa1800711c8f337908762e0cb8fb46031f"
+    },
+    "SATELLITE_CLOUD_MAX": {
+      "value": 0.3,
+      "unit": "fraction",
+      "file": "services/satellite/config.js",
+      "line": 108,
+      "code": "cloudMaxFraction: pickFloat(env, [\"SATELLITE_CLOUD_MAX\", \"SATELLITE_POC_CLOUD_MAX\"], 0.3),",
+      "parser": "pickFloat",
+      "blob": "2aaceff90a5fd4c5820480789b7de8cabcbf2633"
+    },
+    "SATELLITE_PROCESSING_SCENE_CLOUD_MAX": {
+      "value": 0.9,
+      "unit": "fraction",
+      "file": "services/satellite/config.js",
+      "line": 114,
+      "code": "processingSceneCloudMax: pickFloat(env, [\"SATELLITE_PROCESSING_SCENE_CLOUD_MAX\"], 0.9),",
+      "parser": "pickFloat",
+      "blob": "2aaceff90a5fd4c5820480789b7de8cabcbf2633"
+    }
+  }
+}

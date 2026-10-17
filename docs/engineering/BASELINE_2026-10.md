@@ -1,5 +1,7 @@
 # Test baseline and Phase A fixes — October 2026
 
+> **Status correction (2026-10-17).** This document's branch and commit statements describe the state when it was written. The October hardening work it describes was later committed to `develop` as `b760596` and `6dbe6b8` (both "initial commit", 16 October 2026) and pushed to `origin/develop`. `git branch -a --contains 6dbe6b8` lists only `develop` and `origin/develop`: it is **not on `main`, so CI has not deployed it**. The local branch `feat/verification-hardening-2026-10` still exists but is not the working branch. The later 2026-10 completion work (policy `v1.1-safe-ai` as the default, the durable enqueue, the scheduled worker, the progress contract, the tracker, the hermetic e2e harness) is **uncommitted in the working trees** of both repositories on `develop`, pending owner review; nothing is deployed. Current status: [ACCEPTANCE_MATRIX_2026-10-17.md](ACCEPTANCE_MATRIX_2026-10-17.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
 Branch `feat/verification-hardening-2026-10`, created from `develop` at `522d212`. Nothing here is
 committed, pushed or deployed.
 
@@ -76,7 +78,7 @@ database keeps the old, weaker index.
 
 ## Later phases (B to H) and final state
 
-Same branch, still uncommitted. Final run: **899 tests in 54 files, all passing**; 25 consecutive full-suite runs
+Same branch, uncommitted at the time (since committed to `develop`; see the status correction at the top). Final run: **899 tests in 54 files, all passing**; 25 consecutive full-suite runs
 passed after the test-server change below.
 
 | Phase | Delivered |

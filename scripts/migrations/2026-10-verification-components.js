@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { isLocalMongoUri } from "../worker.js";
 import LossClaim from "../../models/LossClaim.js";
 import ClaimAssessment from "../../models/ClaimAssessment.js";
 import AdminAction from "../../models/AdminAction.js";
@@ -13,6 +14,9 @@ import { enqueue } from "../../services/verificationJobs.service.js";
 // `--dry-run` reports what would change and writes nothing.
 //
 //   node scripts/migrations/2026-10-verification-components.js [--dry-run] [--enqueue]
+//
+// Writing (no --dry-run) to a database that is not on this machine is refused unless
+// MIGRATION_ALLOW_REMOTE_APPLY=true (2026-10-17 safety fix; the dry run is always allowed).
 //
 // What it does:
 //   1. backfills `component` and `kind` on existing VerificationEvidence rows;
@@ -127,14 +131,23 @@ export const migrate = async ({ dryRun = false, enqueueEngine = false, now = new
 
 // Command-line entry point. Importing the services opens long-lived clients (AI, vector store), so
 // the process exits explicitly instead of waiting for the event loop to drain.
+// A write run against a database that is not on this machine needs an explicit opt-in.
+export const assertWriteAllowed = ({ dryRun, mongoUri, environment = process.env }) => {
+  if (!dryRun && !isLocalMongoUri(mongoUri) && environment.MIGRATION_ALLOW_REMOTE_APPLY !== "true") {
+    throw new Error("Refusing to write to a database that is not on this machine. Run with --dry-run first, review it, and set MIGRATION_ALLOW_REMOTE_APPLY=true to write.");
+  }
+};
+
 const isMain = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
 if (isMain) {
   let exitCode = 0;
   try {
     const { env, validateEnv, SERVER_REQUIRED } = await import("../../config/env.js");
     validateEnv(SERVER_REQUIRED);
-    await mongoose.connect(env.mongoUri);
-    const result = await migrate({ dryRun: process.argv.includes("--dry-run"), enqueueEngine: process.argv.includes("--enqueue") });
+    const dryRun = process.argv.includes("--dry-run");
+    assertWriteAllowed({ dryRun, mongoUri: env.mongoUri });
+    await mongoose.connect(env.mongoUri, dryRun ? { autoIndex: false, autoCreate: false } : {});
+    const result = await migrate({ dryRun, enqueueEngine: process.argv.includes("--enqueue") });
     console.log(result.lines.join("\n"));
     console.log(JSON.stringify(result.summary));
     await mongoose.disconnect();

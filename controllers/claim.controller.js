@@ -8,8 +8,10 @@ import * as verificationEvidenceService from "../services/verificationEvidence.s
 import * as landDocumentExaminationService from "../services/landDocumentExamination.service.js";
 import * as officialLandRecordService from "../services/officialLandRecord.service.js";
 import * as satelliteVerificationService from "../services/satelliteVerification.service.js";
-import { drain } from "../services/verificationJobs.service.js";
+import { drain, ensurePlan } from "../services/verificationJobs.service.js";
+import * as claimProgressService from "../services/claimProgress.service.js";
 import { env } from "../config/env.js";
+import logger from "../utils/logger.js";
 
 // F-49 (ADR-019) — claim lifecycle + claim-scoped evidence (08_API_Documentation §10).
 // Identity always derives from the verified token (req.user.id = cognitoSub), never from the
@@ -55,13 +57,30 @@ const withdrawClaim = asyncHandler(async (req, res) => {
 });
 
 const resubmitClaim = asyncHandler(async (req, res) => {
-  const claim = await claimService.resubmitForUser({
+  const { claim, idempotent } = await claimService.resubmitForUser({
     cognitoSub: req.user.id,
     claimId: req.params.claimId,
     requestId: req.requestId ?? null,
   });
-  return ApiResponse.success(res, "Claim resubmitted", { claim });
+  return ApiResponse.success(res, idempotent ? "Claim already resubmitted" : "Claim resubmitted", { claim });
 });
+
+// A drain that fails inside a request must not fail the request (the queue retries the work), but
+// it is never silent either.
+const logDrainFailure = (req, where) => (error) =>
+  logger.warn({ claimId: req.params.claimId, requestId: req.requestId ?? null, where, err: error?.message }, "verification.drain_failed");
+
+// A status read also advances ONE queued step (ADR-021), so polling makes progress even when no
+// scheduled worker is attached. Ownership is checked FIRST: a read of someone else's claim is a 404
+// and runs nothing (no provider call, no attempt used on the owner's jobs).
+const drainOneStepOnRead = async (req, where) => {
+  if (!(env.claimAutomatedVerificationEnabled && env.claimVerificationDrainOnRead)) return;
+  const owned = await claimService.findOwned(req.user.id, req.params.claimId);
+  if (!owned) throw ApiError.notFound("Claim not found");
+  await drain({ claimId: owned._id, maxJobs: 1, deadline: Date.now() + env.claimVerificationReadDrainBudgetMs, requestId: req.requestId ?? null }).catch(
+    logDrainFailure(req, where)
+  );
+};
 
 // E9-S5/E9-S6 (ADR-019, Phase 6 integration) — POST /claims/:claimId/verify.
 // Thin endpoint over the Phase 5 internal `verifyClaim` orchestration. The CLIENT only requests
@@ -69,20 +88,37 @@ const resubmitClaim = asyncHandler(async (req, res) => {
 // deterministic engine, persists the decision, and advances the state via the frozen machine.
 // Only { claimId, cognitoSub, requestId } are read — ANY client-supplied result/state/area/AI
 // payload is structurally ignored (P5-20 preserve). Idempotent + concurrency-safe (CAS).
+//
+// ADR-022: ownership is checked BEFORE anything runs, so another user's call is a 404 that drains
+// nothing. A submitted claim's plan is ensured (recovering a plan an earlier request could not
+// write), its due steps run within the request budget, and the claim is decided only when none of
+// its blocking steps is still queued or running (verifyClaimWhenReady); otherwise the response says
+// "in progress". The farmer UI no longer calls this endpoint; the queue decides on its own.
 const verifyClaim = asyncHandler(async (req, res) => {
+  const owned = await claimService.findOwned(req.user.id, req.params.claimId);
+  if (!owned) throw ApiError.notFound("Claim not found");
   // ADR-021: run this claim's queued steps first (bounded by the request budget), so the decision
   // below sees the evidence they produce. Nothing is queued when automated verification is off.
   if (env.claimAutomatedVerificationEnabled) {
+    if (owned.state === "submitted") {
+      await ensurePlan({ claimId: owned._id, cognitoSub: req.user.id, requestId: req.requestId ?? null, trigger: "verify" }).catch((error) =>
+        logger.warn({ claimId: String(owned._id), requestId: req.requestId ?? null, err: error?.message, code: "PLAN_ENQUEUE_FAILED" }, "verification.plan_failed")
+      );
+    }
     await drain({
-      claimId: req.params.claimId,
+      claimId: owned._id,
       deadline: Date.now() + env.claimVerificationRequestBudgetMs,
-    }).catch(() => {});
+      requestId: req.requestId ?? null,
+    }).catch(logDrainFailure(req, "verify"));
   }
-  const verification = await claimVerificationService.verifyClaim({
+  const verification = await claimVerificationService.verifyClaimWhenReady({
     claimId: req.params.claimId,
     cognitoSub: req.user.id,
     requestId: req.requestId ?? null,
   });
+  // Farmer audience (ADR-022): the policy id stays, its hash is an internal detail (reviewers read it in
+  // the verification diagnostics).
+  const farmerVerification = { ...verification, policyHash: null };
   const message = verification.inProgress
     ? "Claim verification in progress"
     : verification.idempotent
@@ -90,7 +126,7 @@ const verifyClaim = asyncHandler(async (req, res) => {
       : verification.claimState === "verified"
         ? "Claim verified"
         : "Claim verification completed";
-  return ApiResponse.success(res, message, { verification });
+  return ApiResponse.success(res, message, { verification: farmerVerification });
 });
 
 const presignEvidence = asyncHandler(async (req, res) => {
@@ -134,25 +170,31 @@ const getEvidenceUrl = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, "Evidence url generated", result);
 });
 
-// Phase 15 — farmer-facing verification summary (owner-scoped).
+// Phase 15 — farmer-facing verification summary (owner-scoped). ADR-022: the evidence rows are the
+// FARMER projection (no review cases, results or internal fields), and the progress-v1 object is
+// included for clients that read this endpoint instead of /progress.
 const getClaimVerification = asyncHandler(async (req, res) => {
-  // ADR-021: a status read also advances ONE queued step, so polling makes progress even when no
-  // scheduled worker is attached. The claim is owner-checked below; the step runs for its owner.
-  if (env.claimAutomatedVerificationEnabled && env.claimVerificationDrainOnRead) {
-    const owned = await claimService.getForUser(req.user.id, req.params.claimId);
-    if (owned) {
-      await drain({ claimId: req.params.claimId, maxJobs: 1, deadline: Date.now() + 15000 }).catch(() => {});
-    }
-  }
+  await drainOneStepOnRead(req, "verification_read");
   const view = await verificationEvidenceService.getVerificationEvidenceView({
     claimId: req.params.claimId,
     cognitoSub: req.user.id,
+    audience: "farmer",
   });
   const claim = await claimService.getForUser(req.user.id, req.params.claimId);
+  const progress = await claimProgressService.getClaimProgressForUser({ claimId: req.params.claimId, cognitoSub: req.user.id });
   return ApiResponse.success(res, "Verification summary fetched", {
     verification: view,
     claim,
+    progress,
   });
+});
+
+// ADR-022 (plan A6) — GET /claims/:claimId/progress: the farmer progress contract (progress-v1),
+// built from persisted state only. Owner-scoped (404 for anyone else, before any queued step runs).
+const getClaimProgress = asyncHandler(async (req, res) => {
+  await drainOneStepOnRead(req, "progress_read");
+  const progress = await claimProgressService.getClaimProgressForUser({ claimId: req.params.claimId, cognitoSub: req.user.id });
+  return ApiResponse.success(res, "Claim progress fetched", { progress });
 });
 
 const examineClaimLandDocuments = asyncHandler(async (req, res) => {
@@ -209,6 +251,7 @@ export {
   deleteEvidence,
   getEvidenceUrl,
   getClaimVerification,
+  getClaimProgress,
   examineClaimLandDocuments,
   runClaimSatelliteVerification,
   verifyClaimOfficialLandRecords,

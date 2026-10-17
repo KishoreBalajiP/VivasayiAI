@@ -1,0 +1,219 @@
+{
+  "config": {
+    "configFile": "/repo/frontend/playwright.config.ts",
+    "rootDir": "/repo/frontend/e2e",
+    "version": "1.48.2",
+    "workers": 1,
+    "projects": [
+      { "id": "desktop-chromium", "name": "desktop-chromium", "testDir": "/repo/frontend/e2e" },
+      { "id": "mobile-chromium", "name": "mobile-chromium", "testDir": "/repo/frontend/e2e" }
+    ]
+  },
+  "suites": [
+    {
+      "title": "claim-submit-auto.spec.ts",
+      "file": "claim-submit-auto.spec.ts",
+      "line": 0,
+      "column": 0,
+      "specs": [
+        {
+          "title": "E2E-01: wizard to tracker to decided with zero POST /verify",
+          "ok": true,
+          "tags": [],
+          "id": "spec-e2e-01",
+          "file": "claim-submit-auto.spec.ts",
+          "line": 12,
+          "column": 1,
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-chromium",
+              "projectName": "desktop-chromium",
+              "status": "expected",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 41234.5,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T10:00:00.000Z",
+                  "attachments": [
+                    { "name": "screenshot", "contentType": "image/png", "path": "/repo/frontend/test-results/e2e/claim-submit-auto-E2E-01-desktop-chromium/test-finished-1.png" }
+                  ]
+                }
+              ]
+            },
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-chromium",
+              "projectName": "mobile-chromium",
+              "status": "expected",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 45000,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T10:01:00.000Z",
+                  "attachments": [
+                    { "name": "screenshot", "contentType": "image/png", "path": "/repo/frontend/test-results/e2e/claim-submit-auto-E2E-01-mobile-chromium/test-finished-1.png" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "E2E-02: no verify button is rendered",
+          "ok": false,
+          "tags": [],
+          "id": "spec-e2e-02",
+          "file": "claim-submit-auto.spec.ts",
+          "line": 40,
+          "column": 1,
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-chromium",
+              "projectName": "desktop-chromium",
+              "status": "expected",
+              "results": [
+                { "workerIndex": 0, "status": "passed", "duration": 5000, "errors": [], "stdout": [], "stderr": [], "retry": 0, "startTime": "2026-10-16T10:02:00.000Z", "attachments": [] }
+              ]
+            },
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-chromium",
+              "projectName": "mobile-chromium",
+              "status": "unexpected",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "failed",
+                  "duration": 31000,
+                  "errors": [
+                    {
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: 'Run AI verification' })\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\nTimeout: 30000ms",
+                      "stack": "Error: expect(locator).toHaveCount(expected) failed\n    at /repo/frontend/e2e/claim-submit-auto.spec.ts:44:7",
+                      "location": { "file": "/repo/frontend/e2e/claim-submit-auto.spec.ts", "line": 44, "column": 7 }
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T10:03:00.000Z",
+                  "attachments": [
+                    { "name": "screenshot", "contentType": "image/png", "path": "/repo/frontend/test-results/e2e/claim-submit-auto-E2E-02-mobile-chromium/test-failed-1.png" },
+                    { "name": "trace", "contentType": "application/zip", "path": "/repo/frontend/test-results/e2e/claim-submit-auto-E2E-02-mobile-chromium/trace.zip" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "suites": [
+        {
+          "title": "no fake progress",
+          "file": "claim-submit-auto.spec.ts",
+          "line": 60,
+          "column": 6,
+          "specs": [
+            {
+              "title": "E2E-24: every DOM status equals the latest /progress response",
+              "ok": true,
+              "tags": [],
+              "id": "spec-e2e-24",
+              "file": "claim-submit-auto.spec.ts",
+              "line": 61,
+              "column": 3,
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop-chromium",
+                  "projectName": "desktop-chromium",
+                  "status": "flaky",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "status": "failed",
+                      "duration": 60000,
+                      "errors": [{ "message": "Error: Timed out 30000ms waiting for the decision card" }],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T10:04:00.000Z",
+                      "attachments": []
+                    },
+                    { "workerIndex": 1, "status": "passed", "duration": 52000, "errors": [], "stdout": [], "stderr": [], "retry": 1, "startTime": "2026-10-16T10:05:00.000Z", "attachments": [] }
+                  ]
+                }
+              ]
+            }
+          ],
+          "suites": []
+        }
+      ]
+    },
+    {
+      "title": "network.spec.ts",
+      "file": "network.spec.ts",
+      "line": 0,
+      "column": 0,
+      "specs": [
+        {
+          "title": "loads the app shell",
+          "ok": true,
+          "tags": [],
+          "id": "spec-network",
+          "file": "network.spec.ts",
+          "line": 5,
+          "column": 1,
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-chromium",
+              "projectName": "desktop-chromium",
+              "status": "expected",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 3000,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T10:06:00.000Z",
+                  "attachments": [
+                    { "name": "network-violations", "contentType": "application/json", "body": "WyJHRVQgaHR0cHM6Ly9ub21pbmF0aW0ub3BlbnN0cmVldG1hcC5vcmcvcmV2ZXJzZT9sYXQ9MTAuNzkiXQ==" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": { "startTime": "2026-10-16T10:00:00.000Z", "duration": 123456.7, "expected": 4, "skipped": 0, "unexpected": 1, "flaky": 1 }
+}

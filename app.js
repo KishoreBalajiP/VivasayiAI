@@ -15,6 +15,7 @@ import corsMiddleware from "./middlewares/cors.js";
 import { authLimiter, chatLimiter, chatDailyLimiter } from "./middlewares/rateLimit.js";
 import requestLogger from "./middlewares/requestLogger.js";
 import ApiResponse from "./utils/ApiResponse.js";
+import { isDevStorageReceiverEnabled } from "./config/env.js";
 
 // Thin, side-effect-free Express app so the same app is used by production (wrapped in
 // serverless-http inside index.js) and by the integration tests (imported directly, no DB/Env
@@ -30,6 +31,16 @@ app.use(corsMiddleware);
 
 // Request logging + correlation (runs before body-parse so parse errors get a requestId)
 app.use(requestLogger);
+
+// ADR-024 (plan A8): the dev-only upload receiver that stands in for S3 presigned URLs in the hermetic
+// e2e harness. Imported (dynamically, so the module is never even loaded otherwise) and mounted only
+// when isDevStorageReceiverEnabled(): mock storage, not production, not Lambda, DEV_STORAGE_RECEIVER=true.
+// It sits before express.json (it reads the raw image body) and before requireAuth (the signed URL is
+// the capability, as with S3). In any other configuration /__dev/storage is a 404.
+if (isDevStorageReceiverEnabled()) {
+  const { default: devStorageRoutes } = await import("./routes/devStorage.js");
+  app.use("/__dev/storage", devStorageRoutes);
+}
 
 app.use(express.json({ limit: "1mb" }));
 

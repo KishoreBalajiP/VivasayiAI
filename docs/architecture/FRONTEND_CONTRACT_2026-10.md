@@ -6,6 +6,9 @@ working; none of these fields is required for them.
 
 Status: implemented and tested in the backend on branch `feat/verification-hardening-2026-10`; not deployed.
 
+> **Status correction (2026-10-17).** This document's branch and commit statements describe the state when it was written. The October hardening work it describes was later committed to `develop` as `b760596` and `6dbe6b8` (both "initial commit", 16 October 2026) and pushed to `origin/develop`. `git branch -a --contains 6dbe6b8` lists only `develop` and `origin/develop`: it is **not on `main`, so CI has not deployed it**. The local branch `feat/verification-hardening-2026-10` still exists but is not the working branch. The later 2026-10 completion work (policy `v1.1-safe-ai` as the default, the durable enqueue, the scheduled worker, the progress contract, the tracker, the hermetic e2e harness) is **uncommitted in the working trees** of both repositories on `develop`, pending owner review; nothing is deployed. Current status: [ACCEPTANCE_MATRIX_2026-10-17.md](../engineering/ACCEPTANCE_MATRIX_2026-10-17.md) and [KNOWN_ISSUES.md](../engineering/KNOWN_ISSUES.md).
+
+
 ## 1. Claims
 
 ### 1.1 New request field: `claimantRelationship` (`POST /claims`)

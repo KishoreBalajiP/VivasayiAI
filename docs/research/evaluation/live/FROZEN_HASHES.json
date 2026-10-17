@@ -1,0 +1,17 @@
+{
+  "schema": "vivasayi-frozen-hashes/v1",
+  "description": "SHA-256 of the dated 16 October 2026 live-evaluation artifacts, and of the record of the code defaults in force during that study. These files are evidence and must never change; corrections go into a dated errata section or a sidecar file, and new runs write new dated files (scripts/live/lib/writeOnce.js). Checked by test FH-1 (tests/researchIntegrity.unit.test.js) and by checkManuscriptNumbers.",
+  "algorithm": "sha256",
+  "computedOn": "2026-10-16",
+  "computedFrom": "working-tree files. The run outputs are byte-identical to the blobs at commit 6dbe6b8. study_code_defaults_2026-10-16.json is not a run output: it was extracted on 2026-10-16 from the code at 6dbe6b8 (each value names its file, line and blob) so that the manuscript check does not need the git history.",
+  "files": {
+    "docs/research/evaluation/live/rag_retrieval_2026-10-16.json": "7572a51b53a46e97f55a858f32f5f47bcc9ea5b28ad24f182d6335e8a05d0d22",
+    "docs/research/evaluation/live/rag_retrieval_2026-10-16.md": "89191cd66116832902770177ea66045c536516593fe3618eec4e6ebb8728bdda",
+    "docs/research/evaluation/live/satellite_case_studies_2026-10-16.json": "f463433fcb239307ffac0fac0b098ed72b59a0eaa5aba16edad7e47639e15d18",
+    "docs/research/evaluation/live/acceptance_v1-legacy_2026-10-16.json": "94fedfaf0267d92aaae40d6770f2a92b1947a054afc7d2336754f8a09e276da1",
+    "docs/research/evaluation/live/acceptance_v2-components_2026-10-16.json": "3cd0430ce9fdbc66db0a2fa8493a357042fc2aab3d66ce4f2bbecfb8833919f4",
+    "docs/research/evaluation/live/live_eval_status_2026-10-16.json": "55e7f4251f42bce9ece50c33fdf02a3d35816bc91baa61d3f314cf404acdb022",
+    "docs/research/evaluation/live/provider_check_2026-10-16.json": "5a72e21297293f097afd190273739c102d3252cbf7eb4e218d7d116fc7d3c483",
+    "docs/research/evaluation/live/study_code_defaults_2026-10-16.json": "8fc65445065fafeb42069184d8c7a000962e3e553dfb2347ecb2dddab3933f88"
+  }
+}

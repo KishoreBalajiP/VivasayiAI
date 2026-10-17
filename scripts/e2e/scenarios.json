@@ -1,0 +1,200 @@
+{
+  "schema": "vivasayi-e2e-scenarios/v1",
+  "$comment": "Hermetic e2e scenarios (ADR-024, design-testing §2.1, critique E1/E2/E4). Served by GET /__e2e/scenarios; POST /__e2e/scenario {id} applies `setup`; POST /__e2e/seed-claim {accessToken, scenario} builds `claim` through the real API. `expected` is what the API reports once the scenario has settled (`settle`), under policy v1.1-safe-ai. Outcomes that the pure engine decides are pinned by tests/decisionConsistency.test.js (the `dc` field names the DC test that checks the same factors). Satellite and weather are supporting evidence only: they never change `expected.outcome` (owner decision D1).",
+  "policy": "v1.1-safe-ai",
+  "eventDate": "UTC midnight of (today in UTC) minus eventDaysAgo days. eventDaysAgo 0 is today in UTC, so the satellite post-event window (event + 1 day) is not open yet (critique E1). The browser runs in Asia/Kolkata; compute dates in UTC.",
+  "settleRules": {
+    "decided": "claim.state is a decision state (verified, partially_verified, rejected, duplicate_area, out_of_limit, more_evidence_required) and every job is terminal or queued for later than 60 s from now (a rescheduled satellite re-check).",
+    "held": "claim.state is submitted, the assessment is held, and no decision-input job (ai_assessment, land_documents, official_land_record) or engine job is queued or running.",
+    "held_after_recovery": "as `held`, and the highest ai_assessment recoveryRound is `expected.recoveryRound` (critique E4: overallStatus moves between in_progress and waiting_for_review while the worker re-queues the dead photo check; wait for this state through GET /__e2e/claims/:id/inspect, not through the UI)."
+  },
+  "defaults": {
+    "setup": { "ai": "damage", "landDocument": "ok", "satellite": "imagery_found", "weather": "available", "landRecord": "unavailable" },
+    "claim": { "eventDaysAgo": 3, "eventType": "flood", "photos": 1, "documents": [], "relationship": null, "geometry": "parcel" }
+  },
+  "scenarios": [
+    {
+      "id": "S00",
+      "name": "No photos: more evidence is asked for (no model call)",
+      "matrixScenario": "S01",
+      "dc": "DC-10",
+      "setup": {},
+      "claim": { "photos": 0 },
+      "settle": "decided",
+      "expected": { "outcome": "more_evidence_required", "overallStatus": "action_required", "decision": "more_evidence_required", "satelliteStatus": "unavailable", "satelliteReasonCode": "analysis_not_enabled", "modelCalls": 0 }
+    },
+    {
+      "id": "S01",
+      "name": "Happy path: the worker verifies the claim with no verify call",
+      "matrixScenario": "S01",
+      "dc": "DC-1",
+      "setup": {},
+      "claim": {},
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "satelliteStatus": "unavailable", "satelliteReasonCode": "analysis_not_enabled", "audits": { "verified": 1, "submitted": 1 } }
+    },
+    {
+      "id": "S06",
+      "name": "Gemini 429 twice, then the photo check succeeds on its third attempt",
+      "matrixScenario": "S06",
+      "setup": { "ai": "failN:q429:2" },
+      "claim": {},
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "satelliteStatus": "unavailable", "neverShown": ["rejected", "more_evidence_required"] }
+    },
+    {
+      "id": "S06b",
+      "name": "Gemini 429 on every call: technical hold, two automatic recovery rounds, then a reviewer",
+      "matrixScenario": "S06",
+      "setup": { "ai": "q429" },
+      "claim": {},
+      "settle": "held_after_recovery",
+      "expected": { "outcome": null, "held": true, "overallStatus": "waiting_for_review", "decision": null, "recoveryRound": 2, "decisionExplanationKey": "progress.decision.technical_issue_reviewer", "neverShown": ["rejected", "more_evidence_required"] },
+      "notes": "Transitional states (critique E4): in_progress (progress.decision.held_retrying_checks) while a re-queued photo check is active, waiting_for_review between rounds."
+    },
+    {
+      "id": "S07",
+      "name": "Gemini 503 (overloaded) on every call: technical hold, never an adverse decision",
+      "matrixScenario": "S07",
+      "setup": { "ai": "q503" },
+      "claim": {},
+      "settle": "held_after_recovery",
+      "expected": { "outcome": null, "held": true, "overallStatus": "waiting_for_review", "decision": null, "recoveryRound": 2, "decisionExplanationKey": "progress.decision.technical_issue_reviewer", "neverShown": ["rejected", "more_evidence_required"] }
+    },
+    {
+      "id": "S08a",
+      "name": "Gemini times out on every photo: technical hold",
+      "matrixScenario": "S08",
+      "setup": { "ai": "timeout" },
+      "claim": {},
+      "settle": "held_after_recovery",
+      "expected": { "outcome": null, "held": true, "overallStatus": "waiting_for_review", "decision": null, "recoveryRound": 2, "decisionExplanationKey": "progress.decision.technical_issue_reviewer", "neverShown": ["rejected", "more_evidence_required"] }
+    },
+    {
+      "id": "S08b",
+      "name": "Gemini answers malformed output: technical hold, never 'more evidence'",
+      "matrixScenario": "S08",
+      "setup": { "ai": "malformed" },
+      "claim": {},
+      "settle": "held",
+      "expected": { "outcome": null, "held": true, "overallStatus": "waiting_for_review", "decision": null, "recoveryRound": 0, "decisionExplanationKey": "progress.decision.technical_issue_reviewer", "neverShown": ["rejected", "more_evidence_required"] },
+      "notes": "malformed_response is retried (3 attempts in e2e) but is not an automatically recovered kind, so there are no recovery rounds."
+    },
+    {
+      "id": "S08c",
+      "name": "AI reads no damage: held for a reviewer (one review case), never rejected by the AI alone",
+      "matrixScenario": "S18",
+      "dc": "DC-2",
+      "setup": { "ai": "no_damage" },
+      "claim": {},
+      "settle": "held",
+      "expected": { "outcome": null, "held": true, "overallStatus": "waiting_for_review", "decision": null, "decisionExplanationKey": "progress.decision.ai_no_damage_review", "reviewCases": 1 }
+    },
+    {
+      "id": "S09",
+      "name": "Tenant with a lease and a land record: documents are read, the claim is verified",
+      "matrixScenario": "S09",
+      "setup": { "landDocument": "ok" },
+      "claim": { "relationship": "tenant", "documents": [{ "category": "lease_agreement" }, { "category": "land_record" }] },
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "stages": { "land_documents": "complete" } }
+    },
+    {
+      "id": "S10",
+      "name": "Tenant without documents: claimant rights stay optional under v1.1, the claim is verified",
+      "matrixScenario": "S10",
+      "dc": "DC-4",
+      "setup": {},
+      "claim": { "relationship": "tenant", "documents": [] },
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "stages": { "land_documents": "not_applicable" } }
+    },
+    {
+      "id": "S11",
+      "name": "Claimed area beyond the parcel limit: out_of_limit",
+      "matrixScenario": "S11",
+      "dc": "DC-5",
+      "setup": {},
+      "claim": { "geometry": "over_limit" },
+      "settle": "decided",
+      "expected": { "outcome": "out_of_limit", "overallStatus": "decided", "decision": "out_of_limit" }
+    },
+    {
+      "id": "S12",
+      "name": "Overlap with another farmer's claim: verified under v1.1, flagged for admins only (critique E2)",
+      "matrixScenario": "S12",
+      "dc": "DC-6",
+      "setup": {},
+      "claim": { "overlap": "other_farmer_claim" },
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "audits": { "cross_farmer_overlap_flagged": 1 }, "noOtherFarmerData": true },
+      "notes": "seed-claim first creates and submits a neighbour's claim over the same parcel (a second farmer whose parcel has the same geometry). The farmer sees no detail of the neighbour's claim."
+    },
+    {
+      "id": "S13",
+      "name": "Satellite analysis supports the loss: 'passed', supporting only; the decision does not wait for it",
+      "matrixScenario": "S13",
+      "dc": "DC-12",
+      "setup": { "satellite": "supports_loss" },
+      "claim": {},
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "satelliteStatus": "passed", "satelliteReasonCode": "vegetation_drop_consistent_with_damage", "supportingOnly": true }
+    },
+    {
+      "id": "S13b",
+      "name": "Event today (UTC): the decision is shown while satellite is still pending with a next check",
+      "matrixScenario": "S13",
+      "setup": { "satellite": "supports_loss" },
+      "claim": { "eventDaysAgo": 0 },
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "satelliteStatus": "pending", "satelliteReasonCode": "waiting_for_post_event_imagery", "satelliteNextCheckAt": true },
+      "notes": "Critique E1: eventDaysAgo 0, computed as a UTC date. With eventDaysAgo 1 the post-event window would already be open."
+    },
+    {
+      "id": "S14",
+      "name": "Cloud over every scene: satellite inconclusive (cloud cover)",
+      "matrixScenario": "S14",
+      "setup": { "satellite": "cloud" },
+      "claim": {},
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "satelliteStatus": "inconclusive", "satelliteReasonCode": "cloud_cover" }
+    },
+    {
+      "id": "S14b",
+      "name": "Satellite provider error: unavailable, re-checked later, decision unaffected",
+      "matrixScenario": "S14",
+      "setup": { "satellite": "provider_error" },
+      "claim": {},
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "satelliteStatus": "unavailable", "satelliteReasonCode": "provider_unavailable", "satelliteNextCheckAt": true }
+    },
+    {
+      "id": "S15",
+      "name": "No clear vegetation change: satellite inconclusive, never 'failed'; AI damage still verified",
+      "matrixScenario": "S15",
+      "setup": { "satellite": "no_change" },
+      "claim": {},
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "satelliteStatus": "inconclusive", "satelliteReasonCode": "no_clear_vegetation_change" }
+    },
+    {
+      "id": "S15b",
+      "name": "AI reads no damage while satellite supports the loss: still held for a reviewer (satellite never decides)",
+      "matrixScenario": "S15",
+      "setup": { "ai": "no_damage", "satellite": "supports_loss" },
+      "claim": {},
+      "settle": "held",
+      "expected": { "outcome": null, "held": true, "overallStatus": "waiting_for_review", "decision": null, "decisionExplanationKey": "progress.decision.ai_no_damage_review", "satelliteStatus": "passed" }
+    },
+    {
+      "id": "S16",
+      "name": "Weather unavailable: the weather stage completes as 'unavailable, supporting only'; decision unchanged",
+      "matrixScenario": "S16",
+      "dc": "DC-12",
+      "setup": { "weather": "unavailable" },
+      "claim": {},
+      "settle": "decided",
+      "expected": { "outcome": "verified", "overallStatus": "decided", "decision": "verified", "stages": { "weather": "complete" }, "weatherExplanationKey": "progress.weather.unavailable_supporting_only" }
+    }
+  ]
+}

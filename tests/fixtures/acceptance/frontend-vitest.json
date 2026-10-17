@@ -1,0 +1,105 @@
+{
+  "numTotalTestSuites": 4,
+  "numPassedTestSuites": 4,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 6,
+  "numPassedTests": 6,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "startTime": 1792152100000,
+  "success": true,
+  "testResults": [
+    {
+      "name": "/repo/frontend/src/components/claims/ClaimTracker.test.tsx",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152100100,
+      "endTime": 1792152100900,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["ClaimTracker"],
+          "fullName": "ClaimTracker TRK-1: header shows the overall status and last updated time",
+          "status": "passed",
+          "title": "TRK-1: header shows the overall status and last updated time",
+          "duration": 55,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["ClaimTracker"],
+          "fullName": "ClaimTracker TRK-6: no verify button and verifyClaimRequest is never called",
+          "status": "passed",
+          "title": "TRK-6: no verify button and verifyClaimRequest is never called",
+          "duration": 40,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/frontend/src/utils/progressPolling.test.ts",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152100900,
+      "endTime": 1792152101000,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["progressPolling"],
+          "fullName": "progressPolling POLL-1: waits at least 10 s between polls",
+          "status": "passed",
+          "title": "POLL-1: waits at least 10 s between polls",
+          "duration": 2,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/frontend/src/contracts/progressContract.test.ts",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152101000,
+      "endTime": 1792152101100,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["progress contract"],
+          "fullName": "progress contract I18N-P1: every contract key has en and ta strings",
+          "status": "passed",
+          "title": "I18N-P1: every contract key has en and ta strings",
+          "duration": 5,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/frontend/src/utils/claimFlow.test.ts",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152101100,
+      "endTime": 1792152101200,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["claimFlow"],
+          "fullName": "claimFlow DC-1: an ID that collides with a backend test",
+          "status": "passed",
+          "title": "DC-1: an ID that collides with a backend test",
+          "duration": 1,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["claimFlow"],
+          "fullName": "claimFlow builds the submit payload",
+          "status": "passed",
+          "title": "builds the submit payload",
+          "duration": 1,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    }
+  ]
+}

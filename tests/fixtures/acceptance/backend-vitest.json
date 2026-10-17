@@ -1,0 +1,241 @@
+{
+  "numTotalTestSuites": 9,
+  "numPassedTestSuites": 6,
+  "numFailedTestSuites": 3,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 16,
+  "numPassedTests": 12,
+  "numFailedTests": 2,
+  "numPendingTests": 1,
+  "numTodoTests": 1,
+  "startTime": 1792152000000,
+  "success": false,
+  "testResults": [
+    {
+      "name": "/repo/backend/tests/verificationJobs.test.js",
+      "status": "failed",
+      "message": "",
+      "startTime": 1792152000100,
+      "endTime": 1792152001100,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["verification jobs"],
+          "fullName": "verification jobs VJ-2: the plan contains only steps with something to act on",
+          "status": "passed",
+          "title": "VJ-2: the plan contains only steps with something to act on",
+          "duration": 12.5,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["verification jobs"],
+          "fullName": "verification jobs VJ-20: satellite never blocks the engine under any policy",
+          "status": "passed",
+          "title": "VJ-20: satellite never blocks the engine under any policy",
+          "duration": 30.125,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["verification jobs", "leases"],
+          "fullName": "verification jobs leases VJ-14: a stale owner's finish after a lease takeover returns lease_lost",
+          "status": "failed",
+          "title": "VJ-14: a stale owner's finish after a lease takeover returns lease_lost",
+          "duration": 40.25,
+          "failureMessages": [
+            "AssertionError: expected 'succeeded' to be 'lease_lost' // Object.is equality\n    at finishJob (/repo/backend/services/verificationJobs.service.js:212:9)\n    at /repo/backend/tests/verificationJobs.test.js:230:5\n    at file:///repo/backend/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at runTest (file:///repo/backend/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)"
+          ],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/verificationEnqueue.test.js",
+      "status": "failed",
+      "message": "",
+      "startTime": 1792152001100,
+      "endTime": 1792152002100,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["durable enqueue"],
+          "fullName": "durable enqueue EQ-1: job rows exist when the submit response arrives",
+          "status": "passed",
+          "title": "EQ-1: job rows exist when the submit response arrives",
+          "duration": 120,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["durable enqueue"],
+          "fullName": "durable enqueue EQ-4: a repeat submit recovers a lost plan",
+          "status": "failed",
+          "title": "EQ-4: a repeat submit recovers a lost plan",
+          "duration": 95.5,
+          "failureMessages": [
+            "AssertionError: expected 503 to be 200 // Object.is equality\n\n- Expected\n+ Received\n\n- 200\n+ 503\n\n    at /repo/backend/tests/verificationEnqueue.test.js:88:31\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///repo/backend/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26"
+          ],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["durable enqueue"],
+          "fullName": "durable enqueue EQ-9: withdraw racing the engine compare-and-set",
+          "status": "todo",
+          "title": "EQ-9: withdraw racing the engine compare-and-set",
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/claim.progress.test.js",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152002100,
+      "endTime": 1792152003100,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["progress"],
+          "fullName": "progress PRG-1: another user gets 404 and no drain happens",
+          "status": "passed",
+          "title": "PRG-1: another user gets 404 and no drain happens",
+          "duration": 15,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["progress"],
+          "fullName": "progress PRG-2: a fresh submit shows received complete and no internal codes",
+          "status": "passed",
+          "title": "PRG-2: a fresh submit shows received complete and no internal codes",
+          "duration": 18,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["progress"],
+          "fullName": "progress PRG-7: tenant without a lease needs documents under v2 only",
+          "status": "skipped",
+          "title": "PRG-7: tenant without a lease needs documents under v2 only",
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/claims.api.test.js",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152003100,
+      "endTime": 1792152004100,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["claims"],
+          "fullName": "claims P6-22b: a failed enqueue keeps the claim submitted",
+          "status": "passed",
+          "title": "P6-22b: a failed enqueue keeps the claim submitted",
+          "duration": 22,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/chat.regressions.test.js",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152004100,
+      "endTime": 1792152004200,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["chat regressions"],
+          "fullName": "chat regressions CR-1: a greeting does not trigger retrieval",
+          "status": "passed",
+          "title": "CR-1: a greeting does not trigger retrieval",
+          "duration": 2,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/verificationComponents.unit.test.js",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152004200,
+      "endTime": 1792152004300,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["components"],
+          "fullName": "components CR-1: claimant rights stay unverified without documents",
+          "status": "passed",
+          "title": "CR-1: claimant rights stay unverified without documents",
+          "duration": 1,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["components"],
+          "fullName": "components VC-26: resolveSatellite ignores review-case rows",
+          "status": "passed",
+          "title": "VC-26: resolveSatellite ignores review-case rows",
+          "duration": 1,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/decisionConsistency.test.js",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152004300,
+      "endTime": 1792152005300,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["decision consistency"],
+          "fullName": "decision consistency DC-1: happy path through the worker equals the pure engine",
+          "status": "passed",
+          "title": "DC-1: happy path through the worker equals the pure engine",
+          "duration": 800,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/geometry.unit.test.js",
+      "status": "passed",
+      "message": "",
+      "startTime": 1792152005300,
+      "endTime": 1792152005400,
+      "assertionResults": [
+        {
+          "ancestorTitles": ["computeOverlapAcres"],
+          "fullName": "computeOverlapAcres returns positive acres for overlapping polygons",
+          "status": "passed",
+          "title": "returns positive acres for overlapping polygons",
+          "duration": 3,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["computeOverlapAcres"],
+          "fullName": "computeOverlapAcres VJ-2 mentioned without a colon is not an ID",
+          "status": "passed",
+          "title": "VJ-2 mentioned without a colon is not an ID",
+          "duration": 1,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ]
+    },
+    {
+      "name": "/repo/backend/tests/broken.test.js",
+      "status": "failed",
+      "message": "Failed to load url ../services/missing.js (resolved id: ../services/missing.js) in /repo/backend/tests/broken.test.js. Does the file exist?",
+      "startTime": 1792152005400,
+      "endTime": 1792152005400,
+      "assertionResults": []
+    }
+  ]
+}

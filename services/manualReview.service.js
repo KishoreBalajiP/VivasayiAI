@@ -49,6 +49,10 @@ export const createReviewCase = async ({ claimId, cognitoSub, source, reasons = 
       },
       metadata: { ...(metadata || {}), reviewRequired: true, kind: "review_case" },
       idempotencyKey,
+      // ADR-022 (additive): the row is a review case, not evidence, whatever source it is labelled
+      // with (a dead AI or document job's case is labelled AI_IMAGE / OWNERSHIP).
+      component: "manual_review",
+      kind: "review_case",
     });
   } catch (error) {
     // Concurrent duplicate trigger: the winner's row is the case.
