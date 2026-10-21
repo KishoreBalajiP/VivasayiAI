@@ -1,0 +1,17 @@
+{
+  "audit_date": "2026-10-17",
+  "evidence_classes": ["synthetic", "author_labelled", "live_unlabelled_feasibility"],
+  "metrics": [
+    {"experiment":"geometry_containment_overlap","sample_size":300,"containment_precision":1.0,"containment_recall":1.0,"overlap_precision":1.0,"overlap_recall":1.0,"ground_truth":"analytic"},
+    {"experiment":"geometry_validity","sample_size":100,"invalid_geometry_recall":1.0,"valid_false_rejection_rate":0.0,"ground_truth":"analytic"},
+    {"experiment":"fusion_v2","forbidden_cases":190,"invalid_approvals":0,"invalid_approval_rate":0.0,"ground_truth":"design_rule"},
+    {"experiment":"fusion_v1_1_safe_ai","ai_alone_cases":2,"ai_alone_rejections":0,"changed_decisions":12,"ground_truth":"design_rule"},
+    {"experiment":"chat_context","intent_n":29,"intent_accuracy":1.0,"unnecessary_followups_n":44,"unnecessary_followups":0,"missed_necessary_n":11,"missed_necessary":0,"ground_truth":"author_specification"},
+    {"experiment":"name_matching","sample_size":60,"accuracy":1.0,"ground_truth":"author_labelled_tuned_same_set"},
+    {"experiment":"satellite_simulation_no_change_clear","sample_size":400,"false_support_rate":0.0,"ground_truth":"simulation_parameters"},
+    {"experiment":"satellite_simulation_drop_015","sample_size":400,"detection_rate":0.4975,"ground_truth":"simulation_parameters"},
+    {"experiment":"satellite_live_feasibility","event_squares":9,"event_supporting_loss":0,"harvest_controls":3,"harvest_false_support":1,"ground_truth":"none_independent"},
+    {"experiment":"rag_live_feasibility","answerable_queries":13,"relevant_top3":2,"relevant_top3_rate":0.1538461538,"advisory_chunks":27,"advisory_answer_bearing":0,"ground_truth":"mechanical_author_rule"}
+  ],
+  "new_runs": {"backend_eval":"blocked_stalled", "backend_tests":"blocked_stalled", "frontend_tests":"blocked_stalled"}
+}
