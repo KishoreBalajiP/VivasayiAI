@@ -476,7 +476,9 @@ export const computeNumbers = async ({ show = gitShow } = {}) => {
 
   // Code defaults.
   add("PolicyCountWord", code.policyIds.length, "word", "config/verificationPolicy.js", "POLICY_IDS.length");
-  const adr = readText(DECISIONS_PATH).match(/## ADR-022[^\n]*\n+\*\*Status:\*\*[^\n]*?(\d{4}-\d{2}-\d{2})/);
+  // ADR headings and status lines are separated by a blank line in the Markdown source;
+  // accept CRLF and one or more blank lines while keeping the date on the status line.
+  const adr = readText(DECISIONS_PATH).match(/## ADR-022[^\n]*\r?\n(?:\r?\n)*\*\*Status:\*\*[^\n]*?(\d{4}-\d{2}-\d{2})/);
   must(adr, `${DECISIONS_PATH} no longer dates ADR-022 (the v1.1-safe-ai decision) on its status line`);
   must(code.policyIds.includes("v1.1-safe-ai"), "config/verificationPolicy.js no longer defines v1.1-safe-ai");
   add("PolicySafeAiDate", adr[1], "longDate", DECISIONS_PATH, "'## ADR-022' status line date (owner decisions D1, D2: v1.1-safe-ai becomes the default)");

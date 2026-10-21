@@ -1,0 +1,12 @@
+experiment,sample_size,numerator,denominator,metric,ground_truth
+geometry_containment,300,300,300,precision=1.0 analytic
+geometry_overlap,300,300,300,recall=1.0 analytic
+geometry_validity,100,100,100,invalid_recall=1.0 analytic
+fusion_v2_invalid_approval,190,0,190,rate=0.0 design_rule
+safe_ai_ai_only_rejection,2,0,2,rate=0.0 design_rule
+chat_unnecessary_followups,44,0,44,rate=0.0 author_specification
+chat_missed_necessary,11,0,11,rate=0.0 author_specification
+name_matching,60,60,60,accuracy=1.0 author_labelled_tuned
+satellite_live_event_support,9,0,9,rate=0.0 no_independent_labels
+satellite_harvest_false_support,3,1,3,rate=0.3333333333 no_independent_labels
+rag_answerable_relevant_top3,13,2,13,recall=0.1538461538 mechanical_author_rule
