@@ -78,6 +78,7 @@ VivasayiAI-Frontend/                  ← FRONTEND (code, README, e2e/ Playwrigh
 | 20 | [README](../README.md) | repo root | Everyone | Professional project README (canonical copy) |
 | — | [Chat Context Guide](architecture/CHAT_CONTEXT_GUIDE.md) | architecture | Backend | How chat memory/context works (historical) |
 | — | [Pending architecture decisions](planning/ARCHITECTURE_DECISIONS_PENDING.md) | planning | Engineering, PM | Open decisions awaiting the owner |
+| — | [UI/UX audit & enhancement plan 2026-10-18](product/UI_UX_AUDIT_2026-10-18.md) | product | Design, Frontend | Verified frontend UI/UX findings (UX-01…20), phased enhancement roadmap, acceptance criteria, feature-preservation checklist and test strategy |
 
 ### Claim verification and operations (October 2026)
 
