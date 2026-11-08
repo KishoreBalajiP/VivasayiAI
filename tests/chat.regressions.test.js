@@ -70,6 +70,47 @@ describe("performRAG — Chroma connection", () => {
     expect(mocks.getCollection).toHaveBeenCalledTimes(1);
     expect(query).toHaveBeenCalledTimes(2);
   });
+
+  it("CH-4: header-only chunks are filtered out before the model sees them", async () => {
+    const query = vi.fn().mockResolvedValue({
+      documents: [[
+        "File: paddy.csv\nTable: paddy\nColumns: District, Crop\n",
+        "Row 1: District: Coimbatore; Crop: paddy",
+        "File: stats.csv\nTable: stats\nColumns: District, Rainfall\n",
+      ]],
+      metadatas: [[
+        { filename: "header.csv", row_count: 0, file_kind: "csv_statistics" },
+        { filename: "paddy.csv", row_count: 1, file_kind: "csv_statistics" },
+        { filename: "stats.csv", row_count: 0, file_kind: "csv_statistics" },
+      ]],
+    });
+    mocks.getCollection.mockResolvedValue({ query });
+
+    const result = await performRAG("when should I irrigate paddy?");
+    expect(result.context).toContain("Row 1: District: Coimbatore; Crop: paddy");
+    expect(result.context).not.toContain("Columns: District, Crop");
+    expect(result.sourceCount).toBe(1);
+    expect(result.sources).toEqual([{ filename: "paddy.csv" }]);
+  });
+
+  it("CH-5: advisory prompts do not use raw statistics or geography as evidence when no advisory corpus is available", async () => {
+    const query = vi.fn().mockResolvedValue({
+      documents: [[
+        "Row 1: District: Coimbatore; Rainfall: 120",
+        "Row 1: District: Salem; Crop: paddy",
+      ]],
+      metadatas: [[
+        { filename: "rainfall.csv", row_count: 1, file_kind: "csv_statistics" },
+        { filename: "districts.kml", row_count: 1, file_kind: "kml_geography" },
+      ]],
+    });
+    mocks.getCollection.mockResolvedValue({ query });
+
+    const result = await performRAG("how do I control stem borer in paddy?");
+    expect(result.context).toBeNull();
+    expect(result.sourceCount).toBe(0);
+    expect(result.sources).toEqual([]);
+  });
 });
 
 describe("detectCrop", () => {

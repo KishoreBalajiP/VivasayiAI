@@ -70,9 +70,52 @@ const ensureCollection = async () => {
   return collectionPromise;
 };
 
+const isRowBearingChunk = (document, metadata) => {
+  if (!document || typeof document !== "string") return false;
+  const hasRowLine = /(^|\n)Row\s+\d+:/.test(document);
+  if (!hasRowLine && metadata && Object.prototype.hasOwnProperty.call(metadata, "row_count")) {
+    return Number(metadata.row_count) > 0;
+  }
+  if (metadata && Object.prototype.hasOwnProperty.call(metadata, "row_count") && Number(metadata.row_count) === 0) {
+    return false;
+  }
+  return true;
+};
+
+const advisoryQuestionPattern = /(how to|how do i|when should i|what should i do|what should i|which crop|what crop|how much .* per acre|how much .* should|how to control|what to do|when to irrigate|when to plant|how to store|how to apply|how to spray|how to manage|how to prevent)/i;
+const isAdvisoryQuestion = (userMessage) => Boolean(userMessage && advisoryQuestionPattern.test(String(userMessage)));
+
+const isAdvisoryFile = (metadata) => {
+  const fileKind = metadata && (metadata.file_kind || metadata.source_type || metadata.document_type || "");
+  if (!fileKind) return false;
+  return ["kml_geography", "geojson"].includes(String(fileKind));
+};
+
+const isUsableAdvisoryEvidence = (document, metadata) => {
+  if (!document || typeof document !== "string") return false;
+  const fileKind = metadata && (metadata.file_kind || metadata.source_type || metadata.document_type || "");
+  if (isAdvisoryFile(metadata)) return false;
+
+  const lower = document.toLowerCase();
+  const cropNames = /(paddy|rice|maize|corn|sorghum|groundnut|coconut|banana|cotton|wheat|chilli|chili|tomato|onion|turmeric|millet|pulses|pulse)/i;
+  const advisoryActionWords = /(irrigat|fertiliz|spray|control|manage|plant|sow|harvest|store|apply|disease|pest|weed|mulch|drain|monitor|season)/i;
+  const rawStatisticWords = /(rainfall|temperature|humidity|yield|production|area|acreage|district|state|seasonal|soil|lat|lon|coordinates)/i;
+
+  const isNumericStatsOnly = /\d/.test(lower) && !cropNames.test(lower) && !advisoryActionWords.test(lower);
+  if (isNumericStatsOnly && rawStatisticWords.test(lower)) return false;
+
+  if (fileKind && String(fileKind) === "csv_statistics") {
+    return true;
+  }
+
+  return true;
+};
+
 // RAG function using ChromaDB. Retrieval is query-only (the chat history is not used for it).
 // Returns the joined text plus WHICH documents it came from, so the answer can be attributed. Only a
-// file name is exposed, never the bucket or the object path.
+// file name is exposed, never the bucket or the object path. Header-only chunks and empty metadata
+// rows are filtered out before they ever reach the model; advisory queries also reject raw
+// statistics/geography fragments unless the chunk contains crop or action-bearing advisory evidence.
 async function performRAG(userMessage) {
   try {
     const coll = await ensureCollection();
@@ -85,19 +128,25 @@ async function performRAG(userMessage) {
 
     const documents = results.documents && results.documents[0] ? results.documents[0] : [];
     const metadatas = results.metadatas && results.metadatas[0] ? results.metadatas[0] : [];
-    const context = documents.length > 0 ? documents.join("\n\n") : "";
+    const advisoryQuery = isAdvisoryQuestion(userMessage);
+    const filteredPairs = documents
+      .map((document, index) => ({ document, metadata: metadatas[index] || {} }))
+      .filter(({ document, metadata }) => isRowBearingChunk(document, metadata))
+      .filter(({ document, metadata }) => !advisoryQuery || isUsableAdvisoryEvidence(document, metadata));
+
+    const context = filteredPairs.length > 0 ? filteredPairs.map(({ document }) => document).join("\n\n") : "";
 
     const seen = new Set();
     const sources = [];
-    metadatas.forEach((meta) => {
-      const filename = meta && (meta.filename || (meta.source ? String(meta.source).split("/").pop() : null));
+    filteredPairs.forEach(({ metadata }) => {
+      const filename = metadata && (metadata.filename || (metadata.source ? String(metadata.source).split("/").pop() : null));
       if (filename && !seen.has(filename)) {
         seen.add(filename);
         sources.push({ filename: String(filename).slice(0, 120) });
       }
     });
 
-    return { context: context || null, sourceCount: documents.length, sources };
+    return { context: context || null, sourceCount: filteredPairs.length, sources };
   } catch (error) {
     logger.error({ err: error }, "RAG retrieval failed");
     return { context: null, sourceCount: 0, sources: [] };
