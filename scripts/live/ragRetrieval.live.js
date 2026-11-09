@@ -70,6 +70,9 @@ if (date === FROZEN_BASELINE_DATE && !tag) fail(`--date=${FROZEN_BASELINE_DATE} 
 if (backend === "json" && !indexArg) fail("--backend=json needs --index=<dir>");
 if (backend === "json" && !queryVectorsArg) fail("--backend=json needs --query-vectors=<file> so every condition uses the same query vectors");
 const condition = arg("condition") || tag || "production";
+const retrievalMode = arg("retrieval") || "dense"; // dense = the baseline's plain top-k; evidence = rag/retrieve.js
+if (!["dense", "evidence"].includes(retrievalMode)) fail(`--retrieval must be dense or evidence, got "${retrievalMode}"`);
+const { retrieveEvidence, RETRIEVAL_CONFIG } = await import("../../rag/retrieve.js");
 
 const outDir = arg("out-dir") ? resolve(arg("out-dir")) : tag ? join(root, "docs", "research", "evaluation", "live", "rag") : join(root, "docs", "research", "evaluation", "live");
 const stem = tag ? `rag_retrieval_${date}_${tag}` : `rag_retrieval_${date}`;
@@ -151,14 +154,27 @@ for (const item of QUERIES) {
   try {
     const vector = queryVectors ? queryVectors.get(item.id) : await embeddings.embedQuery(item.q);
     const t1 = performance.now();
-    const res = await collection.query({ queryEmbeddings: [vector], nResults: K, include: ["documents", "metadatas", "distances"] });
+    let docs, metas, dists, ids, analysis = null;
+    if (retrievalMode === "evidence") {
+      const out = await retrieveEvidence(collection, { queryText: item.q, vector, topK: K });
+      analysis = out.analysis;
+      docs = out.hits.map((h) => h.document);
+      metas = out.hits.map((h) => h.metadata);
+      dists = out.hits.map((h) => h.distance);
+      ids = out.hits.map((h) => h.id);
+    } else {
+      const res = await collection.query({ queryEmbeddings: [vector], nResults: K, include: ["documents", "metadatas", "distances"] });
+      docs = res.documents?.[0] || [];
+      metas = res.metadatas?.[0] || [];
+      dists = res.distances?.[0] || [];
+      ids = res.ids?.[0] || [];
+    }
     const t2 = performance.now();
-    const docs = res.documents?.[0] || [];
-    const metas = res.metadatas?.[0] || [];
-    const dists = res.distances?.[0] || [];
     const hits = labelHits(item, docs, metas, dists);
     const rowTextOnly = labelHitsRowTextOnly(item, docs, metas, dists);
-    rows.push({ id: item.id, kind: item.kind, lang: item.lang || "en", query: item.q, embedMs: queryVectors ? null : Math.round(t1 - t0), queryMs: Math.round(t2 - t1), hits, rowTextOnly });
+    // Full retrieved text and ids: the raw output human assessors and later metrics work from.
+    const rawHits = docs.map((document, i) => ({ id: ids[i] ?? null, document, metadata: metas[i] }));
+    rows.push({ id: item.id, kind: item.kind, lang: item.lang || "en", query: item.q, embedMs: queryVectors ? null : Math.round(t1 - t0), queryMs: Math.round(t2 - t1), hits, rowTextOnly, rawHits, ...(analysis ? { analysis } : {}) });
   } catch (error) {
     rows.push({ id: item.id, kind: item.kind, query: item.q, error: redact(error && error.message) });
   }
@@ -188,6 +204,7 @@ const result = {
     ? "Retrieval from a local index (rag/localIndex.js, exact squared L2) with cached Cohere query vectors. No provider was called and nothing was written."
     : "Live retrieval from a Chroma Cloud collection with production Cohere embeddings. Read-only.",
   config: {
+    retrieval: retrievalMode === "evidence" ? { mode: retrievalMode, ...RETRIEVAL_CONFIG } : { mode: retrievalMode },
     backend,
     collection: collectionName,
     index: indexInfo,

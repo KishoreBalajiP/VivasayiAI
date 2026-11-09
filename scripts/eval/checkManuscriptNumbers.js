@@ -121,7 +121,7 @@ export const checkFrozenHashes = (frozen) =>
   Object.entries(frozen.files || {}).flatMap(([path, expected]) => {
     const full = join(root, path);
     if (!existsSync(full)) return [`frozen result ${path} is missing`];
-    const actual = createHash("sha256").update(readFileSync(full)).digest("hex");
+    const actual = createHash("sha256").update(readFileSync(full, "utf8").replace(/\r\n/g, "\n")).digest("hex");
     return actual === expected ? [] : [`frozen result ${path} changed (sha256 ${actual.slice(0, 12)}..., expected ${expected.slice(0, 12)}...)`];
   });
 

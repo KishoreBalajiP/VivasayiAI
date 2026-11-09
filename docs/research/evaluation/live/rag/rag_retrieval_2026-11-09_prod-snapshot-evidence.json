@@ -1,0 +1,2819 @@
+{
+  "name": "ragRetrievalLive",
+  "date": "2026-11-09",
+  "commit": "587a24e",
+  "dirtyWorkingTree": true,
+  "dirty": true,
+  "backend": "json",
+  "condition": "prod-snapshot-evidence",
+  "tag": "prod-snapshot-evidence",
+  "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specPinned": true,
+  "pinnedSpecSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specGitChecked": true,
+  "indexManifestSha256": "1bc2f3e1f99e6f0dc609e952894030905c419430dbff79edf4396ca0c59f3e9d",
+  "queryVectorsSha256": "b5118c904aa53ac6ee5ff24889b787229210e4e8687b1a88b1e9cd880afbb585",
+  "description": "Retrieval from a local index (rag/localIndex.js, exact squared L2) with cached Cohere query vectors. No provider was called and nothing was written.",
+  "config": {
+    "retrieval": {
+      "mode": "evidence",
+      "version": "evidence-v1",
+      "candidateK": 100,
+      "weights": {
+        "district": 0.3,
+        "statsCrop": 0.15,
+        "statsLexical": 0.1,
+        "advisoryCrop": 0.2,
+        "advisoryCropMismatch": -0.2,
+        "advisoryLexical": 0.15
+      }
+    },
+    "backend": "json",
+    "collection": null,
+    "index": {
+      "path": ".rag-local\\indexes\\prod-snapshot-2026-11-09",
+      "manifestSha256": "1bc2f3e1f99e6f0dc609e952894030905c419430dbff79edf4396ca0c59f3e9d",
+      "tag": "prod-snapshot-2026-11-09",
+      "chunker": "legacy-e9b779d (as ingested in production)",
+      "corpus": "production",
+      "source": "read-only snapshot of the production Chroma Cloud collection (count + paged get)",
+      "model": "embed-english-v3.0",
+      "count": 450
+    },
+    "queryVectors": "docs\\research\\evaluation\\live\\rag\\query_vectors_embed-english-v3.0.json",
+    "embeddingModel": "embed-english-v3.0",
+    "productionTopK": 3,
+    "evaluatedK": 5,
+    "distanceNote": "Squared L2 over the stored float32 vectors, computed locally (Chroma's default l2 space); lower = closer; ties broken by index order."
+  },
+  "corpus": {
+    "chunks": 450,
+    "files": 60,
+    "chunksByFileKind": {
+      "csv_statistics": 196,
+      "xls_html_table": 17,
+      "kml_geography": 237
+    },
+    "chunksByFile": {
+      "RICE_PestPredictionKnowledgeBase.csv": 13,
+      "Soil data.csv": 7,
+      "Tamilnadu agriculture yield data.csv": 9,
+      "acorus_vasambu.csv": 3,
+      "alovera.csv": 3,
+      "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv": 3,
+      "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv": 3,
+      "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv": 3,
+      "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv": 7,
+      "arecanut_curednuts_2016_17.csv": 3,
+      "bamboo_2016_17.csv": 3,
+      "betelvine_2016_17.csv": 3,
+      "cashewnut_2016_17.csv": 3,
+      "cocoa_2016_17.csv": 3,
+      "coconut_2016_17.csv": 3,
+      "coffee_2016_17.csv": 3,
+      "geranuim.csv": 3,
+      "gloriousa_superba.csv": 3,
+      "horizontal_crop_vertical_year_report (1).xls": 6,
+      "horizontal_year_vertical_crop_report.xls": 11,
+      "lemon_grass.csv": 3,
+      "medicinal_coleus.csv": 3,
+      "medicinal_crops_1.csv": 3,
+      "neem.csv": 3,
+      "oilpalm_2016_17.csv": 3,
+      "othermedicinal_plants.csv": 3,
+      "palmorosa.csv": 3,
+      "palmyrah_2016_17.csv": 3,
+      "peri_winkle.csv": 3,
+      "production_of_bajra_in_2017_18.csv": 3,
+      "production_of_bengal_gram_in_2017_18.csv": 3,
+      "production_of_black_gram_in_2017_18.csv": 3,
+      "production_of_cowpea_in_2017_18.csv": 3,
+      "production_of_green_gram_in_2017_18.csv": 3,
+      "production_of_horse_gram_in_2017_18.csv": 3,
+      "production_of_jowar_in_2017_18.csv": 3,
+      "production_of_korra_in_2017_18.csv": 3,
+      "production_of_maize_in_2017_18.csv": 3,
+      "production_of_other_cereals_in_2017_18.csv": 3,
+      "production_of_other_pulses_in_2017_18.csv": 3,
+      "production_of_ragi_in_2017_18.csv": 3,
+      "production_of_red_gram_in_2017_18.csv": 3,
+      "production_of_rice_in_2017_18.csv": 4,
+      "production_of_samai_in_2017_18.csv": 3,
+      "production_of_total_cereals_in_2017_18.csv": 3,
+      "production_of_total_pulses_in_2017_18.csv": 2,
+      "production_of_varagu_in_2017_18.csv": 3,
+      "rose_mary.csv": 3,
+      "rubber_2016_17.csv": 3,
+      "senna.csv": 3,
+      "silveroak_2016_17.csv": 3,
+      "tamil-nadu.kml": 237,
+      "tea_2016_17.csv": 3,
+      "thulasi_basil.csv": 3,
+      "timeseriesdata_prodtyandproduction_2.csv": 3,
+      "total_2016_17.csv": 3,
+      "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv": 4,
+      "total_aromatic_plants.csv": 3,
+      "total_medicinal_and_aromatic_plants.csv": 3,
+      "vanilla.csv": 3
+    }
+  },
+  "relevanceRule": "Answerable: relevant iff filename matches the a-priori expected-file pattern AND chunk text contains each required term group (district, and crop where stated). Advisory: answer-bearing is impossible by construction (no advisory text ingested); 'topical' = chunk text contains the topic term group. Labels are author-defined and mechanical; not human-judged.",
+  "queries": {
+    "total": 22,
+    "answerable": 13,
+    "advisory": 9,
+    "errors": 0
+  },
+  "summaryAtProductionTopK": {
+    "answerable": {
+      "hitRateAnyRelevant": {
+        "k": 11,
+        "n": 13,
+        "value": 0.8462
+      },
+      "top1Relevant": {
+        "k": 10,
+        "n": 13,
+        "value": 0.7692
+      },
+      "precisionOfChunks": {
+        "k": 17,
+        "n": 39,
+        "value": 0.4359
+      },
+      "anyExpectedFile": {
+        "k": 11,
+        "n": 13,
+        "value": 0.8462
+      }
+    },
+    "advisory": {
+      "answerBearingChunks": {
+        "k": 0,
+        "n": 0,
+        "value": null
+      },
+      "topicalChunks": {
+        "k": 0,
+        "n": 0,
+        "value": null
+      },
+      "queriesWithAnyTopicalChunk": {
+        "k": 0,
+        "n": 9,
+        "value": 0
+      }
+    },
+    "retrievedFileKinds": {
+      "csv_statistics": 39
+    },
+    "answerableExpectedFileHitsThatAreHeaderOnly": {
+      "k": 0,
+      "n": 17,
+      "value": 0
+    },
+    "kmlChunksRetrieved": {
+      "k": 0,
+      "n": 39,
+      "value": 0
+    }
+  },
+  "summaryAtK5": {
+    "answerable": {
+      "hitRateAnyRelevant": {
+        "k": 11,
+        "n": 13,
+        "value": 0.8462
+      },
+      "top1Relevant": {
+        "k": 10,
+        "n": 13,
+        "value": 0.7692
+      },
+      "precisionOfChunks": {
+        "k": 20,
+        "n": 65,
+        "value": 0.3077
+      },
+      "anyExpectedFile": {
+        "k": 11,
+        "n": 13,
+        "value": 0.8462
+      }
+    },
+    "advisory": {
+      "answerBearingChunks": {
+        "k": 0,
+        "n": 0,
+        "value": null
+      },
+      "topicalChunks": {
+        "k": 0,
+        "n": 0,
+        "value": null
+      },
+      "queriesWithAnyTopicalChunk": {
+        "k": 0,
+        "n": 9,
+        "value": 0
+      }
+    },
+    "retrievedFileKinds": {
+      "csv_statistics": 65
+    },
+    "answerableExpectedFileHitsThatAreHeaderOnly": {
+      "k": 0,
+      "n": 20,
+      "value": 0
+    },
+    "kmlChunksRetrieved": {
+      "k": 0,
+      "n": 65,
+      "value": 0
+    }
+  },
+  "sensitivity": {
+    "rowTextOnly": {
+      "rule": "Same frozen rule, applied to the chunk text without its File:/Table:/Columns:/Headers:/Data: lines, so a term counts only when it occurs in row text. Header names repeated inside 'header: value' pairs still count.",
+      "summaryAtProductionTopK": {
+        "answerable": {
+          "hitRateAnyRelevant": {
+            "k": 11,
+            "n": 13,
+            "value": 0.8462
+          },
+          "top1Relevant": {
+            "k": 10,
+            "n": 13,
+            "value": 0.7692
+          },
+          "precisionOfChunks": {
+            "k": 17,
+            "n": 39,
+            "value": 0.4359
+          },
+          "anyExpectedFile": {
+            "k": 11,
+            "n": 13,
+            "value": 0.8462
+          }
+        },
+        "advisory": {
+          "answerBearingChunks": {
+            "k": 0,
+            "n": 0,
+            "value": null
+          },
+          "topicalChunks": {
+            "k": 0,
+            "n": 0,
+            "value": null
+          },
+          "queriesWithAnyTopicalChunk": {
+            "k": 0,
+            "n": 9,
+            "value": 0
+          }
+        },
+        "retrievedFileKinds": {
+          "csv_statistics": 39
+        },
+        "answerableExpectedFileHitsThatAreHeaderOnly": {
+          "k": 0,
+          "n": 17,
+          "value": 0
+        },
+        "kmlChunksRetrieved": {
+          "k": 0,
+          "n": 39,
+          "value": 0
+        }
+      },
+      "summaryAtK5": {
+        "answerable": {
+          "hitRateAnyRelevant": {
+            "k": 11,
+            "n": 13,
+            "value": 0.8462
+          },
+          "top1Relevant": {
+            "k": 10,
+            "n": 13,
+            "value": 0.7692
+          },
+          "precisionOfChunks": {
+            "k": 20,
+            "n": 65,
+            "value": 0.3077
+          },
+          "anyExpectedFile": {
+            "k": 11,
+            "n": 13,
+            "value": 0.8462
+          }
+        },
+        "advisory": {
+          "answerBearingChunks": {
+            "k": 0,
+            "n": 0,
+            "value": null
+          },
+          "topicalChunks": {
+            "k": 0,
+            "n": 0,
+            "value": null
+          },
+          "queriesWithAnyTopicalChunk": {
+            "k": 0,
+            "n": 9,
+            "value": 0
+          }
+        },
+        "retrievedFileKinds": {
+          "csv_statistics": 65
+        },
+        "answerableExpectedFileHitsThatAreHeaderOnly": {
+          "k": 0,
+          "n": 20,
+          "value": 0
+        },
+        "kmlChunksRetrieved": {
+          "k": 0,
+          "n": 65,
+          "value": 0
+        }
+      }
+    }
+  },
+  "distances": {
+    "top1Answerable": {
+      "n": 13,
+      "mean": 1.26,
+      "median": 1.2529,
+      "p95": 1.4177,
+      "min": 1.1046,
+      "max": 1.4177,
+      "sum": 16.388
+    },
+    "top1Advisory": {
+      "n": 0,
+      "mean": null,
+      "median": null,
+      "p95": null,
+      "min": null,
+      "max": null,
+      "sum": null
+    },
+    "relevantChunks": {
+      "n": 20,
+      "mean": 1.3,
+      "median": 1.2954,
+      "p95": 1.3884,
+      "min": 1.1439,
+      "max": 1.4177,
+      "sum": 26.0615
+    },
+    "irrelevantChunksAnswerable": {
+      "n": 45,
+      "mean": 1.24,
+      "median": 1.2421,
+      "p95": 1.3772,
+      "min": 1.0933,
+      "max": 1.4034,
+      "sum": 55.6079
+    }
+  },
+  "latencyMs": {
+    "embed": {
+      "n": 0,
+      "mean": null,
+      "median": null,
+      "p95": null,
+      "min": null,
+      "max": null,
+      "sum": null
+    },
+    "query": {
+      "n": 22,
+      "mean": 4.32,
+      "median": 5,
+      "p95": 10,
+      "min": 1,
+      "max": 11,
+      "sum": 95
+    }
+  },
+  "rows": [
+    {
+      "id": "A1",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "rice production in Thanjavur district 2017-18",
+      "embedMs": null,
+      "queryMs": 11,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.2529,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 15: 15,Tamil Nadu,Karur,0,41545,813,42358 Row 16: 16,Tamil Nadu,Perambalur,1260,37065,6698,45023 Row 17: 17,Tamil Nadu,Ariyalur,9851,87227,2145,99223 Row 18"
+        },
+        {
+          "rank": 2,
+          "filename": "production_of_green_gram_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.1239,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,1,1406,1407 Row 20: 20,Tamil Nadu,Tiruvarur,12,11963,11975 Row 21: 21,Tamil Nadu,Nagapattinam,0,14271,14271 Row 22: 22,Tamil Nad"
+        },
+        {
+          "rank": 3,
+          "filename": "production_of_black_gram_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.1378,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,14367,15973,30340 Row 20: 20,Tamil Nadu,Tiruvarur,5696,13657,19353 Row 21: 21,Tamil Nadu,Nagapattinam,15,18370,18385 Row 22: 22,"
+        },
+        {
+          "rank": 4,
+          "filename": "production_of_horse_gram_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.1527,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,0,0,0 Row 20: 20,Tamil Nadu,Tiruvarur,0,0,0 Row 21: 21,Tamil Nadu,Nagapattinam,0,0,0 Row 22: 22,Tamil Nadu,Madurai,17,0,17 Row 2"
+        },
+        {
+          "rank": 5,
+          "filename": "production_of_ragi_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.1542,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,7,4,11 Row 20: 20,Tamil Nadu,Tiruvarur,0,0,0 Row 21: 21,Tamil Nadu,Nagapattinam,0,4,4 Row 22: 22,Tamil Nadu,Madurai,27,9,36 Row "
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "production_of_rice_in_2017_18.csv_chunk_2_1761567902194",
+          "document": "Row 15: 15,Tamil Nadu,Karur,0,41545,813,42358\r\nRow 16: 16,Tamil Nadu,Perambalur,1260,37065,6698,45023\r\nRow 17: 17,Tamil Nadu,Ariyalur,9851,87227,2145,99223\r\nRow 18: 18,Tamil Nadu,Pudukkottai,10221,154191,7234,171646\r\nRow 19: 19,Tamil Nadu,Thanjavur,118353,491007,59148,668508\r\nRow 20: 20,Tamil Nadu,Tiruvarur,102199,562612,35110,699921\r\nRow 21: 21,Tamil Nadu,Nagapattinam,97562,348528,1358,447448\r\nRow 22: 22,Tamil Nadu,Madurai,2972,72073,9532,84577\r\nRow 23: 23,Tamil Nadu,Theni,8036,27831,1390,37257\r\nRow 24: 24,Tamil Nadu,Dindigul,412,29048,19995,49455\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,0,35967,0,35967\r\nRow 26: 26,Tamil Nadu,Virudhunagar,4,63689,6777,70470\r\nRow 27: 27,Tamil Nadu,Sivaganga,162,63773,581,64516\r\nRow 28: 28,Tamil Nadu,Tirunelveli,7204,174046,112956,294206\r\nRow 29: 29,Tamil Nadu,Thoothukudi,722,17286,42942,60950\r\nRow 30: 30,Tamil Nadu,The Nilgiris,921,0,0,921\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,11368,21157,509,33034",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/production_of_rice_in_2017_18.csv",
+            "filename": "production_of_rice_in_2017_18.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "production_of_green_gram_in_2017_18.csv_chunk_2_1761567894835",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,1,1406,1407\r\nRow 20: 20,Tamil Nadu,Tiruvarur,12,11963,11975\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0,14271,14271\r\nRow 22: 22,Tamil Nadu,Madurai,2375,190,2565\r\nRow 23: 23,Tamil Nadu,Theni,932,429,1361\r\nRow 24: 24,Tamil Nadu,Dindigul,210,1268,1478\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,0,120,120\r\nRow 26: 26,Tamil Nadu,Virudhunagar,1189,1097,2286\r\nRow 27: 27,Tamil Nadu,Sivaganga,10,3,13\r\nRow 28: 28,Tamil Nadu,Tirunelveli,8,1343,1351\r\nRow 29: 29,Tamil Nadu,Thoothukudi,2,11480,11482\r\nRow 30: 30,Tamil Nadu,The Nilgiris,1,0,1\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,0,0,0\r\nRow 32: Total,Tamil Nadu,State Total,17926,60333,78259",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/production_of_green_gram_in_2017_18.csv",
+            "filename": "production_of_green_gram_in_2017_18.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "production_of_black_gram_in_2017_18.csv_chunk_2_1761567893320",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,14367,15973,30340\r\nRow 20: 20,Tamil Nadu,Tiruvarur,5696,13657,19353\r\nRow 21: 21,Tamil Nadu,Nagapattinam,15,18370,18385\r\nRow 22: 22,Tamil Nadu,Madurai,993,151,1144\r\nRow 23: 23,Tamil Nadu,Theni,1145,961,2106\r\nRow 24: 24,Tamil Nadu,Dindigul,1592,6895,8487\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,5,2314,2319\r\nRow 26: 26,Tamil Nadu,Virudhunagar,1020,1997,3017\r\nRow 27: 27,Tamil Nadu,Sivaganga,625,446,1071\r\nRow 28: 28,Tamil Nadu,Tirunelveli,167,17291,17458\r\nRow 29: 29,Tamil Nadu,Thoothukudi,6,25171,25177\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0,0,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,95,152,247\r\nRow 32: Total,Tamil Nadu,State Total,53226,248436,301662",
+          "metadata": {
+            "chunk_index": 2,
+            "filename": "production_of_black_gram_in_2017_18.csv",
+            "source": "s3://tn-farming-assistant-dataset/production_of_black_gram_in_2017_18.csv"
+          }
+        },
+        {
+          "id": "production_of_horse_gram_in_2017_18.csv_chunk_2_1761567895594",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,0,0,0\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0,0,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0,0,0\r\nRow 22: 22,Tamil Nadu,Madurai,17,0,17\r\nRow 23: 23,Tamil Nadu,Theni,209,220,429\r\nRow 24: 24,Tamil Nadu,Dindigul,223,1889,2112\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,0,1,1\r\nRow 26: 26,Tamil Nadu,Virudhunagar,11,19,30\r\nRow 27: 27,Tamil Nadu,Sivaganga,4,111,115\r\nRow 28: 28,Tamil Nadu,Tirunelveli,0,3,3\r\nRow 29: 29,Tamil Nadu,Thoothukudi,0,7,7\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0,0,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,0,0,0\r\nRow 32: Total,Tamil Nadu,State Total,6273,42261,48534",
+          "metadata": {
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/production_of_horse_gram_in_2017_18.csv",
+            "filename": "production_of_horse_gram_in_2017_18.csv"
+          }
+        },
+        {
+          "id": "production_of_ragi_in_2017_18.csv_chunk_2_1761567900623",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,7,4,11\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0,0,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0,4,4\r\nRow 22: 22,Tamil Nadu,Madurai,27,9,36\r\nRow 23: 23,Tamil Nadu,Theni,48,31,79\r\nRow 24: 24,Tamil Nadu,Dindigul,31,40,71\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,3,1468,1471\r\nRow 26: 26,Tamil Nadu,Virudhunagar,24,210,234\r\nRow 27: 27,Tamil Nadu,Sivaganga,168,156,324\r\nRow 28: 28,Tamil Nadu,Tirunelveli,3,107,110\r\nRow 29: 29,Tamil Nadu,Thoothukudi,0,112,112\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0,0,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,0,0,0\r\nRow 32: Total,Tamil Nadu,State Total,213587,107745,321332",
+          "metadata": {
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/production_of_ragi_in_2017_18.csv",
+            "filename": "production_of_ragi_in_2017_18.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "rice"
+        ],
+        "districts": [
+          "thanjavur"
+        ],
+        "tokens": [
+          "rice",
+          "production",
+          "thanjavur"
+        ]
+      }
+    },
+    {
+      "id": "A2",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "maize production in Dindigul district",
+      "embedMs": null,
+      "queryMs": 10,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_maize_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.3164,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Tamil Nadu,Ariyalur,113387,14515,127902 Row 18: 18,Tamil Nadu,Pudukkottai,16050,11202,27252 Row 19: 19,Tamil Nadu,Thanjavur,5467,2054,7521 Row 20: 20"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 6,
+          "distance": 1.1131,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0 Row 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,1"
+        },
+        {
+          "rank": 3,
+          "filename": "production_of_other_pulses_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.3068,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 23: 23,Tamil Nadu,Theni,1971 Row 24: 24,Tamil Nadu,Dindigul,1350 Row 25: 25,Tamil Nadu,Ramanathapuram,1 Row 26: 26,Tamil Nadu,Virudhunagar,135 Row 27: 27,Ta"
+        },
+        {
+          "rank": 4,
+          "filename": "production_of_ragi_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.3175,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,7,4,11 Row 20: 20,Tamil Nadu,Tiruvarur,0,0,0 Row 21: 21,Tamil Nadu,Nagapattinam,0,4,4 Row 22: 22,Tamil Nadu,Madurai,27,9,36 Row "
+        },
+        {
+          "rank": 5,
+          "filename": "production_of_black_gram_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.324,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,14367,15973,30340 Row 20: 20,Tamil Nadu,Tiruvarur,5696,13657,19353 Row 21: 21,Tamil Nadu,Nagapattinam,15,18370,18385 Row 22: 22,"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "production_of_maize_in_2017_18.csv_chunk_2_1761567898119",
+          "document": "Row 17: 17,Tamil Nadu,Ariyalur,113387,14515,127902\r\nRow 18: 18,Tamil Nadu,Pudukkottai,16050,11202,27252\r\nRow 19: 19,Tamil Nadu,Thanjavur,5467,2054,7521\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0,0,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,9,80,89\r\nRow 22: 22,Tamil Nadu,Madurai,41382,17995,59377\r\nRow 23: 23,Tamil Nadu,Theni,27132,35665,62797\r\nRow 24: 24,Tamil Nadu,Dindigul,42371,198424,240795\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,0,5026,5026\r\nRow 26: 26,Tamil Nadu,Virudhunagar,39356,110407,149763\r\nRow 27: 27,Tamil Nadu,Sivaganga,175,80,255\r\nRow 28: 28,Tamil Nadu,Tirunelveli,16926,53045,69971\r\nRow 29: 29,Tamil Nadu,Thoothukudi,0,94256,94256\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0,0,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,9,27,36\r\nRow 32: Total,Tamil Nadu,State Total,1532106,1059526,2591632",
+          "metadata": {
+            "chunk_index": 2,
+            "filename": "production_of_maize_in_2017_18.csv",
+            "source": "s3://tn-farming-assistant-dataset/production_of_maize_in_2017_18.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_6_1761567835799",
+          "document": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0\r\nRow 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,12146,0,12146,12146,1.00,0,0,0,0,0,0,0\r\nRow 27: 27,Virudhunagar,0,307,307,0,307,307,1.00,0,31783,31783,0,28694,28694,1.11,0,1394,1394,0,1394,1394,1.00\r\nRow 28: 28,Sivaganga,10,4823,4833,10,4722,4732,1.02,0,14799,14799,0,14798,14798,1.00,0,0,0,0,0,0,0\r\nRow 29: 29,Tirunelveli,0,1115,1115,0,1064,1064,1.05,0,65079,65079,0,55546,55546,1.17,0,2248,2248,0,2225,2225,1.01\r\nRow 30: 30,Thoothukudi,0,874,874,0,873,873,1.00,0,16019,16019,0,15992,15992,1.00,0,0,0,0,0,0,0\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0,0,1779,1779,0,1779,1779,1.00,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,0,4054,4054,0,3746,3746,1.08,0,3304,3304,0,3236,3236,1.02,0,8,8,0,8,8,1.00\r\nRow 33: Total,State Total,134,674327,674461,124,516212,516336,1.31,120,1310971,1311091,80,1086507,1086587,1.21,806,113585,114391,626,105819,106445,1.07",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 6,
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "production_of_other_pulses_in_2017_18.csv_chunk_2_1761567899668",
+          "document": "Row 23: 23,Tamil Nadu,Theni,1971\r\nRow 24: 24,Tamil Nadu,Dindigul,1350\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,1\r\nRow 26: 26,Tamil Nadu,Virudhunagar,135\r\nRow 27: 27,Tamil Nadu,Sivaganga,13\r\nRow 28: 28,Tamil Nadu,Tirunelveli,1\r\nRow 29: 29,Tamil Nadu,Thoothukudi,15\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,1\r\nRow 32: Total,Tamil Nadu,State Total,26099",
+          "metadata": {
+            "filename": "production_of_other_pulses_in_2017_18.csv",
+            "source": "s3://tn-farming-assistant-dataset/production_of_other_pulses_in_2017_18.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "production_of_ragi_in_2017_18.csv_chunk_2_1761567900623",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,7,4,11\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0,0,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0,4,4\r\nRow 22: 22,Tamil Nadu,Madurai,27,9,36\r\nRow 23: 23,Tamil Nadu,Theni,48,31,79\r\nRow 24: 24,Tamil Nadu,Dindigul,31,40,71\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,3,1468,1471\r\nRow 26: 26,Tamil Nadu,Virudhunagar,24,210,234\r\nRow 27: 27,Tamil Nadu,Sivaganga,168,156,324\r\nRow 28: 28,Tamil Nadu,Tirunelveli,3,107,110\r\nRow 29: 29,Tamil Nadu,Thoothukudi,0,112,112\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0,0,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,0,0,0\r\nRow 32: Total,Tamil Nadu,State Total,213587,107745,321332",
+          "metadata": {
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/production_of_ragi_in_2017_18.csv",
+            "filename": "production_of_ragi_in_2017_18.csv"
+          }
+        },
+        {
+          "id": "production_of_black_gram_in_2017_18.csv_chunk_2_1761567893320",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,14367,15973,30340\r\nRow 20: 20,Tamil Nadu,Tiruvarur,5696,13657,19353\r\nRow 21: 21,Tamil Nadu,Nagapattinam,15,18370,18385\r\nRow 22: 22,Tamil Nadu,Madurai,993,151,1144\r\nRow 23: 23,Tamil Nadu,Theni,1145,961,2106\r\nRow 24: 24,Tamil Nadu,Dindigul,1592,6895,8487\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,5,2314,2319\r\nRow 26: 26,Tamil Nadu,Virudhunagar,1020,1997,3017\r\nRow 27: 27,Tamil Nadu,Sivaganga,625,446,1071\r\nRow 28: 28,Tamil Nadu,Tirunelveli,167,17291,17458\r\nRow 29: 29,Tamil Nadu,Thoothukudi,6,25171,25177\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0,0,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,95,152,247\r\nRow 32: Total,Tamil Nadu,State Total,53226,248436,301662",
+          "metadata": {
+            "chunk_index": 2,
+            "filename": "production_of_black_gram_in_2017_18.csv",
+            "source": "s3://tn-farming-assistant-dataset/production_of_black_gram_in_2017_18.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "maize"
+        ],
+        "districts": [
+          "dindigul"
+        ],
+        "tokens": [
+          "maize",
+          "production",
+          "dindigul"
+        ]
+      }
+    },
+    {
+      "id": "A3",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "ragi production in Krishnagiri",
+      "embedMs": null,
+      "queryMs": 8,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_ragi_in_2017_18.csv",
+          "chunkIndex": 1,
+          "distance": 1.4177,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Tamil Nadu,Kancheepuram,257,433,690 Row 2: 2,Tamil Nadu,Tiruvallur,178,1203,1381 Row 3: 3,Tamil Nadu,Cuddalore,332,366,698 Row 4: 4,Tamil Nadu,Vi"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 4,
+          "distance": 1.2666,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0 Row 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549"
+        },
+        {
+          "rank": 3,
+          "filename": "production_of_korra_in_2017_18.csv",
+          "chunkIndex": 1,
+          "distance": 1.3951,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Tamil Nadu,Kancheepuram,0 Row 2: 2,Tamil Nadu,Tiruvallur,0 Row 3: 3,Tamil Nadu,Cuddalore,33 Row 4: 4,Tamil Nadu,Villupuram,296 Row 5: 5,Tamil Nad"
+        },
+        {
+          "rank": 4,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.3344,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,486,88.85,323,84.78,163,1.50 Row 2: 2,Kancheepuram,103502,94.97,91949,95.61,11553,1.13 Row 3: 3,Tiruvallur,127512,95.26,83361,94.63,44151"
+        },
+        {
+          "rank": 5,
+          "filename": "production_of_other_cereals_in_2017_18.csv",
+          "chunkIndex": 1,
+          "distance": 1.4034,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Tamil Nadu,Kancheepuram,0 Row 2: 2,Tamil Nadu,Tiruvallur,0 Row 3: 3,Tamil Nadu,Cuddalore,0 Row 4: 4,Tamil Nadu,Villupuram,10 Row 5: 5,Tamil Nadu,"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "production_of_ragi_in_2017_18.csv_chunk_1_1761567900623",
+          "document": "Data:\nRow 1: 1,Tamil Nadu,Kancheepuram,257,433,690\r\nRow 2: 2,Tamil Nadu,Tiruvallur,178,1203,1381\r\nRow 3: 3,Tamil Nadu,Cuddalore,332,366,698\r\nRow 4: 4,Tamil Nadu,Villupuram,3874,3075,6949\r\nRow 5: 5,Tamil Nadu,Vellore,5479,18495,23974\r\nRow 6: 6,Tamil Nadu,Tiruvannamalai,4973,13599,18572\r\nRow 7: 7,Tamil Nadu,Salem,13252,12373,25625\r\nRow 8: 8,Tamil Nadu,Namakkal,1397,580,1977\r\nRow 9: 9,Tamil Nadu,Dharmapuri,33788,28513,62301\r\nRow 10: 10,Tamil Nadu,Krishnagiri,133742,26704,160446\r\nRow 11: 11,Tamil Nadu,Coimbatore,17,4,21\r\nRow 12: 12,Tamil Nadu,Tiruppur,0,0,0\r\nRow 13: 13,Tamil Nadu,Erode,15894,134,16028\r\nRow 14: 14,Tamil Nadu,Tiruchirappalli,14,4,18\r\nRow 15: 15,Tamil Nadu,Karur,7,49,56\r\nRow 16: 16,Tamil Nadu,Perambalur,7,0,7\r\nRow 17: 17,Tamil Nadu,Ariyalur,34,54,88\r\nRow 18: 18,Tamil Nadu,Pudukkottai,31,18,49\r\nRow 19: 19,Tamil Nadu,Thanjavur,7,4,11\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0,0,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0,4,4\r\nRow 22: 22,Tamil Nadu,Madurai,27,9,36",
+          "metadata": {
+            "filename": "production_of_ragi_in_2017_18.csv",
+            "source": "s3://tn-farming-assistant-dataset/production_of_ragi_in_2017_18.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_4_1761567835799",
+          "document": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549,0,39385,39385,1.44,0,0,0,0,0,0,0\r\nRow 11: 11,Krishnagiri,0,26139,26139,0,20616,20616,1.27,0,42124,42124,0,31546,31546,1.34,0,0,0,0,0,0,0\r\nRow 12: 12,Coimbatore,0,32180,32180,0,31694,31694,1.02,0,68080,68080,0,65804,65804,1.03,0,0,0,0,0,0,0\r\nRow 13: 13,Tiruppur,0,13359,13359,0,13238,13238,1.01,0,81616,81616,0,80489,80489,1.01,0,0,0,0,0,0,0\r\nRow 14: 14,Erode,0,22019,22019,0,20112,20112,1.09,0,52505,52505,0,45355,45355,1.16,0,0,0,0,0,0,0\r\nRow 15: 15,Tiruchirappalli,0,16889,16889,0,11575,11575,1.46,0,28979,28979,0,27440,27440,1.06,0,0,0,0,0,0,0\r\nRow 16: 16,Karur,0,13820,13820,0,13077,13077,1.06,0,20212,20212,0,19147,19147,1.06,0,126,126,0,126,126,1.00\r\nRow 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0",
+          "metadata": {
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 4
+          }
+        },
+        {
+          "id": "production_of_korra_in_2017_18.csv_chunk_1_1761567897221",
+          "document": "Data:\nRow 1: 1,Tamil Nadu,Kancheepuram,0\r\nRow 2: 2,Tamil Nadu,Tiruvallur,0\r\nRow 3: 3,Tamil Nadu,Cuddalore,33\r\nRow 4: 4,Tamil Nadu,Villupuram,296\r\nRow 5: 5,Tamil Nadu,Vellore,1\r\nRow 6: 6,Tamil Nadu,Tiruvannamalai,3\r\nRow 7: 7,Tamil Nadu,Salem,51\r\nRow 8: 8,Tamil Nadu,Namakkal,41\r\nRow 9: 9,Tamil Nadu,Dharmapuri,36\r\nRow 10: 10,Tamil Nadu,Krishnagiri,0\r\nRow 11: 11,Tamil Nadu,Coimbatore,0\r\nRow 12: 12,Tamil Nadu,Tiruppur,0\r\nRow 13: 13,Tamil Nadu,Erode,0\r\nRow 14: 14,Tamil Nadu,Tiruchirappalli,0\r\nRow 15: 15,Tamil Nadu,Karur,0\r\nRow 16: 16,Tamil Nadu,Perambalur,0\r\nRow 17: 17,Tamil Nadu,Ariyalur,0\r\nRow 18: 18,Tamil Nadu,Pudukkottai,0\r\nRow 19: 19,Tamil Nadu,Thanjavur,0\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0\r\nRow 22: 22,Tamil Nadu,Madurai,45\r\nRow 23: 23,Tamil Nadu,Theni,9\r\nRow 24: 24,Tamil Nadu,Dindigul,1\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,0\r\nRow 26: 26,Tamil Nadu,Virudhunagar,6\r\nRow 27: 27,Tamil Nadu,Sivaganga,0\r\nRow 28: 28,Tamil Nadu,Tirunelveli,0",
+          "metadata": {
+            "chunk_index": 1,
+            "source": "s3://tn-farming-assistant-dataset/production_of_korra_in_2017_18.csv",
+            "filename": "production_of_korra_in_2017_18.csv"
+          }
+        },
+        {
+          "id": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv_chunk_1_1761567972949",
+          "document": "Data:\nRow 1: 1,Chennai,486,88.85,323,84.78,163,1.50\r\nRow 2: 2,Kancheepuram,103502,94.97,91949,95.61,11553,1.13\r\nRow 3: 3,Tiruvallur,127512,95.26,83361,94.63,44151,1.53\r\nRow 4: 4,Cuddalore,188045,60.24,137128,65.14,50917,1.37\r\nRow 5: 5,Villupuram,267112,63.38,210239,65.81,56873,1.27\r\nRow 6: 6,Vellore,100708,56.63,76164,53.56,24544,1.32\r\nRow 7: 7,Tiruvannamalai,194812,70.25,135236,69.09,59576,1.44\r\nRow 8: 8,Salem,106535,40.27,79809,40.99,26726,1.33\r\nRow 9: 9,Namakkal,80517,38.89,57198,37.36,23319,1.41\r\nRow 10: 10,Dharmapuri,58837,29.24,41177,28.05,17660,1.43\r\nRow 11: 11,Krishnagiri,76042,34.09,58892,34.83,17150,1.29\r\nRow 12: 12,Coimbatore,115117,66.11,112350,67.94,2767,1.02\r\nRow 13: 13,Tiruppur,115428,63.63,114149,64.16,1279,1.01\r\nRow 14: 14,Erode,121215,71.38,105482,69.01,15733,1.15\r\nRow 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11\r\nRow 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05\r\nRow 17: 17,Perambalur,22402,22.47,21055,21.90,1347,1.06",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "production_of_other_cereals_in_2017_18.csv_chunk_1_1761567898892",
+          "document": "Data:\nRow 1: 1,Tamil Nadu,Kancheepuram,0\r\nRow 2: 2,Tamil Nadu,Tiruvallur,0\r\nRow 3: 3,Tamil Nadu,Cuddalore,0\r\nRow 4: 4,Tamil Nadu,Villupuram,10\r\nRow 5: 5,Tamil Nadu,Vellore,0\r\nRow 6: 6,Tamil Nadu,Tiruvannamalai,12\r\nRow 7: 7,Tamil Nadu,Salem,247\r\nRow 8: 8,Tamil Nadu,Namakkal,0\r\nRow 9: 9,Tamil Nadu,Dharmapuri,1\r\nRow 10: 10,Tamil Nadu,Krishnagiri,0\r\nRow 11: 11,Tamil Nadu,Coimbatore,4\r\nRow 12: 12,Tamil Nadu,Tiruppur,7\r\nRow 13: 13,Tamil Nadu,Erode,8\r\nRow 14: 14,Tamil Nadu,Tiruchirappalli,0\r\nRow 15: 15,Tamil Nadu,Karur,0\r\nRow 16: 16,Tamil Nadu,Perambalur,0\r\nRow 17: 17,Tamil Nadu,Ariyalur,0\r\nRow 18: 18,Tamil Nadu,Pudukkottai,36\r\nRow 19: 19,Tamil Nadu,Thanjavur,0\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0\r\nRow 22: 22,Tamil Nadu,Madurai,3438\r\nRow 23: 23,Tamil Nadu,Theni,60\r\nRow 24: 24,Tamil Nadu,Dindigul,28\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,1534\r\nRow 26: 26,Tamil Nadu,Virudhunagar,2511\r\nRow 27: 27,Tamil Nadu,Sivaganga,45\r\nRow 28: 28,Tamil Nadu,Tirunelveli,29",
+          "metadata": {
+            "chunk_index": 1,
+            "filename": "production_of_other_cereals_in_2017_18.csv",
+            "source": "s3://tn-farming-assistant-dataset/production_of_other_cereals_in_2017_18.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "ragi"
+        ],
+        "districts": [
+          "krishnagiri"
+        ],
+        "tokens": [
+          "ragi",
+          "production",
+          "krishnagiri"
+        ]
+      }
+    },
+    {
+      "id": "A4",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "soil nitrogen phosphorus potassium and pH values for Coimbatore",
+      "embedMs": null,
+      "queryMs": 7,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 4,
+          "distance": 1.1361,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0 Row 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.2366,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,98,0,98,98,0,98,1.00 Row 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11 Row 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27 Row 4: 4"
+        },
+        {
+          "rank": 3,
+          "filename": "total_aromatic_plants.csv",
+          "chunkIndex": 1,
+          "distance": 1.2583,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Ariyalur,NA,NA,NA Row 2: 2,Coimbatore,52,349,6.72 Row 3: 3,Cuddalore,1,11,10.78 Row 4: 4,Dharmapuri,65,1625,25.00 Row 5: 5,Dindigul,5,196,39.20 R"
+        },
+        {
+          "rank": 4,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.2702,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,486,88.85,323,84.78,163,1.50 Row 2: 2,Kancheepuram,103502,94.97,91949,95.61,11553,1.13 Row 3: 3,Tiruvallur,127512,95.26,83361,94.63,44151"
+        },
+        {
+          "rank": 5,
+          "filename": "peri_winkle.csv",
+          "chunkIndex": 1,
+          "distance": 1.2755,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Ariyalur,NA,NA,NA Row 2: 2,Coimbatore,NA,NA,NA Row 3: 3,Cuddalore,NA,NA,NA Row 4: 4,Dharmapuri,NA,NA,NA Row 5: 5,Dindigul,NA,NA,NA Row 6: 6,Erode"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_4_1761567835799",
+          "document": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549,0,39385,39385,1.44,0,0,0,0,0,0,0\r\nRow 11: 11,Krishnagiri,0,26139,26139,0,20616,20616,1.27,0,42124,42124,0,31546,31546,1.34,0,0,0,0,0,0,0\r\nRow 12: 12,Coimbatore,0,32180,32180,0,31694,31694,1.02,0,68080,68080,0,65804,65804,1.03,0,0,0,0,0,0,0\r\nRow 13: 13,Tiruppur,0,13359,13359,0,13238,13238,1.01,0,81616,81616,0,80489,80489,1.01,0,0,0,0,0,0,0\r\nRow 14: 14,Erode,0,22019,22019,0,20112,20112,1.09,0,52505,52505,0,45355,45355,1.16,0,0,0,0,0,0,0\r\nRow 15: 15,Tiruchirappalli,0,16889,16889,0,11575,11575,1.46,0,28979,28979,0,27440,27440,1.06,0,0,0,0,0,0,0\r\nRow 16: 16,Karur,0,13820,13820,0,13077,13077,1.06,0,20212,20212,0,19147,19147,1.06,0,126,126,0,126,126,1.00\r\nRow 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0",
+          "metadata": {
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 4
+          }
+        },
+        {
+          "id": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv_chunk_1_1761567834992",
+          "document": "Data:\nRow 1: 1,Chennai,98,0,98,98,0,98,1.00\r\nRow 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11\r\nRow 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27\r\nRow 4: 4,Cuddalore,1637,0,1637,1608,0,1608,1.02\r\nRow 5: 5,Villupuram,22123,0,22123,20183,0,20183,1.10\r\nRow 6: 6,Vellore,1538,0,1538,1465,0,1465,1.05\r\nRow 7: 7,Tiruvannamalai,1777,0,1777,1353,0,1353,1.31\r\nRow 8: 8,Salem,0,0,0,0,0,0,0\r\nRow 9: 9,Namakkal,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,673,0,673,646,0,646,1.04\r\nRow 11: 11,Krishnagiri,6925,0,6925,5999,0,5999,1.15\r\nRow 12: 12,Coimbatore,198,0,198,198,0,198,1.00\r\nRow 13: 13,Tiruppur,1153,0,1153,1153,0,1153,1.00\r\nRow 14: 14,Erode,28,0,28,28,0,28,1.00\r\nRow 15: 15,Tiruchirappalli,984,0,984,854,0,854,1.15\r\nRow 16: 16,Karur,51,0,51,46,0,46,1.11\r\nRow 17: 17,Perambalur,21,0,21,21,0,21,1.00\r\nRow 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10\r\nRow 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01\r\nRow 20: 20,Thanjavur,98,0,98,98,0,98,1.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0",
+          "metadata": {
+            "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "total_aromatic_plants.csv_chunk_1_1761567973772",
+          "document": "Data:\nRow 1: 1,Ariyalur,NA,NA,NA\r\nRow 2: 2,Coimbatore,52,349,6.72\r\nRow 3: 3,Cuddalore,1,11,10.78\r\nRow 4: 4,Dharmapuri,65,1625,25.00\r\nRow 5: 5,Dindigul,5,196,39.20\r\nRow 6: 6,Erode,8,97,11.99\r\nRow 7: 7,Kancheepuram,NA,NA,NA\r\nRow 8: 8,Kanyakumari,4,27,6.72\r\nRow 9: 9,Karur,NA,NA,NA\r\nRow 10: 10,Krishnagiri,NA,NA,NA\r\nRow 11: 11,Madurai,NA,NA,NA\r\nRow 12: 12,Nagapattinam,NA,NA,NA\r\nRow 13: 13,Namakkal,NA,NA,NA\r\nRow 14: 14,Perambalur,NA,NA,NA\r\nRow 15: 15,Pudukkottai,NA,NA,NA\r\nRow 16: 16,Ramanadhapuram,NA,NA,NA\r\nRow 17: 17,Salem,20,500,25.00\r\nRow 18: 18,Sivagangai,NA,NA,NA\r\nRow 19: 19,Thanjavur,NA,NA,NA\r\nRow 20: 20,Theni,NA,NA,NA\r\nRow 21: 21,The Nilgiris,19,128,6.72\r\nRow 22: 22,Tiruvallur,NA,NA,NA\r\nRow 23: 23,Tiruvannamalai,193,5633,29.19\r\nRow 24: 24,Thiruvarur,NA,NA,NA\r\nRow 25: 25,Thoothukudi,NA,NA,NA\r\nRow 26: 26,Tirupur,NA,NA,NA\r\nRow 27: 27,Trichy,NA,NA,NA\r\nRow 28: 28,Tirunelveli,NA,NA,NA\r\nRow 29: 29,Vellore,NA,NA,NA\r\nRow 30: 30,Villupuram,NA,NA,NA\r\nRow 31: 31,Virudhunagar,NA,NA,NA",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/total_aromatic_plants.csv",
+            "filename": "total_aromatic_plants.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv_chunk_1_1761567972949",
+          "document": "Data:\nRow 1: 1,Chennai,486,88.85,323,84.78,163,1.50\r\nRow 2: 2,Kancheepuram,103502,94.97,91949,95.61,11553,1.13\r\nRow 3: 3,Tiruvallur,127512,95.26,83361,94.63,44151,1.53\r\nRow 4: 4,Cuddalore,188045,60.24,137128,65.14,50917,1.37\r\nRow 5: 5,Villupuram,267112,63.38,210239,65.81,56873,1.27\r\nRow 6: 6,Vellore,100708,56.63,76164,53.56,24544,1.32\r\nRow 7: 7,Tiruvannamalai,194812,70.25,135236,69.09,59576,1.44\r\nRow 8: 8,Salem,106535,40.27,79809,40.99,26726,1.33\r\nRow 9: 9,Namakkal,80517,38.89,57198,37.36,23319,1.41\r\nRow 10: 10,Dharmapuri,58837,29.24,41177,28.05,17660,1.43\r\nRow 11: 11,Krishnagiri,76042,34.09,58892,34.83,17150,1.29\r\nRow 12: 12,Coimbatore,115117,66.11,112350,67.94,2767,1.02\r\nRow 13: 13,Tiruppur,115428,63.63,114149,64.16,1279,1.01\r\nRow 14: 14,Erode,121215,71.38,105482,69.01,15733,1.15\r\nRow 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11\r\nRow 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05\r\nRow 17: 17,Perambalur,22402,22.47,21055,21.90,1347,1.06",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "peri_winkle.csv_chunk_1_1761567890977",
+          "document": "Data:\nRow 1: 1,Ariyalur,NA,NA,NA\r\nRow 2: 2,Coimbatore,NA,NA,NA\r\nRow 3: 3,Cuddalore,NA,NA,NA\r\nRow 4: 4,Dharmapuri,NA,NA,NA\r\nRow 5: 5,Dindigul,NA,NA,NA\r\nRow 6: 6,Erode,NA,NA,NA\r\nRow 7: 7,Kancheepuram,NA,NA,NA\r\nRow 8: 8,Kanyakumari,NA,NA,NA\r\nRow 9: 9,Karur,NA,NA,NA\r\nRow 10: 10,Krishnagiri,NA,NA,NA\r\nRow 11: 11,Madurai,32,215,6.73\r\nRow 12: 12,Nagapattinam,NA,NA,NA\r\nRow 13: 13,Namakkal,NA,NA,NA\r\nRow 14: 14,Perambalur,NA,NA,NA\r\nRow 15: 15,Pudukkottai,NA,NA,NA\r\nRow 16: 16,Ramanadhapuram,NA,NA,NA\r\nRow 17: 17,Salem,NA,NA,NA\r\nRow 18: 18,Sivagangai,NA,NA,NA\r\nRow 19: 19,Thanjavur,NA,NA,NA\r\nRow 20: 20,Theni,NA,NA,NA\r\nRow 21: 21,The Nilgiris,NA,NA,NA\r\nRow 22: 22,Tiruvallur,NA,NA,NA\r\nRow 23: 23,Thiruvarur,NA,NA,NA\r\nRow 24: 24,Tiruvannamalai,NA,NA,NA\r\nRow 25: 25,Thoothukudi,12,81,6.73\r\nRow 26: 26,Tirupur,NA,NA,NA\r\nRow 27: 27,Trichy,NA,NA,NA\r\nRow 28: 28,Tirunelveli,NA,NA,NA\r\nRow 29: 29,Vellore,NA,NA,NA\r\nRow 30: 30,Villupuram,NA,NA,NA\r\nRow 31: 31,Virudhunagar,279,1878,6.73",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/peri_winkle.csv",
+            "filename": "peri_winkle.csv",
+            "chunk_index": 1
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [],
+        "districts": [
+          "coimbatore"
+        ],
+        "tokens": [
+          "soil",
+          "nitrogen",
+          "phosphorus",
+          "potassium",
+          "values",
+          "coimbatore"
+        ]
+      }
+    },
+    {
+      "id": "A5",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "area irrigated by wells in Villupuram district",
+      "embedMs": null,
+      "queryMs": 7,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 3,
+          "distance": 1.2914,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,0,353,353,0,190,190,1.86,0,35,35,0,35,35,1.00,0,0,0,0,0,0,0 Row 2: 2,Kancheepuram,0,17238,17238,0,14518,14518,1.19,0,41077,41077,0,36886,"
+        },
+        {
+          "rank": 2,
+          "filename": "Soil data.csv",
+          "chunkIndex": 2,
+          "distance": 1.1695,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 18: Villupuram,20.072,55.958,50.614,7.0009 Row 19: Villupuram,20,59.174,51.221,6.9563 Row 20: Villupuram,20.084,52.262,53.792,7.0013 Row 21: Villupuram,20.0"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.3369,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,98,0,98,98,0,98,1.00 Row 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11 Row 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27 Row 4: 4"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.3535,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,0,0,0,0,0,0,0 Row 2: 2,Kancheepuram,90,0,90,90,0,90,1.00 Row 3: 3,Tiruvallur,49,0,49,49,0,49,1.00 Row 4: 4,Cuddalore,49336,0,49336,40553,"
+        },
+        {
+          "rank": 5,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.3695,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,486,88.85,323,84.78,163,1.50 Row 2: 2,Kancheepuram,103502,94.97,91949,95.61,11553,1.13 Row 3: 3,Tiruvallur,127512,95.26,83361,94.63,44151"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_3_1761567835799",
+          "document": "Data:\nRow 1: 1,Chennai,0,353,353,0,190,190,1.86,0,35,35,0,35,35,1.00,0,0,0,0,0,0,0\r\nRow 2: 2,Kancheepuram,0,17238,17238,0,14518,14518,1.19,0,41077,41077,0,36886,36886,1.11,0,0,0,0,0,0,0\r\nRow 3: 3,Tiruvallur,0,106399,106399,0,67404,67404,1.58,0,6145,6145,0,4131,4131,1.49,0,0,0,0,0,0,0\r\nRow 4: 4,Cuddalore,26,128770,128796,23,87855,87878,1.47,0,7769,7769,0,6749,6749,1.15,0,0,0,0,0,0,0\r\nRow 5: 5,Villupuram,39,66046,66085,39,48800,48839,1.35,0,178097,178097,0,140529,140529,1.27,0,0,0,0,0,0,0\r\nRow 6: 6,Vellore,0,18791,18791,0,14747,14747,1.27,0,80379,80379,0,59952,59952,1.34,0,0,0,0,0,0,0\r\nRow 7: 7,Tiruvannamalai,0,7755,7755,0,4741,4741,1.64,0,185280,185280,0,129142,129142,1.43,0,0,0,0,0,0,0\r\nRow 8: 8,Salem,0,26654,26654,0,20258,20258,1.32,120,74510,74630,80,54220,54300,1.37,0,0,0,0,0,0,0\r\nRow 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549,0,39385,39385,1.44,0,0,0,0,0,0,0",
+          "metadata": {
+            "chunk_index": 3,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "Soil data.csv_chunk_2_1761567828585",
+          "document": "Row 18: Villupuram,20.072,55.958,50.614,7.0009\r\nRow 19: Villupuram,20,59.174,51.221,6.9563\r\nRow 20: Villupuram,20.084,52.262,53.792,7.0013\r\nRow 21: Villupuram,20.048,59.564,60.324,7.0818\r\nRow 22: Villupuram,20.075,56.714,64.356,6.9987\r\nRow 23: Villupuram,20,57.819,53.108,6.9994\r\nRow 24: Villupuram,20,66.03,58.586,6.9777\r\nRow 25: Villupuram,20,78.23,47.221,7.0018\r\nRow 26: Villupuram,20.042,55.838,50,6.9993\r\nRow 27: Villupuram,20.036,61.89,56.702,6.9979\r\nRow 28: Villupuram,20.036,53.888,60.017,6.9875\r\nRow 29: Villupuram,20.096,44.272,55.949,7.054\r\nRow 30: Villupuram,20.024,55.607,67.316,6.9992\r\nRow 31: Vijayapura,20.105,78.29,59.528,7.0727\r\nRow 32: Vijayapura,20.102,75.407,58.979,7.0187\r\nRow 33: Vijayapura,21.064,68.894,59.947,7.7583\r\nRow 34: Vijayapura,20.066,75.335,62.656,7.0189\r\nRow 35: Vijayapura,20,72.854,61.466,7.0297\r\nRow 36: Vijayapura,20,79.214,70.241,7.0962\r\nRow 37: Vijayapura,20.252,73.502,63.017,7.3545\r\nRow 38: Vijayapura,20.087,76.262,60.848,7.0611",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/Soil data.csv",
+            "filename": "Soil data.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv_chunk_1_1761567834992",
+          "document": "Data:\nRow 1: 1,Chennai,98,0,98,98,0,98,1.00\r\nRow 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11\r\nRow 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27\r\nRow 4: 4,Cuddalore,1637,0,1637,1608,0,1608,1.02\r\nRow 5: 5,Villupuram,22123,0,22123,20183,0,20183,1.10\r\nRow 6: 6,Vellore,1538,0,1538,1465,0,1465,1.05\r\nRow 7: 7,Tiruvannamalai,1777,0,1777,1353,0,1353,1.31\r\nRow 8: 8,Salem,0,0,0,0,0,0,0\r\nRow 9: 9,Namakkal,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,673,0,673,646,0,646,1.04\r\nRow 11: 11,Krishnagiri,6925,0,6925,5999,0,5999,1.15\r\nRow 12: 12,Coimbatore,198,0,198,198,0,198,1.00\r\nRow 13: 13,Tiruppur,1153,0,1153,1153,0,1153,1.00\r\nRow 14: 14,Erode,28,0,28,28,0,28,1.00\r\nRow 15: 15,Tiruchirappalli,984,0,984,854,0,854,1.15\r\nRow 16: 16,Karur,51,0,51,46,0,46,1.11\r\nRow 17: 17,Perambalur,21,0,21,21,0,21,1.00\r\nRow 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10\r\nRow 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01\r\nRow 20: 20,Thanjavur,98,0,98,98,0,98,1.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0",
+          "metadata": {
+            "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv_chunk_1_1761567833418",
+          "document": "Data:\nRow 1: 1,Chennai,0,0,0,0,0,0,0\r\nRow 2: 2,Kancheepuram,90,0,90,90,0,90,1.00\r\nRow 3: 3,Tiruvallur,49,0,49,49,0,49,1.00\r\nRow 4: 4,Cuddalore,49336,0,49336,40553,0,40553,1.22\r\nRow 5: 5,Villupuram,807,0,807,688,0,688,1.17\r\nRow 6: 6,Vellore,0,0,0,0,0,0,0\r\nRow 7: 7,Tiruvannamalai,0,0,0,0,0,0,0\r\nRow 8: 8,Salem,5251,0,5251,5251,0,5251,1.00\r\nRow 9: 9,Namakkal,5789,0,5789,4115,0,4115,1.41\r\nRow 10: 10,Dharmapuri,394,0,394,355,0,355,1.11\r\nRow 11: 11,Krishnagiri,854,0,854,731,0,731,1.17\r\nRow 12: 12,Coimbatore,14659,0,14659,14654,0,14654,1.00\r\nRow 13: 13,Tiruppur,19300,0,19300,19269,0,19269,1.00\r\nRow 14: 14,Erode,46663,0,46663,39987,0,39987,1.17\r\nRow 15: 15,Tiruchirappalli,29715,0,29715,29123,0,29123,1.02\r\nRow 16: 16,Karur,5748,0,5748,5644,0,5644,1.02\r\nRow 17: 17,Perambalur,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12\r\nRow 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00\r\nRow 20: 20,Thanjavur,210506,0,210506,141016,0,141016,1.49",
+          "metadata": {
+            "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv_chunk_1_1761567972949",
+          "document": "Data:\nRow 1: 1,Chennai,486,88.85,323,84.78,163,1.50\r\nRow 2: 2,Kancheepuram,103502,94.97,91949,95.61,11553,1.13\r\nRow 3: 3,Tiruvallur,127512,95.26,83361,94.63,44151,1.53\r\nRow 4: 4,Cuddalore,188045,60.24,137128,65.14,50917,1.37\r\nRow 5: 5,Villupuram,267112,63.38,210239,65.81,56873,1.27\r\nRow 6: 6,Vellore,100708,56.63,76164,53.56,24544,1.32\r\nRow 7: 7,Tiruvannamalai,194812,70.25,135236,69.09,59576,1.44\r\nRow 8: 8,Salem,106535,40.27,79809,40.99,26726,1.33\r\nRow 9: 9,Namakkal,80517,38.89,57198,37.36,23319,1.41\r\nRow 10: 10,Dharmapuri,58837,29.24,41177,28.05,17660,1.43\r\nRow 11: 11,Krishnagiri,76042,34.09,58892,34.83,17150,1.29\r\nRow 12: 12,Coimbatore,115117,66.11,112350,67.94,2767,1.02\r\nRow 13: 13,Tiruppur,115428,63.63,114149,64.16,1279,1.01\r\nRow 14: 14,Erode,121215,71.38,105482,69.01,15733,1.15\r\nRow 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11\r\nRow 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05\r\nRow 17: 17,Perambalur,22402,22.47,21055,21.90,1347,1.06",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [],
+        "districts": [
+          "villupuram"
+        ],
+        "tokens": [
+          "area",
+          "irrigated",
+          "wells",
+          "villupuram"
+        ]
+      }
+    },
+    {
+      "id": "A6",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "area irrigated by tanks in Ramanathapuram",
+      "embedMs": null,
+      "queryMs": 6,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 6,
+          "distance": 1.1906,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0 Row 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,1"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.2601,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10 Row 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01 Row 20: 20,Thanjavur,98,0,98,98,0,98,1.00 Row 21: 2"
+        },
+        {
+          "rank": 3,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.2374,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11 Row 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05 Row 17: 17,Perambalur,22402,22.47,21055,21.90,13"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.2469,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12 Row 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00 Row 20: 20,Thanjavur,21"
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.2557,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_6_1761567835799",
+          "document": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0\r\nRow 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,12146,0,12146,12146,1.00,0,0,0,0,0,0,0\r\nRow 27: 27,Virudhunagar,0,307,307,0,307,307,1.00,0,31783,31783,0,28694,28694,1.11,0,1394,1394,0,1394,1394,1.00\r\nRow 28: 28,Sivaganga,10,4823,4833,10,4722,4732,1.02,0,14799,14799,0,14798,14798,1.00,0,0,0,0,0,0,0\r\nRow 29: 29,Tirunelveli,0,1115,1115,0,1064,1064,1.05,0,65079,65079,0,55546,55546,1.17,0,2248,2248,0,2225,2225,1.01\r\nRow 30: 30,Thoothukudi,0,874,874,0,873,873,1.00,0,16019,16019,0,15992,15992,1.00,0,0,0,0,0,0,0\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0,0,1779,1779,0,1779,1779,1.00,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,0,4054,4054,0,3746,3746,1.08,0,3304,3304,0,3236,3236,1.02,0,8,8,0,8,8,1.00\r\nRow 33: Total,State Total,134,674327,674461,124,516212,516336,1.31,120,1310971,1311091,80,1086507,1086587,1.21,806,113585,114391,626,105819,106445,1.07",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 6,
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv_chunk_2_1761567834992",
+          "document": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10\r\nRow 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01\r\nRow 20: 20,Thanjavur,98,0,98,98,0,98,1.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0\r\nRow 22: 22,Nagapattinam,0,0,0,0,0,0,0\r\nRow 23: 23,Madurai,15116,0,15116,13556,0,13556,1.12\r\nRow 24: 24,Theni,2116,0,2116,2011,0,2011,1.05\r\nRow 25: 25,Dindigul,3361,0,3361,3281,0,3281,1.02\r\nRow 26: 26,Ramanathapuram,51056,0,51056,51055,0,51055,1.00\r\nRow 27: 27,Virudhunagar,17874,0,17874,17585,0,17585,1.02\r\nRow 28: 28,Sivaganga,39486,0,39486,39478,0,39478,1.00\r\nRow 29: 29,Tirunelveli,45284,0,45284,38207,0,38207,1.19\r\nRow 30: 30,Thoothukudi,8386,0,8386,7584,0,7584,1.11\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,14247,0,14247,10263,0,10263,1.39\r\nRow 33: Total,State Total,347408,426,347834,321525,422,321947,1.08",
+          "metadata": {
+            "chunk_index": 2,
+            "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv_chunk_2_1761567972949",
+          "document": "Row 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11\r\nRow 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05\r\nRow 17: 17,Perambalur,22402,22.47,21055,21.90,1347,1.06\r\nRow 18: 18,Ariyalur,43757,41.21,34797,37.54,8960,1.26\r\nRow 19: 19,Pudukkottai,104206,85.57,100968,85.47,3238,1.03\r\nRow 20: 20,Thanjavur,259960,93.12,175919,96.67,84041,1.48\r\nRow 21: 21,Tiruvarur,212236,73.11,151130,96.41,61106,1.40\r\nRow 22: 22,Nagapattinam,163172,61.10,121820,81.89,41352,1.34\r\nRow 23: 23,Madurai,78747,60.82,70453,58.14,8294,1.12\r\nRow 24: 24,Theni,67117,55.49,58497,52.61,8620,1.15\r\nRow 25: 25,Dindigul,79541,37.48,78836,37.89,705,1.01\r\nRow 26: 26,Ramanathapuram,64324,36.18,64323,36.18,1,1.00\r\nRow 27: 27,Virudhunagar,49964,37.51,46586,36.02,3378,1.07\r\nRow 28: 28,Sivaganga,59118,63.19,59008,63.32,110,1.00\r\nRow 29: 29,Tirunelveli,137073,69.52,110284,65.14,26789,1.24\r\nRow 30: 30,Thoothukudi,36630,17.47,34548,16.74,2082,1.06\r\nRow 31: 31,The Nilgiris,1779,2.45,1779,2.45,0,1.00",
+          "metadata": {
+            "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv_chunk_2_1761567833418",
+          "document": "Row 17: 17,Perambalur,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12\r\nRow 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00\r\nRow 20: 20,Thanjavur,210506,0,210506,141016,0,141016,1.49\r\nRow 21: 21,Tiruvarur,212236,0,212236,151130,0,151130,1.40\r\nRow 22: 22,Nagapattinam,162382,0,162382,121082,0,121082,1.34\r\nRow 23: 23,Madurai,8199,0,8199,6815,0,6815,1.20\r\nRow 24: 24,Theni,12758,0,12758,9118,0,9118,1.40\r\nRow 25: 25,Dindigul,4259,0,4259,4113,0,4113,1.04\r\nRow 26: 26,Ramanathapuram,0,0,0,0,0,0,0\r\nRow 27: 27,Virudhunagar,0,0,0,0,0,0,0\r\nRow 28: 28,Sivaganga,0,0,0,0,0,0,0\r\nRow 29: 29,Tirunelveli,25595,0,25595,15467,0,15467,1.65\r\nRow 30: 30,Thoothukudi,11351,0,11351,10099,0,10099,1.12\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,9335,0,9335,7841,0,7841,1.19\r\nRow 33: Total,State Total,844741,0,844741,636063,0,636063,1.33",
+          "metadata": {
+            "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_5_1761567835799",
+          "document": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,2661,0,2254,2254,1.18,0,0,0,0,0,0,0\r\nRow 19: 19,Pudukkottai,0,40856,40856,0,38222,38222,1.07,0,7871,7871,0,7710,7710,1.02,0,0,0,0,0,0,0\r\nRow 20: 20,Thanjavur,37,48777,48814,30,34281,34311,1.42,0,542,542,0,494,494,1.10,790,31526,32316,610,28760,29370,1.10\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,42026,42042,16,37049,37065,1.13\r\nRow 22: 22,Nagapattinam,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,36257,36257,0,36257,36257,1.00\r\nRow 23: 23,Madurai,0,2274,2274,0,2147,2147,1.06,0,53158,53158,0,47935,47935,1.11,0,0,0,0,0,0,0\r\nRow 24: 24,Theni,0,16773,16773,0,15290,15290,1.10,0,35470,35470,0,32078,32078,1.11,0,0,0,0,0,0,0\r\nRow 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0\r\nRow 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,12146,0,12146,12146,1.00,0,0,0,0,0,0,0",
+          "metadata": {
+            "chunk_index": 5,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [],
+        "districts": [
+          "ramanathapuram"
+        ],
+        "tokens": [
+          "area",
+          "irrigated",
+          "tanks",
+          "ramanathapuram"
+        ]
+      }
+    },
+    {
+      "id": "A7",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "tea area and production in the Nilgiris",
+      "embedMs": null,
+      "queryMs": 6,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "tea_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.1439,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,TamilNadu,Theni,1672,17556,10.50 Row 21: 21,TamilNadu,The Nilgiris,56036,526738.4,9.40 Row 22: 22,TamilNadu,Tiruvallur,0,0,0.00 Row 23: 23,TamilNadu,"
+        },
+        {
+          "rank": 2,
+          "filename": "tea_2016_17.csv",
+          "chunkIndex": 1,
+          "distance": 1.2666,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,TamilNadu,Ariyalur,0,0,0.00 Row 2: 2,TamilNadu,Coimbatore,11180,128570,11.50 Row 3: 3,TamilNadu,Cuddalore,0,0,0.00 Row 4: 4,TamilNadu,Dharmapuri,"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 6,
+          "distance": 1.1453,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0 Row 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,1"
+        },
+        {
+          "rank": 4,
+          "filename": "arecanut_curednuts_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.1414,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,TamilNadu,Theni,30,26,0.87 Row 21: 21,TamilNadu,The Nilgiris,343,709,2.07 Row 22: 22,TamilNadu,Tiruvallur,0,0,0.00 Row 23: 23,TamilNadu,Tiruvannamala"
+        },
+        {
+          "rank": 5,
+          "filename": "palmyrah_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.1432,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,TamilNadu,Theni,10,120,12 Row 21: 21,TamilNadu,The Nilgiris,0,0,12 Row 22: 22,TamilNadu,Tiruvallur,53,636,12 Row 23: 23,TamilNadu,Tiruvannamalai,2,24"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "tea_2016_17.csv_chunk_2_1761567969616",
+          "document": "Row 20: 20,TamilNadu,Theni,1672,17556,10.50\r\nRow 21: 21,TamilNadu,The Nilgiris,56036,526738.4,9.40\r\nRow 22: 22,TamilNadu,Tiruvallur,0,0,0.00\r\nRow 23: 23,TamilNadu,Tiruvannamalai,0,0,0.00\r\nRow 24: 24,TamilNadu,Thiruvarur,0,0,0.00\r\nRow 25: 25,TamilNadu,Thoothukudi,0,0,0.00\r\nRow 26: 26,TamilNadu,Tirupur,0,0,0.00\r\nRow 27: 27,TamilNadu,Trichy,0,0,0.00\r\nRow 28: 28,TamilNadu,Tirunelveli,804,11256,14.00\r\nRow 29: 29,TamilNadu,Vellore,0,0,0.00\r\nRow 30: 30,TamilNadu,Villupuram,0,0,0.00\r\nRow 31: 31,TamilNadu,Virudhunagar,0,0,0.00\r\nRow 32: Total,TamilNadu,State Total,69897,686970,9.83",
+          "metadata": {
+            "filename": "tea_2016_17.csv",
+            "source": "s3://tn-farming-assistant-dataset/tea_2016_17.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "tea_2016_17.csv_chunk_1_1761567969616",
+          "document": "Data:\nRow 1: 1,TamilNadu,Ariyalur,0,0,0.00\r\nRow 2: 2,TamilNadu,Coimbatore,11180,128570,11.50\r\nRow 3: 3,TamilNadu,Cuddalore,0,0,0.00\r\nRow 4: 4,TamilNadu,Dharmapuri,0,0,0.00\r\nRow 5: 5,TamilNadu,Dindigul,3,21.6,7.20\r\nRow 6: 6,TamilNadu,Erode,0,0,0.00\r\nRow 7: 7,TamilNadu,Kancheepuram,0,0,0.00\r\nRow 8: 8,TamilNadu,Kanyakumari,202,2828,14.00\r\nRow 9: 9,TamilNadu,Karur,0,0,0.00\r\nRow 10: 10,TamilNadu,Krishnagiri,0,0,0.00\r\nRow 11: 11,TamilNadu,Madurai,0,0,0.00\r\nRow 12: 12,TamilNadu,Nagapattinam,0,0,0.00\r\nRow 13: 13,TamilNadu,Namakkal,0,0,0.00\r\nRow 14: 14,TamilNadu,Perambalur,0,0,0.00\r\nRow 15: 15,TamilNadu,Pudukkottai,0,0,0.00\r\nRow 16: 16,TamilNadu,Ramanadhapuram,0,0,0.00\r\nRow 17: 17,TamilNadu,Salem,0,0,0.00\r\nRow 18: 18,TamilNadu,Sivagangai,0,0,0.00\r\nRow 19: 19,TamilNadu,Thanjavur,0,0,0.00\r\nRow 20: 20,TamilNadu,Theni,1672,17556,10.50\r\nRow 21: 21,TamilNadu,The Nilgiris,56036,526738.4,9.40\r\nRow 22: 22,TamilNadu,Tiruvallur,0,0,0.00\r\nRow 23: 23,TamilNadu,Tiruvannamalai,0,0,0.00",
+          "metadata": {
+            "filename": "tea_2016_17.csv",
+            "source": "s3://tn-farming-assistant-dataset/tea_2016_17.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_6_1761567835799",
+          "document": "Row 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0\r\nRow 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,12146,0,12146,12146,1.00,0,0,0,0,0,0,0\r\nRow 27: 27,Virudhunagar,0,307,307,0,307,307,1.00,0,31783,31783,0,28694,28694,1.11,0,1394,1394,0,1394,1394,1.00\r\nRow 28: 28,Sivaganga,10,4823,4833,10,4722,4732,1.02,0,14799,14799,0,14798,14798,1.00,0,0,0,0,0,0,0\r\nRow 29: 29,Tirunelveli,0,1115,1115,0,1064,1064,1.05,0,65079,65079,0,55546,55546,1.17,0,2248,2248,0,2225,2225,1.01\r\nRow 30: 30,Thoothukudi,0,874,874,0,873,873,1.00,0,16019,16019,0,15992,15992,1.00,0,0,0,0,0,0,0\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0,0,1779,1779,0,1779,1779,1.00,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,0,4054,4054,0,3746,3746,1.08,0,3304,3304,0,3236,3236,1.02,0,8,8,0,8,8,1.00\r\nRow 33: Total,State Total,134,674327,674461,124,516212,516336,1.31,120,1310971,1311091,80,1086507,1086587,1.21,806,113585,114391,626,105819,106445,1.07",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 6,
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "arecanut_curednuts_2016_17.csv_chunk_2_1761567836735",
+          "document": "Row 20: 20,TamilNadu,Theni,30,26,0.87\r\nRow 21: 21,TamilNadu,The Nilgiris,343,709,2.07\r\nRow 22: 22,TamilNadu,Tiruvallur,0,0,0.00\r\nRow 23: 23,TamilNadu,Tiruvannamalai,6,0,0.00\r\nRow 24: 24,TamilNadu,Thiruvarur,3,5,1.67\r\nRow 25: 25,TamilNadu,Thoothukudi,0,0,0.00\r\nRow 26: 26,TamilNadu,Tirupur,38,76,2.00\r\nRow 27: 27,TamilNadu,Trichy,84,109,1.30\r\nRow 28: 28,TamilNadu,Tirunelveli,126,42,0.33\r\nRow 29: 29,TamilNadu,Vellore,6,11,1.83\r\nRow 30: 30,TamilNadu,Villupuram,72,97,1.35\r\nRow 31: 31,TamilNadu,Virudhunagar,1,2,2.00\r\nRow 32: Total,TamilNadu,State Total,7078,12710,1.80",
+          "metadata": {
+            "filename": "arecanut_curednuts_2016_17.csv",
+            "source": "s3://tn-farming-assistant-dataset/arecanut_curednuts_2016_17.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "palmyrah_2016_17.csv_chunk_2_1761567890069",
+          "document": "Row 20: 20,TamilNadu,Theni,10,120,12\r\nRow 21: 21,TamilNadu,The Nilgiris,0,0,12\r\nRow 22: 22,TamilNadu,Tiruvallur,53,636,12\r\nRow 23: 23,TamilNadu,Tiruvannamalai,2,24,12\r\nRow 24: 24,TamilNadu,Thiruvarur,72,864,12\r\nRow 25: 25,TamilNadu,Thoothukudi,2823,33876,12\r\nRow 26: 26,TamilNadu,Tirupur,13,156,12\r\nRow 27: 27,TamilNadu,Trichy,26,312,12\r\nRow 28: 28,TamilNadu,Tirunelveli,1125,13500,12\r\nRow 29: 29,TamilNadu,Vellore,44,528,12\r\nRow 30: 30,TamilNadu,Villupuram,36,432,12\r\nRow 31: 31,TamilNadu,Virudhunagar,345,4140,12\r\nRow 32: Total,TamilNadu,State Total,10121,121452,12",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/palmyrah_2016_17.csv",
+            "chunk_index": 2,
+            "filename": "palmyrah_2016_17.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "tea"
+        ],
+        "districts": [
+          "nilgiris"
+        ],
+        "tokens": [
+          "tea",
+          "area",
+          "production",
+          "nilgiris"
+        ]
+      }
+    },
+    {
+      "id": "A8",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "black gram production in Tiruvarur district",
+      "embedMs": null,
+      "queryMs": 5,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_black_gram_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.3166,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,14367,15973,30340 Row 20: 20,Tamil Nadu,Tiruvarur,5696,13657,19353 Row 21: 21,Tamil Nadu,Nagapattinam,15,18370,18385 Row 22: 22,"
+        },
+        {
+          "rank": 2,
+          "filename": "production_of_black_gram_in_2017_18.csv",
+          "chunkIndex": 1,
+          "distance": 1.3814,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Tamil Nadu,Kancheepuram,531,1197,1728 Row 2: 2,Tamil Nadu,Tiruvallur,257,648,905 Row 3: 3,Tamil Nadu,Cuddalore,984,43330,44314 Row 4: 4,Tamil Nad"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.2176,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        },
+        {
+          "rank": 4,
+          "filename": "production_of_green_gram_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.3261,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 19,Tamil Nadu,Thanjavur,1,1406,1407 Row 20: 20,Tamil Nadu,Tiruvarur,12,11963,11975 Row 21: 21,Tamil Nadu,Nagapattinam,0,14271,14271 Row 22: 22,Tamil Nad"
+        },
+        {
+          "rank": 5,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.2421,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11 Row 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05 Row 17: 17,Perambalur,22402,22.47,21055,21.90,13"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "production_of_black_gram_in_2017_18.csv_chunk_2_1761567893320",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,14367,15973,30340\r\nRow 20: 20,Tamil Nadu,Tiruvarur,5696,13657,19353\r\nRow 21: 21,Tamil Nadu,Nagapattinam,15,18370,18385\r\nRow 22: 22,Tamil Nadu,Madurai,993,151,1144\r\nRow 23: 23,Tamil Nadu,Theni,1145,961,2106\r\nRow 24: 24,Tamil Nadu,Dindigul,1592,6895,8487\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,5,2314,2319\r\nRow 26: 26,Tamil Nadu,Virudhunagar,1020,1997,3017\r\nRow 27: 27,Tamil Nadu,Sivaganga,625,446,1071\r\nRow 28: 28,Tamil Nadu,Tirunelveli,167,17291,17458\r\nRow 29: 29,Tamil Nadu,Thoothukudi,6,25171,25177\r\nRow 30: 30,Tamil Nadu,The Nilgiris,0,0,0\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,95,152,247\r\nRow 32: Total,Tamil Nadu,State Total,53226,248436,301662",
+          "metadata": {
+            "chunk_index": 2,
+            "filename": "production_of_black_gram_in_2017_18.csv",
+            "source": "s3://tn-farming-assistant-dataset/production_of_black_gram_in_2017_18.csv"
+          }
+        },
+        {
+          "id": "production_of_black_gram_in_2017_18.csv_chunk_1_1761567893320",
+          "document": "Data:\nRow 1: 1,Tamil Nadu,Kancheepuram,531,1197,1728\r\nRow 2: 2,Tamil Nadu,Tiruvallur,257,648,905\r\nRow 3: 3,Tamil Nadu,Cuddalore,984,43330,44314\r\nRow 4: 4,Tamil Nadu,Villupuram,3897,71678,75575\r\nRow 5: 5,Tamil Nadu,Vellore,1805,826,2631\r\nRow 6: 6,Tamil Nadu,Tiruvannamalai,4901,9931,14832\r\nRow 7: 7,Tamil Nadu,Salem,4627,1510,6137\r\nRow 8: 8,Tamil Nadu,Namakkal,1109,1391,2500\r\nRow 9: 9,Tamil Nadu,Dharmapuri,4285,153,4438\r\nRow 10: 10,Tamil Nadu,Krishnagiri,939,746,1685\r\nRow 11: 11,Tamil Nadu,Coimbatore,143,232,375\r\nRow 12: 12,Tamil Nadu,Tiruppur,621,1673,2294\r\nRow 13: 13,Tamil Nadu,Erode,580,281,861\r\nRow 14: 14,Tamil Nadu,Tiruchirappalli,978,4079,5057\r\nRow 15: 15,Tamil Nadu,Karur,437,946,1383\r\nRow 16: 16,Tamil Nadu,Perambalur,184,128,312\r\nRow 17: 17,Tamil Nadu,Ariyalur,282,4117,4399\r\nRow 18: 18,Tamil Nadu,Pudukkottai,940,2192,3132\r\nRow 19: 19,Tamil Nadu,Thanjavur,14367,15973,30340\r\nRow 20: 20,Tamil Nadu,Tiruvarur,5696,13657,19353\r\nRow 21: 21,Tamil Nadu,Nagapattinam,15,18370,18385",
+          "metadata": {
+            "chunk_index": 1,
+            "source": "s3://tn-farming-assistant-dataset/production_of_black_gram_in_2017_18.csv",
+            "filename": "production_of_black_gram_in_2017_18.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_5_1761567835799",
+          "document": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,2661,0,2254,2254,1.18,0,0,0,0,0,0,0\r\nRow 19: 19,Pudukkottai,0,40856,40856,0,38222,38222,1.07,0,7871,7871,0,7710,7710,1.02,0,0,0,0,0,0,0\r\nRow 20: 20,Thanjavur,37,48777,48814,30,34281,34311,1.42,0,542,542,0,494,494,1.10,790,31526,32316,610,28760,29370,1.10\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,42026,42042,16,37049,37065,1.13\r\nRow 22: 22,Nagapattinam,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,36257,36257,0,36257,36257,1.00\r\nRow 23: 23,Madurai,0,2274,2274,0,2147,2147,1.06,0,53158,53158,0,47935,47935,1.11,0,0,0,0,0,0,0\r\nRow 24: 24,Theni,0,16773,16773,0,15290,15290,1.10,0,35470,35470,0,32078,32078,1.11,0,0,0,0,0,0,0\r\nRow 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0\r\nRow 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,12146,0,12146,12146,1.00,0,0,0,0,0,0,0",
+          "metadata": {
+            "chunk_index": 5,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "production_of_green_gram_in_2017_18.csv_chunk_2_1761567894835",
+          "document": "Row 19: 19,Tamil Nadu,Thanjavur,1,1406,1407\r\nRow 20: 20,Tamil Nadu,Tiruvarur,12,11963,11975\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0,14271,14271\r\nRow 22: 22,Tamil Nadu,Madurai,2375,190,2565\r\nRow 23: 23,Tamil Nadu,Theni,932,429,1361\r\nRow 24: 24,Tamil Nadu,Dindigul,210,1268,1478\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,0,120,120\r\nRow 26: 26,Tamil Nadu,Virudhunagar,1189,1097,2286\r\nRow 27: 27,Tamil Nadu,Sivaganga,10,3,13\r\nRow 28: 28,Tamil Nadu,Tirunelveli,8,1343,1351\r\nRow 29: 29,Tamil Nadu,Thoothukudi,2,11480,11482\r\nRow 30: 30,Tamil Nadu,The Nilgiris,1,0,1\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,0,0,0\r\nRow 32: Total,Tamil Nadu,State Total,17926,60333,78259",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/production_of_green_gram_in_2017_18.csv",
+            "filename": "production_of_green_gram_in_2017_18.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv_chunk_2_1761567972949",
+          "document": "Row 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11\r\nRow 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05\r\nRow 17: 17,Perambalur,22402,22.47,21055,21.90,1347,1.06\r\nRow 18: 18,Ariyalur,43757,41.21,34797,37.54,8960,1.26\r\nRow 19: 19,Pudukkottai,104206,85.57,100968,85.47,3238,1.03\r\nRow 20: 20,Thanjavur,259960,93.12,175919,96.67,84041,1.48\r\nRow 21: 21,Tiruvarur,212236,73.11,151130,96.41,61106,1.40\r\nRow 22: 22,Nagapattinam,163172,61.10,121820,81.89,41352,1.34\r\nRow 23: 23,Madurai,78747,60.82,70453,58.14,8294,1.12\r\nRow 24: 24,Theni,67117,55.49,58497,52.61,8620,1.15\r\nRow 25: 25,Dindigul,79541,37.48,78836,37.89,705,1.01\r\nRow 26: 26,Ramanathapuram,64324,36.18,64323,36.18,1,1.00\r\nRow 27: 27,Virudhunagar,49964,37.51,46586,36.02,3378,1.07\r\nRow 28: 28,Sivaganga,59118,63.19,59008,63.32,110,1.00\r\nRow 29: 29,Tirunelveli,137073,69.52,110284,65.14,26789,1.24\r\nRow 30: 30,Thoothukudi,36630,17.47,34548,16.74,2082,1.06\r\nRow 31: 31,The Nilgiris,1779,2.45,1779,2.45,0,1.00",
+          "metadata": {
+            "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "black gram"
+        ],
+        "districts": [
+          "tiruvarur"
+        ],
+        "tokens": [
+          "black",
+          "gram",
+          "production",
+          "tiruvarur"
+        ]
+      }
+    },
+    {
+      "id": "A9",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "sugarcane area and production in Erode district",
+      "embedMs": null,
+      "queryMs": 5,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 4,
+          "distance": 1.1046,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0 Row 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.1697,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,0,0,0,0,0,0,0 Row 2: 2,Kancheepuram,90,0,90,90,0,90,1.00 Row 3: 3,Tiruvallur,49,0,49,49,0,49,1.00 Row 4: 4,Cuddalore,49336,0,49336,40553,"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.1719,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,98,0,98,98,0,98,1.00 Row 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11 Row 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27 Row 4: 4"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.2158,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,0,0,0,0,0,0,0.00 Row 2: 2,Kancheepuram,0,0,0,0,0,0,0.00 Row 3: 3,Tiruvallur,0,0,0,0,0,0,0.00 Row 4: 4,Cuddalore,507,0,507,340,0,340,1.49 "
+        },
+        {
+          "rank": 5,
+          "filename": "production_of_samai_in_2017_18.csv",
+          "chunkIndex": 1,
+          "distance": 1.2326,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": false,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Tamil Nadu,Kancheepuram,0,0,0 Row 2: 2,Tamil Nadu,Tiruvallur,0,0,0 Row 3: 3,Tamil Nadu,Cuddalore,0,0,0 Row 4: 4,Tamil Nadu,Villupuram,163,0,163 R"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": false,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_4_1761567835799",
+          "document": "Row 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549,0,39385,39385,1.44,0,0,0,0,0,0,0\r\nRow 11: 11,Krishnagiri,0,26139,26139,0,20616,20616,1.27,0,42124,42124,0,31546,31546,1.34,0,0,0,0,0,0,0\r\nRow 12: 12,Coimbatore,0,32180,32180,0,31694,31694,1.02,0,68080,68080,0,65804,65804,1.03,0,0,0,0,0,0,0\r\nRow 13: 13,Tiruppur,0,13359,13359,0,13238,13238,1.01,0,81616,81616,0,80489,80489,1.01,0,0,0,0,0,0,0\r\nRow 14: 14,Erode,0,22019,22019,0,20112,20112,1.09,0,52505,52505,0,45355,45355,1.16,0,0,0,0,0,0,0\r\nRow 15: 15,Tiruchirappalli,0,16889,16889,0,11575,11575,1.46,0,28979,28979,0,27440,27440,1.06,0,0,0,0,0,0,0\r\nRow 16: 16,Karur,0,13820,13820,0,13077,13077,1.06,0,20212,20212,0,19147,19147,1.06,0,126,126,0,126,126,1.00\r\nRow 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0",
+          "metadata": {
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 4
+          }
+        },
+        {
+          "id": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv_chunk_1_1761567833418",
+          "document": "Data:\nRow 1: 1,Chennai,0,0,0,0,0,0,0\r\nRow 2: 2,Kancheepuram,90,0,90,90,0,90,1.00\r\nRow 3: 3,Tiruvallur,49,0,49,49,0,49,1.00\r\nRow 4: 4,Cuddalore,49336,0,49336,40553,0,40553,1.22\r\nRow 5: 5,Villupuram,807,0,807,688,0,688,1.17\r\nRow 6: 6,Vellore,0,0,0,0,0,0,0\r\nRow 7: 7,Tiruvannamalai,0,0,0,0,0,0,0\r\nRow 8: 8,Salem,5251,0,5251,5251,0,5251,1.00\r\nRow 9: 9,Namakkal,5789,0,5789,4115,0,4115,1.41\r\nRow 10: 10,Dharmapuri,394,0,394,355,0,355,1.11\r\nRow 11: 11,Krishnagiri,854,0,854,731,0,731,1.17\r\nRow 12: 12,Coimbatore,14659,0,14659,14654,0,14654,1.00\r\nRow 13: 13,Tiruppur,19300,0,19300,19269,0,19269,1.00\r\nRow 14: 14,Erode,46663,0,46663,39987,0,39987,1.17\r\nRow 15: 15,Tiruchirappalli,29715,0,29715,29123,0,29123,1.02\r\nRow 16: 16,Karur,5748,0,5748,5644,0,5644,1.02\r\nRow 17: 17,Perambalur,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12\r\nRow 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00\r\nRow 20: 20,Thanjavur,210506,0,210506,141016,0,141016,1.49",
+          "metadata": {
+            "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv_chunk_1_1761567834992",
+          "document": "Data:\nRow 1: 1,Chennai,98,0,98,98,0,98,1.00\r\nRow 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11\r\nRow 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27\r\nRow 4: 4,Cuddalore,1637,0,1637,1608,0,1608,1.02\r\nRow 5: 5,Villupuram,22123,0,22123,20183,0,20183,1.10\r\nRow 6: 6,Vellore,1538,0,1538,1465,0,1465,1.05\r\nRow 7: 7,Tiruvannamalai,1777,0,1777,1353,0,1353,1.31\r\nRow 8: 8,Salem,0,0,0,0,0,0,0\r\nRow 9: 9,Namakkal,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,673,0,673,646,0,646,1.04\r\nRow 11: 11,Krishnagiri,6925,0,6925,5999,0,5999,1.15\r\nRow 12: 12,Coimbatore,198,0,198,198,0,198,1.00\r\nRow 13: 13,Tiruppur,1153,0,1153,1153,0,1153,1.00\r\nRow 14: 14,Erode,28,0,28,28,0,28,1.00\r\nRow 15: 15,Tiruchirappalli,984,0,984,854,0,854,1.15\r\nRow 16: 16,Karur,51,0,51,46,0,46,1.11\r\nRow 17: 17,Perambalur,21,0,21,21,0,21,1.00\r\nRow 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10\r\nRow 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01\r\nRow 20: 20,Thanjavur,98,0,98,98,0,98,1.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0",
+          "metadata": {
+            "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv_chunk_1_1761567834189",
+          "document": "Data:\nRow 1: 1,Chennai,0,0,0,0,0,0,0.00\r\nRow 2: 2,Kancheepuram,0,0,0,0,0,0,0.00\r\nRow 3: 3,Tiruvallur,0,0,0,0,0,0,0.00\r\nRow 4: 4,Cuddalore,507,0,507,340,0,340,1.49\r\nRow 5: 5,Villupuram,0,0,0,0,0,0,0.00\r\nRow 6: 6,Vellore,0,0,0,0,0,0,0.00\r\nRow 7: 7,Tiruvannamalai,0,0,0,0,0,0,0.00\r\nRow 8: 8,Salem,0,0,0,0,0,0,0.00\r\nRow 9: 9,Namakkal,1352,1481,2833,1166,1300,2466,1.15\r\nRow 10: 10,Dharmapuri,0,0,0,0,0,0,0.00\r\nRow 11: 11,Krishnagiri,0,0,0,0,0,0,0.00\r\nRow 12: 12,Coimbatore,0,0,0,0,0,0,0.00\r\nRow 13: 13,Tiruppur,0,0,0,0,0,0,0.00\r\nRow 14: 14,Erode,0,0,0,0,0,0,0.00\r\nRow 15: 15,Tiruchirappalli,0,0,0,0,0,0,0.00\r\nRow 16: 16,Karur,0,0,0,0,0,0,0.00\r\nRow 17: 17,Perambalur,0,0,0,0,0,0,0.00\r\nRow 18: 18,Ariyalur,0,0,0,0,0,0,0.00\r\nRow 19: 19,Pudukkottai,0,0,0,0,0,0,0.00\r\nRow 20: 20,Thanjavur,0,0,0,0,0,0,0.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0.00\r\nRow 22: 22,Nagapattinam,0,790,790,0,738,738,1.07\r\nRow 23: 23,Madurai,0,0,0,0,0,0,0.00\r\nRow 24: 24,Theni,0,0,0,0,0,0,0.00",
+          "metadata": {
+            "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "production_of_samai_in_2017_18.csv_chunk_1_1761567902989",
+          "document": "Data:\nRow 1: 1,Tamil Nadu,Kancheepuram,0,0,0\r\nRow 2: 2,Tamil Nadu,Tiruvallur,0,0,0\r\nRow 3: 3,Tamil Nadu,Cuddalore,0,0,0\r\nRow 4: 4,Tamil Nadu,Villupuram,163,0,163\r\nRow 5: 5,Tamil Nadu,Vellore,1796,0,1796\r\nRow 6: 6,Tamil Nadu,Tiruvannamalai,7243,2,7245\r\nRow 7: 7,Tamil Nadu,Salem,1225,22,1247\r\nRow 8: 8,Tamil Nadu,Namakkal,343,336,679\r\nRow 9: 9,Tamil Nadu,Dharmapuri,6273,0,6273\r\nRow 10: 10,Tamil Nadu,Krishnagiri,1151,14,1165\r\nRow 11: 11,Tamil Nadu,Coimbatore,5,0,5\r\nRow 12: 12,Tamil Nadu,Tiruppur,0,2,2\r\nRow 13: 13,Tamil Nadu,Erode,19,0,19\r\nRow 14: 14,Tamil Nadu,Tiruchirappalli,0,0,0\r\nRow 15: 15,Tamil Nadu,Karur,5,0,5\r\nRow 16: 16,Tamil Nadu,Perambalur,0,0,0\r\nRow 17: 17,Tamil Nadu,Ariyalur,0,0,0\r\nRow 18: 18,Tamil Nadu,Pudukkottai,0,0,0\r\nRow 19: 19,Tamil Nadu,Thanjavur,3,0,3\r\nRow 20: 20,Tamil Nadu,Tiruvarur,0,0,0\r\nRow 21: 21,Tamil Nadu,Nagapattinam,0,0,0\r\nRow 22: 22,Tamil Nadu,Madurai,0,0,0\r\nRow 23: 23,Tamil Nadu,Theni,9,50,59\r\nRow 24: 24,Tamil Nadu,Dindigul,12,3,15",
+          "metadata": {
+            "filename": "production_of_samai_in_2017_18.csv",
+            "chunk_index": 1,
+            "source": "s3://tn-farming-assistant-dataset/production_of_samai_in_2017_18.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "sugarcane"
+        ],
+        "districts": [
+          "erode"
+        ],
+        "tokens": [
+          "sugarcane",
+          "area",
+          "production",
+          "erode"
+        ]
+      }
+    },
+    {
+      "id": "A10",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "coconut production in Salem district",
+      "embedMs": null,
+      "queryMs": 5,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "coconut_2016_17.csv",
+          "chunkIndex": 1,
+          "distance": 1.3667,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,TamilNadu,Ariyalur,303,34,2345,7.74 Row 2: 2,TamilNadu,Coimbatore,85832,5879,405448,4.72 Row 3: 3,TamilNadu,Cuddalore,1640,381,26276,16.02 Row 4:"
+        },
+        {
+          "rank": 2,
+          "filename": "coconut_2016_17.csv",
+          "chunkIndex": 2,
+          "distance": 1.3783,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 16: 16,TamilNadu,Ramanadhapuram,8292,573,39517,4.77 Row 17: 17,TamilNadu,Salem,13636,1100,75862,5.56 Row 18: 18,TamilNadu,Sivagangai,7098,435,30000,4.23 Row"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 3,
+          "distance": 1.2836,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,0,353,353,0,190,190,1.86,0,35,35,0,35,35,1.00,0,0,0,0,0,0,0 Row 2: 2,Kancheepuram,0,17238,17238,0,14518,14518,1.19,0,41077,41077,0,36886,"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 1,
+          "distance": 1.2948,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Chennai,98,0,98,98,0,98,1.00 Row 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11 Row 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27 Row 4: 4"
+        },
+        {
+          "rank": 5,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 1,
+          "distance": 1.3772,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Tamil Nadu,Kancheepuram,107173,180691,106712,394576 Row 2: 2,Tamil Nadu,Tiruvallur,106696,200491,105665,412852 Row 3: 3,Tamil Nadu,Cuddalore,1245"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "coconut_2016_17.csv_chunk_1_1761567841494",
+          "document": "Data:\nRow 1: 1,TamilNadu,Ariyalur,303,34,2345,7.74\r\nRow 2: 2,TamilNadu,Coimbatore,85832,5879,405448,4.72\r\nRow 3: 3,TamilNadu,Cuddalore,1640,381,26276,16.02\r\nRow 4: 4,TamilNadu,Dharmapuri,7974,557,38414,4.82\r\nRow 5: 5,TamilNadu,Dindigul,30538,2416,166621,5.46\r\nRow 6: 6,TamilNadu,Erode,14301,1498,103310,7.22\r\nRow 7: 7,TamilNadu,Kancheepuram,2824,307,21172,7.50\r\nRow 8: 8,TamilNadu,Kanyakumari,23988,2100,144828,6.04\r\nRow 9: 9,TamilNadu,Karur,6640,612,42207,6.36\r\nRow 10: 10,TamilNadu,Krishnagiri,15611,2952,203586,13.04\r\nRow 11: 11,TamilNadu,Madurai,10876,928,64000,5.88\r\nRow 12: 12,TamilNadu,Nagapattinam,3823,654,45103,11.80\r\nRow 13: 13,TamilNadu,Namakkal,8270,409,28207,3.41\r\nRow 14: 14,TamilNadu,Perambalur,693,19,1310,1.89\r\nRow 15: 15,TamilNadu,Pudukkottai,9456,1121,77310,8.18\r\nRow 16: 16,TamilNadu,Ramanadhapuram,8292,573,39517,4.77\r\nRow 17: 17,TamilNadu,Salem,13636,1100,75862,5.56\r\nRow 18: 18,TamilNadu,Sivagangai,7098,435,30000,4.23",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/coconut_2016_17.csv",
+            "filename": "coconut_2016_17.csv",
+            "chunk_index": 1
+          }
+        },
+        {
+          "id": "coconut_2016_17.csv_chunk_2_1761567841494",
+          "document": "Row 16: 16,TamilNadu,Ramanadhapuram,8292,573,39517,4.77\r\nRow 17: 17,TamilNadu,Salem,13636,1100,75862,5.56\r\nRow 18: 18,TamilNadu,Sivagangai,7098,435,30000,4.23\r\nRow 19: 19,TamilNadu,Thanjavur,36136,6639,457862,12.67\r\nRow 20: 20,TamilNadu,Theni,20931,3666,252828,12.08\r\nRow 21: 21,TamilNadu,The Nilgiris,56,2,138,2.46\r\nRow 22: 22,TamilNadu,Tiruvallur,724,86,5931,8.19\r\nRow 23: 23,TamilNadu,Tiruvannamalai,432,31,2138,4.95\r\nRow 24: 24,TamilNadu,Thiruvarur,4718,870,60000,12.72\r\nRow 25: 25,TamilNadu,Thoothukudi,6013,483,33310,5.54\r\nRow 26: 26,TamilNadu,Tirupur,60148,6757,466000,7.75\r\nRow 27: 27,TamilNadu,Trichy,6070,465,32069,5.28\r\nRow 28: 28,TamilNadu,Tirunelveli,16249,1652,113931,7.01\r\nRow 29: 29,TamilNadu,Vellore,20470,2904,200276,9.78\r\nRow 30: 30,TamilNadu,Villupuram,1723,171,11793,6.84\r\nRow 31: 31,TamilNadu,Virudhunagar,10156,1363,94000,9.26\r\nRow 32: Total,TamilNadu,State Total,435621,47064,3245793,7.45",
+          "metadata": {
+            "filename": "coconut_2016_17.csv",
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/coconut_2016_17.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_3_1761567835799",
+          "document": "Data:\nRow 1: 1,Chennai,0,353,353,0,190,190,1.86,0,35,35,0,35,35,1.00,0,0,0,0,0,0,0\r\nRow 2: 2,Kancheepuram,0,17238,17238,0,14518,14518,1.19,0,41077,41077,0,36886,36886,1.11,0,0,0,0,0,0,0\r\nRow 3: 3,Tiruvallur,0,106399,106399,0,67404,67404,1.58,0,6145,6145,0,4131,4131,1.49,0,0,0,0,0,0,0\r\nRow 4: 4,Cuddalore,26,128770,128796,23,87855,87878,1.47,0,7769,7769,0,6749,6749,1.15,0,0,0,0,0,0,0\r\nRow 5: 5,Villupuram,39,66046,66085,39,48800,48839,1.35,0,178097,178097,0,140529,140529,1.27,0,0,0,0,0,0,0\r\nRow 6: 6,Vellore,0,18791,18791,0,14747,14747,1.27,0,80379,80379,0,59952,59952,1.34,0,0,0,0,0,0,0\r\nRow 7: 7,Tiruvannamalai,0,7755,7755,0,4741,4741,1.64,0,185280,185280,0,129142,129142,1.43,0,0,0,0,0,0,0\r\nRow 8: 8,Salem,0,26654,26654,0,20258,20258,1.32,120,74510,74630,80,54220,54300,1.37,0,0,0,0,0,0,0\r\nRow 9: 9,Namakkal,0,11537,11537,0,8510,8510,1.36,0,60358,60358,0,42107,42107,1.43,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,22,1199,1221,22,769,791,1.54,0,56549,56549,0,39385,39385,1.44,0,0,0,0,0,0,0",
+          "metadata": {
+            "chunk_index": 3,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv_chunk_1_1761567834992",
+          "document": "Data:\nRow 1: 1,Chennai,98,0,98,98,0,98,1.00\r\nRow 2: 2,Kancheepuram,45097,0,45097,40455,0,40455,1.11\r\nRow 3: 3,Tiruvallur,14919,0,14919,11777,0,11777,1.27\r\nRow 4: 4,Cuddalore,1637,0,1637,1608,0,1608,1.02\r\nRow 5: 5,Villupuram,22123,0,22123,20183,0,20183,1.10\r\nRow 6: 6,Vellore,1538,0,1538,1465,0,1465,1.05\r\nRow 7: 7,Tiruvannamalai,1777,0,1777,1353,0,1353,1.31\r\nRow 8: 8,Salem,0,0,0,0,0,0,0\r\nRow 9: 9,Namakkal,0,0,0,0,0,0,0\r\nRow 10: 10,Dharmapuri,673,0,673,646,0,646,1.04\r\nRow 11: 11,Krishnagiri,6925,0,6925,5999,0,5999,1.15\r\nRow 12: 12,Coimbatore,198,0,198,198,0,198,1.00\r\nRow 13: 13,Tiruppur,1153,0,1153,1153,0,1153,1.00\r\nRow 14: 14,Erode,28,0,28,28,0,28,1.00\r\nRow 15: 15,Tiruchirappalli,984,0,984,854,0,854,1.15\r\nRow 16: 16,Karur,51,0,51,46,0,46,1.11\r\nRow 17: 17,Perambalur,21,0,21,21,0,21,1.00\r\nRow 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10\r\nRow 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01\r\nRow 20: 20,Thanjavur,98,0,98,98,0,98,1.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0",
+          "metadata": {
+            "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 1,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "production_of_rice_in_2017_18.csv_chunk_1_1761567902194",
+          "document": "Data:\nRow 1: 1,Tamil Nadu,Kancheepuram,107173,180691,106712,394576\r\nRow 2: 2,Tamil Nadu,Tiruvallur,106696,200491,105665,412852\r\nRow 3: 3,Tamil Nadu,Cuddalore,124535,406593,33413,564541\r\nRow 4: 4,Tamil Nadu,Villupuram,47038,481976,174271,703285\r\nRow 5: 5,Tamil Nadu,Vellore,53120,87617,114436,255173\r\nRow 6: 6,Tamil Nadu,Tiruvannamalai,60243,363008,280996,704247\r\nRow 7: 7,Tamil Nadu,Salem,1399,75068,18268,94735\r\nRow 8: 8,Tamil Nadu,Namakkal,2397,35685,2359,40441\r\nRow 9: 9,Tamil Nadu,Dharmapuri,7131,75766,24314,107211\r\nRow 10: 10,Tamil Nadu,Krishnagiri,10392,63665,43981,118038\r\nRow 11: 11,Tamil Nadu,Coimbatore,42,2284,0,2326\r\nRow 12: 12,Tamil Nadu,Tiruppur,0,39573,3181,42754\r\nRow 13: 13,Tamil Nadu,Erode,231,46492,7734,54457\r\nRow 14: 14,Tamil Nadu,Tiruchirappalli,14972,211330,12032,238334\r\nRow 15: 15,Tamil Nadu,Karur,0,41545,813,42358\r\nRow 16: 16,Tamil Nadu,Perambalur,1260,37065,6698,45023\r\nRow 17: 17,Tamil Nadu,Ariyalur,9851,87227,2145,99223",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/production_of_rice_in_2017_18.csv",
+            "filename": "production_of_rice_in_2017_18.csv",
+            "chunk_index": 1
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "coconut"
+        ],
+        "districts": [
+          "salem"
+        ],
+        "tokens": [
+          "coconut",
+          "production",
+          "salem"
+        ]
+      }
+    },
+    {
+      "id": "A11",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "area under neem cultivation in Madurai",
+      "embedMs": null,
+      "queryMs": 5,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "neem.csv",
+          "chunkIndex": 1,
+          "distance": 1.2141,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 1,Ariyalur,8,179,22.40 Row 2: 2,Coimbatore,59,1322,22.40 Row 3: 3,Cuddalore,1,22,22.40 Row 4: 4,Dharmapuri,9,202,22.40 Row 5: 5,Dindigul,29,650,22."
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.0933,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.147,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12 Row 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00 Row 20: 20,Thanjavur,21"
+        },
+        {
+          "rank": 4,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.1477,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10 Row 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01 Row 20: 20,Thanjavur,98,0,98,98,0,98,1.00 Row 21: 2"
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.1537,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,Thanjavur,0,0,0,0,0,0,0.00 Row 21: 21,Tiruvarur,0,0,0,0,0,0,0.00 Row 22: 22,Nagapattinam,0,790,790,0,738,738,1.07 Row 23: 23,Madurai,0,0,0,0,0,0,0.00"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "neem.csv_chunk_1_1761567886932",
+          "document": "Data:\nRow 1: 1,Ariyalur,8,179,22.40\r\nRow 2: 2,Coimbatore,59,1322,22.40\r\nRow 3: 3,Cuddalore,1,22,22.40\r\nRow 4: 4,Dharmapuri,9,202,22.40\r\nRow 5: 5,Dindigul,29,650,22.40\r\nRow 6: 6,Erode,39,874,22.40\r\nRow 7: 7,Kancheepuram,4,90,22.40\r\nRow 8: 8,Kanyakumari,34,762,22.40\r\nRow 9: 9,Karur,6,134,22.40\r\nRow 10: 10,Krishnagiri,1,22,22.40\r\nRow 11: 11,Madurai,167,3741,22.40\r\nRow 12: 12,Nagapattinam,8,179,22.40\r\nRow 13: 13,Namakkal,107,2397,22.40\r\nRow 14: 14,Perambalur,22,493,22.40\r\nRow 15: 15,Pudukkottai,4,90,22.40\r\nRow 16: 16,Ramanadhapuram,72,1613,22.40\r\nRow 17: 17,Salem,11,246,22.40\r\nRow 18: 18,Sivagangai,7,157,22.40\r\nRow 19: 19,Thanjavur,77,1725,22.40\r\nRow 20: 20,Theni,55,1232,22.40\r\nRow 21: 21,The Nilgiris,NA,NA,NA\r\nRow 22: 22,Tiruvallur,NA,NA,NA\r\nRow 23: 23,Thiruvarur,16,358,22.40\r\nRow 24: 24,Tiruvannamalai,NA,NA,NA\r\nRow 25: 25,Thoothukudi,541,12118,22.40\r\nRow 26: 26,Tirupur,58,1299,22.40\r\nRow 27: 27,Trichy,36,806,22.40\r\nRow 28: 28,Tirunelveli,196,4390,22.40\r\nRow 29: 29,Vellore,13,291,22.40",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/neem.csv",
+            "chunk_index": 1,
+            "filename": "neem.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_5_1761567835799",
+          "document": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,2661,0,2254,2254,1.18,0,0,0,0,0,0,0\r\nRow 19: 19,Pudukkottai,0,40856,40856,0,38222,38222,1.07,0,7871,7871,0,7710,7710,1.02,0,0,0,0,0,0,0\r\nRow 20: 20,Thanjavur,37,48777,48814,30,34281,34311,1.42,0,542,542,0,494,494,1.10,790,31526,32316,610,28760,29370,1.10\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,42026,42042,16,37049,37065,1.13\r\nRow 22: 22,Nagapattinam,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,36257,36257,0,36257,36257,1.00\r\nRow 23: 23,Madurai,0,2274,2274,0,2147,2147,1.06,0,53158,53158,0,47935,47935,1.11,0,0,0,0,0,0,0\r\nRow 24: 24,Theni,0,16773,16773,0,15290,15290,1.10,0,35470,35470,0,32078,32078,1.11,0,0,0,0,0,0,0\r\nRow 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0\r\nRow 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,12146,0,12146,12146,1.00,0,0,0,0,0,0,0",
+          "metadata": {
+            "chunk_index": 5,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv_chunk_2_1761567833418",
+          "document": "Row 17: 17,Perambalur,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,5336,0,5336,4744,0,4744,1.12\r\nRow 19: 19,Pudukkottai,4129,0,4129,4129,0,4129,1.00\r\nRow 20: 20,Thanjavur,210506,0,210506,141016,0,141016,1.49\r\nRow 21: 21,Tiruvarur,212236,0,212236,151130,0,151130,1.40\r\nRow 22: 22,Nagapattinam,162382,0,162382,121082,0,121082,1.34\r\nRow 23: 23,Madurai,8199,0,8199,6815,0,6815,1.20\r\nRow 24: 24,Theni,12758,0,12758,9118,0,9118,1.40\r\nRow 25: 25,Dindigul,4259,0,4259,4113,0,4113,1.04\r\nRow 26: 26,Ramanathapuram,0,0,0,0,0,0,0\r\nRow 27: 27,Virudhunagar,0,0,0,0,0,0,0\r\nRow 28: 28,Sivaganga,0,0,0,0,0,0,0\r\nRow 29: 29,Tirunelveli,25595,0,25595,15467,0,15467,1.65\r\nRow 30: 30,Thoothukudi,11351,0,11351,10099,0,10099,1.12\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,9335,0,9335,7841,0,7841,1.19\r\nRow 33: Total,State Total,844741,0,844741,636063,0,636063,1.33",
+          "metadata": {
+            "filename": "area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_canals_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv_chunk_2_1761567834992",
+          "document": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10\r\nRow 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01\r\nRow 20: 20,Thanjavur,98,0,98,98,0,98,1.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0\r\nRow 22: 22,Nagapattinam,0,0,0,0,0,0,0\r\nRow 23: 23,Madurai,15116,0,15116,13556,0,13556,1.12\r\nRow 24: 24,Theni,2116,0,2116,2011,0,2011,1.05\r\nRow 25: 25,Dindigul,3361,0,3361,3281,0,3281,1.02\r\nRow 26: 26,Ramanathapuram,51056,0,51056,51055,0,51055,1.00\r\nRow 27: 27,Virudhunagar,17874,0,17874,17585,0,17585,1.02\r\nRow 28: 28,Sivaganga,39486,0,39486,39478,0,39478,1.00\r\nRow 29: 29,Tirunelveli,45284,0,45284,38207,0,38207,1.19\r\nRow 30: 30,Thoothukudi,8386,0,8386,7584,0,7584,1.11\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,14247,0,14247,10263,0,10263,1.39\r\nRow 33: Total,State Total,347408,426,347834,321525,422,321947,1.08",
+          "metadata": {
+            "chunk_index": 2,
+            "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv_chunk_2_1761567834189",
+          "document": "Row 20: 20,Thanjavur,0,0,0,0,0,0,0.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0.00\r\nRow 22: 22,Nagapattinam,0,790,790,0,738,738,1.07\r\nRow 23: 23,Madurai,0,0,0,0,0,0,0.00\r\nRow 24: 24,Theni,0,0,0,0,0,0,0.00\r\nRow 25: 25,Dindigul,975,0,975,975,0,975,1.00\r\nRow 26: 26,Ramanathapuram,0,0,0,0,0,0,0.00\r\nRow 27: 27,Virudhunagar,0,0,0,0,0,0,0.00\r\nRow 28: 28,Sivaganga,0,0,0,0,0,0,0.00\r\nRow 29: 29,Tirunelveli,0,0,0,0,0,0,0.00\r\nRow 30: 30,Thoothukudi,0,0,0,0,0,0,0.00\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0.00\r\nRow 32: 32,Kanniyakumari,0,0,0,0,0,0,0.00\r\nRow 33: Total,State Total,2834,2271,5105,2481,2038,4519,1.13",
+          "metadata": {
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "neem"
+        ],
+        "districts": [
+          "madurai"
+        ],
+        "tokens": [
+          "area",
+          "under",
+          "neem",
+          "cultivation",
+          "madurai"
+        ]
+      }
+    },
+    {
+      "id": "A12",
+      "kind": "answerable",
+      "lang": "en",
+      "query": "rice pest incidence and weather observations (pest prediction data)",
+      "embedMs": null,
+      "queryMs": 5,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 1,
+          "distance": 1.2486,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Data: Row 1: 2003,1,0,Number/hill,27.9,14.8,94.7,51.3,0,3.1,8.7,2.7,Brownplanthopper,Cuttack Row 2: 2003,2,0,Number/hill,27.2,15,93.9,53.1,0,2.1,8.7,2.4,Brownpl"
+        },
+        {
+          "rank": 2,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 3,
+          "distance": 1.286,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 19: 2003,19,0,Number/hill,34.5,25.3,88.3,62.3,28,7.5,8,4.9,Brownplanthopper,Cuttack Row 20: 2003,20,0,Number/hill,35.4,26.2,86.9,49.3,0,6.3,11.1,6.5,Brownpl"
+        },
+        {
+          "rank": 3,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 2,
+          "distance": 1.2954,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 10: 2003,10,0,Number/hill,31.1,21.5,95.3,54.7,0,3.5,7.5,4.2,Brownplanthopper,Cuttack Row 11: 2003,11,0,Number/hill,31.7,22.8,93.4,58.1,41.1,4.7,7,3.9,Brownp"
+        },
+        {
+          "rank": 4,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 6,
+          "distance": 1.3137,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 43: 2003,43,4.4,Number/hill,31.4,24.9,94.7,68.3,45.4,2.3,6.7,3,Brownplanthopper,Cuttack Row 44: 2003,44,1.3,Number/hill,29.1,23.1,94.7,75.4,39.8,4.8,4.9,2.7"
+        },
+        {
+          "rank": 5,
+          "filename": "RICE_PestPredictionKnowledgeBase.csv",
+          "chunkIndex": 7,
+          "distance": 1.3164,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 52: 2003,52,0,Number/hill,26.8,12.9,93.6,37.9,0,1.6,8.7,2.9,Brownplanthopper,Cuttack Row 53: 1959,1,1,Number/Light trap,26.8,12.2,83.6,44,0,2.7,10,3,Gallmid"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "RICE_PestPredictionKnowledgeBase.csv_chunk_1_1761567826572",
+          "document": "Data:\nRow 1: 2003,1,0,Number/hill,27.9,14.8,94.7,51.3,0,3.1,8.7,2.7,Brownplanthopper,Cuttack\r\nRow 2: 2003,2,0,Number/hill,27.2,15,93.9,53.1,0,2.1,8.7,2.4,Brownplanthopper,Cuttack\r\nRow 3: 2003,3,0,Number/hill,28.7,18.3,94.1,56.7,0.6,4.8,6.7,2.8,Brownplanthopper,Cuttack\r\nRow 4: 2003,4,0,Number/hill,25.3,16.4,90.9,57.4,0.3,6.5,5.3,3,Brownplanthopper,Cuttack\r\nRow 5: 2003,5,0,Number/hill,28.8,18.7,95.7,55,0,5.2,6.3,2.8,Brownplanthopper,Cuttack\r\nRow 6: 2003,6,0,Number/hill,27.1,17.2,94.9,53.3,4.4,3.5,6.9,2.9,Brownplanthopper,Cuttack\r\nRow 7: 2003,7,0,Number/hill,30.7,16,93.9,33,0,2.6,10.2,4,Brownplanthopper,Cuttack\r\nRow 8: 2003,8,0,Number/hill,30.4,21.4,95.3,56.9,15.4,5.1,6.4,3.4,Brownplanthopper,Cuttack\r\nRow 9: 2003,9,0,Number/hill,31.1,22.3,92.6,56.7,17.5,6,6.5,4.2,Brownplanthopper,Cuttack\r\nRow 10: 2003,10,0,Number/hill,31.1,21.5,95.3,54.7,0,3.5,7.5,4.2,Brownplanthopper,Cuttack\r\nRow 11: 2003,11,0,Number/hill,31.7,22.8,93.4,58.1,41.1,4.7,7,3.9,Brownplanthopper,Cuttack",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/RICE_PestPredictionKnowledgeBase.csv",
+            "chunk_index": 1,
+            "filename": "RICE_PestPredictionKnowledgeBase.csv"
+          }
+        },
+        {
+          "id": "RICE_PestPredictionKnowledgeBase.csv_chunk_3_1761567826572",
+          "document": "Row 19: 2003,19,0,Number/hill,34.5,25.3,88.3,62.3,28,7.5,8,4.9,Brownplanthopper,Cuttack\r\nRow 20: 2003,20,0,Number/hill,35.4,26.2,86.9,49.3,0,6.3,11.1,6.5,Brownplanthopper,Cuttack\r\nRow 21: 2003,21,0,Number/hill,37.6,28.8,88.7,54.4,5.6,9.6,9.7,7.3,Brownplanthopper,Cuttack\r\nRow 22: 2003,22,0,Number/hill,41.1,29.7,86.7,39.4,0,8.7,8.9,7.5,Brownplanthopper,Cuttack\r\nRow 23: 2003,23,0,Number/hill,38.8,28.2,85.4,48.1,0,10,8.3,7.6,Brownplanthopper,Cuttack\r\nRow 24: 2003,24,0,Number/hill,35.5,26.8,86.1,70,38.9,8.3,3.2,5.5,Brownplanthopper,Cuttack\r\nRow 25: 2003,25,0,Number/hill,35.1,27.1,90.3,65.9,75.4,6.3,4.7,3.6,Brownplanthopper,Cuttack\r\nRow 26: 2003,26,0,Number/hill,30.7,26.2,93.4,80.1,14.8,3,0.9,2.1,Brownplanthopper,Cuttack\r\nRow 27: 2003,27,0,Number/hill,31,26.1,93.9,83.4,115.8,5.5,1.9,2.2,Brownplanthopper,Cuttack\r\nRow 28: 2003,28,0,Number/hill,30.7,24.9,96.3,82.3,115.2,5.2,0.9,1.7,Brownplanthopper,Cuttack",
+          "metadata": {
+            "filename": "RICE_PestPredictionKnowledgeBase.csv",
+            "source": "s3://tn-farming-assistant-dataset/RICE_PestPredictionKnowledgeBase.csv",
+            "chunk_index": 3
+          }
+        },
+        {
+          "id": "RICE_PestPredictionKnowledgeBase.csv_chunk_2_1761567826572",
+          "document": "Row 10: 2003,10,0,Number/hill,31.1,21.5,95.3,54.7,0,3.5,7.5,4.2,Brownplanthopper,Cuttack\r\nRow 11: 2003,11,0,Number/hill,31.7,22.8,93.4,58.1,41.1,4.7,7,3.9,Brownplanthopper,Cuttack\r\nRow 12: 2003,12,0,Number/hill,34,23.8,92.6,45.1,0,6.1,9.1,5.1,Brownplanthopper,Cuttack\r\nRow 13: 2003,13,0,Number/hill,32.1,23.1,92.3,47.4,1.6,6.2,8.5,4.9,Brownplanthopper,Cuttack\r\nRow 14: 2003,14,0,Number/hill,32.9,22.5,90.7,55.9,18.5,5.5,9.2,4.9,Brownplanthopper,Cuttack\r\nRow 15: 2003,15,0,Number/hill,35.1,25.4,92.4,54.6,0,7.6,9.1,5.9,Brownplanthopper,Cuttack\r\nRow 16: 2003,16,0,Number/hill,35.8,25.9,91.4,50.9,0,7.9,9.3,6.2,Brownplanthopper,Cuttack\r\nRow 17: 2003,17,0,Number/hill,36.4,24.7,90.9,48.7,9.8,10.6,8.2,6.2,Brownplanthopper,Cuttack\r\nRow 18: 2003,18,0,Number/hill,35,25.7,91.3,59.6,11.4,7.2,9.2,5.1,Brownplanthopper,Cuttack\r\nRow 19: 2003,19,0,Number/hill,34.5,25.3,88.3,62.3,28,7.5,8,4.9,Brownplanthopper,Cuttack\r\nRow 20: 2003,20,0,Number/hill,35.4,26.2,86.9,49.3,0,6.3,11.1,6.5,Brownplanthopper,Cuttack",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/RICE_PestPredictionKnowledgeBase.csv",
+            "chunk_index": 2,
+            "filename": "RICE_PestPredictionKnowledgeBase.csv"
+          }
+        },
+        {
+          "id": "RICE_PestPredictionKnowledgeBase.csv_chunk_6_1761567826572",
+          "document": "Row 43: 2003,43,4.4,Number/hill,31.4,24.9,94.7,68.3,45.4,2.3,6.7,3,Brownplanthopper,Cuttack\r\nRow 44: 2003,44,1.3,Number/hill,29.1,23.1,94.7,75.4,39.8,4.8,4.9,2.7,Brownplanthopper,Cuttack\r\nRow 45: 2003,45,0,Number/hill,30.5,22.7,92.3,67.1,0,2.5,8.3,3.3,Brownplanthopper,Cuttack\r\nRow 46: 2003,46,0,Number/hill,29.3,21.8,93.3,68.7,61.8,6.1,6.6,2.8,Brownplanthopper,Cuttack\r\nRow 47: 2003,47,0,Number/hill,29.8,22.4,94.6,61.6,0,3.9,5.7,2.8,Brownplanthopper,Cuttack\r\nRow 48: 2003,48,0,Number/hill,29.1,16.4,90.4,45.1,0,2,9.4,2.7,Brownplanthopper,Cuttack\r\nRow 49: 2003,49,0,Number/hill,29,14.4,92.6,40.4,0,1.5,9.6,3,Brownplanthopper,Cuttack\r\nRow 50: 2003,50,0,Number/hill,27.7,15.5,93.1,44.7,0,2.1,8,2.9,Brownplanthopper,Cuttack\r\nRow 51: 2003,51,0,Number/hill,27.3,13.6,91.9,40.6,0,2.2,9.2,2.9,Brownplanthopper,Cuttack\r\nRow 52: 2003,52,0,Number/hill,26.8,12.9,93.6,37.9,0,1.6,8.7,2.9,Brownplanthopper,Cuttack\r\nRow 53: 1959,1,1,Number/Light trap,26.8,12.2,83.6,44,0,2.7,10,3,Gallmidge,Cuttack",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/RICE_PestPredictionKnowledgeBase.csv",
+            "chunk_index": 6,
+            "filename": "RICE_PestPredictionKnowledgeBase.csv"
+          }
+        },
+        {
+          "id": "RICE_PestPredictionKnowledgeBase.csv_chunk_7_1761567826572",
+          "document": "Row 52: 2003,52,0,Number/hill,26.8,12.9,93.6,37.9,0,1.6,8.7,2.9,Brownplanthopper,Cuttack\r\nRow 53: 1959,1,1,Number/Light trap,26.8,12.2,83.6,44,0,2.7,10,3,Gallmidge,Cuttack\r\nRow 54: 1959,2,0,Number/Light trap,29.9,15.4,91.7,46,0,2.7,9.8,3.5,Gallmidge,Cuttack\r\nRow 55: 1959,3,0,Number/Light trap,29.4,18.2,93.6,45,16.8,3.1,8.9,2.8,Gallmidge,Cuttack\r\nRow 56: 1959,4,0,Number/Light trap,26.1,15.4,85.7,44,6.9,3.1,8.5,2.6,Gallmidge,Cuttack\r\nRow 57: 1959,5,0,Number/Light trap,27.2,16.4,83.1,44,0,3.5,9.3,3.7,Gallmidge,Cuttack\r\nRow 58: 1959,6,1,Number/Light trap,28.9,17.8,83.1,46,0.5,4.2,8.7,3.1,Gallmidge,Cuttack\r\nRow 59: 1959,7,0,Number/Light trap,31.6,19.4,84.7,45,13.4,3.7,10.2,4.3,Gallmidge,Cuttack\r\nRow 60: 1959,8,1,Number/Light trap,32.6,20.2,79.6,42,0,4,10.3,5.8,Gallmidge,Cuttack\r\nRow 61: 1959,9,0,Number/Light trap,33.5,20.7,81.7,42,0,4.4,9.8,5.7,Gallmidge,Cuttack\r\nRow 62: 1959,10,0,Number/Light trap,34,18.7,82.1,43,1.5,4.8,9.1,6.4,Gallmidge,Cuttack",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/RICE_PestPredictionKnowledgeBase.csv",
+            "chunk_index": 7,
+            "filename": "RICE_PestPredictionKnowledgeBase.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "rice"
+        ],
+        "districts": [],
+        "tokens": [
+          "rice",
+          "pest",
+          "incidence",
+          "weather",
+          "observations",
+          "prediction"
+        ]
+      }
+    },
+    {
+      "id": "A13",
+      "kind": "answerable",
+      "lang": "ta",
+      "query": "தஞ்சாவூர் மாவட்ட நெல் உற்பத்தி",
+      "embedMs": null,
+      "queryMs": 6,
+      "hits": [
+        {
+          "rank": 1,
+          "filename": "production_of_rice_in_2017_18.csv",
+          "chunkIndex": 2,
+          "distance": 1.3884,
+          "fileKind": "csv_statistics",
+          "relevant": true,
+          "fileMatch": true,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 15: 15,Tamil Nadu,Karur,0,41545,813,42358 Row 16: 16,Tamil Nadu,Perambalur,1260,37065,6698,45023 Row 17: 17,Tamil Nadu,Ariyalur,9851,87227,2145,99223 Row 18"
+        },
+        {
+          "rank": 2,
+          "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 5,
+          "distance": 1.2844,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0 Row 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,26"
+        },
+        {
+          "rank": 3,
+          "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.3024,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 20: 20,Thanjavur,0,0,0,0,0,0,0.00 Row 21: 21,Tiruvarur,0,0,0,0,0,0,0.00 Row 22: 22,Nagapattinam,0,790,790,0,738,738,1.07 Row 23: 23,Madurai,0,0,0,0,0,0,0.00"
+        },
+        {
+          "rank": 4,
+          "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.321,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11 Row 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05 Row 17: 17,Perambalur,22402,22.47,21055,21.90,13"
+        },
+        {
+          "rank": 5,
+          "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+          "chunkIndex": 2,
+          "distance": 1.3332,
+          "fileKind": "csv_statistics",
+          "relevant": false,
+          "fileMatch": false,
+          "termsMatch": true,
+          "topical": null,
+          "headerOnly": false,
+          "snippet": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10 Row 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01 Row 20: 20,Thanjavur,98,0,98,98,0,98,1.00 Row 21: 2"
+        }
+      ],
+      "rowTextOnly": [
+        {
+          "rank": 1,
+          "relevant": true,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 2,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 3,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 4,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        },
+        {
+          "rank": 5,
+          "relevant": false,
+          "termsMatch": true,
+          "topical": null
+        }
+      ],
+      "rawHits": [
+        {
+          "id": "production_of_rice_in_2017_18.csv_chunk_2_1761567902194",
+          "document": "Row 15: 15,Tamil Nadu,Karur,0,41545,813,42358\r\nRow 16: 16,Tamil Nadu,Perambalur,1260,37065,6698,45023\r\nRow 17: 17,Tamil Nadu,Ariyalur,9851,87227,2145,99223\r\nRow 18: 18,Tamil Nadu,Pudukkottai,10221,154191,7234,171646\r\nRow 19: 19,Tamil Nadu,Thanjavur,118353,491007,59148,668508\r\nRow 20: 20,Tamil Nadu,Tiruvarur,102199,562612,35110,699921\r\nRow 21: 21,Tamil Nadu,Nagapattinam,97562,348528,1358,447448\r\nRow 22: 22,Tamil Nadu,Madurai,2972,72073,9532,84577\r\nRow 23: 23,Tamil Nadu,Theni,8036,27831,1390,37257\r\nRow 24: 24,Tamil Nadu,Dindigul,412,29048,19995,49455\r\nRow 25: 25,Tamil Nadu,Ramanathapuram,0,35967,0,35967\r\nRow 26: 26,Tamil Nadu,Virudhunagar,4,63689,6777,70470\r\nRow 27: 27,Tamil Nadu,Sivaganga,162,63773,581,64516\r\nRow 28: 28,Tamil Nadu,Tirunelveli,7204,174046,112956,294206\r\nRow 29: 29,Tamil Nadu,Thoothukudi,722,17286,42942,60950\r\nRow 30: 30,Tamil Nadu,The Nilgiris,921,0,0,921\r\nRow 31: 31,Tamil Nadu,Kanniyakumari,11368,21157,509,33034",
+          "metadata": {
+            "source": "s3://tn-farming-assistant-dataset/production_of_rice_in_2017_18.csv",
+            "filename": "production_of_rice_in_2017_18.csv",
+            "chunk_index": 2
+          }
+        },
+        {
+          "id": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv_chunk_5_1761567835799",
+          "document": "Row 17: 17,Perambalur,0,2212,2212,0,2114,2114,1.05,0,20169,20169,0,18920,18920,1.07,0,0,0,0,0,0,0\r\nRow 18: 18,Ariyalur,0,33522,33522,0,25761,25761,1.30,0,2661,2661,0,2254,2254,1.18,0,0,0,0,0,0,0\r\nRow 19: 19,Pudukkottai,0,40856,40856,0,38222,38222,1.07,0,7871,7871,0,7710,7710,1.02,0,0,0,0,0,0,0\r\nRow 20: 20,Thanjavur,37,48777,48814,30,34281,34311,1.42,0,542,542,0,494,494,1.10,790,31526,32316,610,28760,29370,1.10\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,42026,42042,16,37049,37065,1.13\r\nRow 22: 22,Nagapattinam,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,36257,36257,0,36257,36257,1.00\r\nRow 23: 23,Madurai,0,2274,2274,0,2147,2147,1.06,0,53158,53158,0,47935,47935,1.11,0,0,0,0,0,0,0\r\nRow 24: 24,Theni,0,16773,16773,0,15290,15290,1.10,0,35470,35470,0,32078,32078,1.11,0,0,0,0,0,0,0\r\nRow 25: 25,Dindigul,0,8470,8470,0,8459,8459,1.00,0,62476,62476,0,62008,62008,1.01,0,0,0,0,0,0,0\r\nRow 26: 26,Ramanathapuram,0,1122,1122,0,1122,1122,1.00,0,12146,12146,0,12146,12146,1.00,0,0,0,0,0,0,0",
+          "metadata": {
+            "chunk_index": 5,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_wells_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_wells_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv_chunk_2_1761567834189",
+          "document": "Row 20: 20,Thanjavur,0,0,0,0,0,0,0.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0.00\r\nRow 22: 22,Nagapattinam,0,790,790,0,738,738,1.07\r\nRow 23: 23,Madurai,0,0,0,0,0,0,0.00\r\nRow 24: 24,Theni,0,0,0,0,0,0,0.00\r\nRow 25: 25,Dindigul,975,0,975,975,0,975,1.00\r\nRow 26: 26,Ramanathapuram,0,0,0,0,0,0,0.00\r\nRow 27: 27,Virudhunagar,0,0,0,0,0,0,0.00\r\nRow 28: 28,Sivaganga,0,0,0,0,0,0,0.00\r\nRow 29: 29,Tirunelveli,0,0,0,0,0,0,0.00\r\nRow 30: 30,Thoothukudi,0,0,0,0,0,0,0.00\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0.00\r\nRow 32: 32,Kanniyakumari,0,0,0,0,0,0,0.00\r\nRow 33: Total,State Total,2834,2271,5105,2481,2038,4519,1.13",
+          "metadata": {
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv",
+            "filename": "area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv_chunk_2_1761567972949",
+          "document": "Row 15: 15,Tiruchirappalli,76567,48.58,68992,47.39,7575,1.11\r\nRow 16: 16,Karur,39831,55.73,37914,55.68,1917,1.05\r\nRow 17: 17,Perambalur,22402,22.47,21055,21.90,1347,1.06\r\nRow 18: 18,Ariyalur,43757,41.21,34797,37.54,8960,1.26\r\nRow 19: 19,Pudukkottai,104206,85.57,100968,85.47,3238,1.03\r\nRow 20: 20,Thanjavur,259960,93.12,175919,96.67,84041,1.48\r\nRow 21: 21,Tiruvarur,212236,73.11,151130,96.41,61106,1.40\r\nRow 22: 22,Nagapattinam,163172,61.10,121820,81.89,41352,1.34\r\nRow 23: 23,Madurai,78747,60.82,70453,58.14,8294,1.12\r\nRow 24: 24,Theni,67117,55.49,58497,52.61,8620,1.15\r\nRow 25: 25,Dindigul,79541,37.48,78836,37.89,705,1.01\r\nRow 26: 26,Ramanathapuram,64324,36.18,64323,36.18,1,1.00\r\nRow 27: 27,Virudhunagar,49964,37.51,46586,36.02,3378,1.07\r\nRow 28: 28,Sivaganga,59118,63.19,59008,63.32,110,1.00\r\nRow 29: 29,Tirunelveli,137073,69.52,110284,65.14,26789,1.24\r\nRow 30: 30,Thoothukudi,36630,17.47,34548,16.74,2082,1.06\r\nRow 31: 31,The Nilgiris,1779,2.45,1779,2.45,0,1.00",
+          "metadata": {
+            "filename": "total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv",
+            "chunk_index": 2,
+            "source": "s3://tn-farming-assistant-dataset/total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv"
+          }
+        },
+        {
+          "id": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv_chunk_2_1761567834992",
+          "document": "Row 18: 18,Ariyalur,1812,426,2238,1616,422,2038,1.10\r\nRow 19: 19,Pudukkottai,51350,0,51350,50907,0,50907,1.01\r\nRow 20: 20,Thanjavur,98,0,98,98,0,98,1.00\r\nRow 21: 21,Tiruvarur,0,0,0,0,0,0,0\r\nRow 22: 22,Nagapattinam,0,0,0,0,0,0,0\r\nRow 23: 23,Madurai,15116,0,15116,13556,0,13556,1.12\r\nRow 24: 24,Theni,2116,0,2116,2011,0,2011,1.05\r\nRow 25: 25,Dindigul,3361,0,3361,3281,0,3281,1.02\r\nRow 26: 26,Ramanathapuram,51056,0,51056,51055,0,51055,1.00\r\nRow 27: 27,Virudhunagar,17874,0,17874,17585,0,17585,1.02\r\nRow 28: 28,Sivaganga,39486,0,39486,39478,0,39478,1.00\r\nRow 29: 29,Tirunelveli,45284,0,45284,38207,0,38207,1.19\r\nRow 30: 30,Thoothukudi,8386,0,8386,7584,0,7584,1.11\r\nRow 31: 31,The Nilgiris,0,0,0,0,0,0,0\r\nRow 32: 32,Kanniyakumari,14247,0,14247,10263,0,10263,1.39\r\nRow 33: Total,State Total,347408,426,347834,321525,422,321947,1.08",
+          "metadata": {
+            "chunk_index": 2,
+            "filename": "area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv",
+            "source": "s3://tn-farming-assistant-dataset/area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv"
+          }
+        }
+      ],
+      "analysis": {
+        "intent": "statistics",
+        "crops": [
+          "rice"
+        ],
+        "districts": [
+          "thanjavur"
+        ],
+        "tokens": []
+      }
+    },
+    {
+      "id": "B1",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how to control stem borer in paddy",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "rice"
+        ],
+        "districts": [],
+        "tokens": [
+          "control",
+          "stem",
+          "borer",
+          "paddy"
+        ]
+      }
+    },
+    {
+      "id": "B2",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "when should I irrigate sugarcane in summer",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "sugarcane"
+        ],
+        "districts": [],
+        "tokens": [
+          "irrigate",
+          "sugarcane",
+          "summer"
+        ]
+      }
+    },
+    {
+      "id": "B3",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how much urea per acre should I apply for paddy",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "rice"
+        ],
+        "districts": [],
+        "tokens": [
+          "much",
+          "urea",
+          "acre",
+          "apply",
+          "paddy"
+        ]
+      }
+    },
+    {
+      "id": "B4",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "my banana leaves are turning yellow, what should I do",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "banana"
+        ],
+        "districts": [],
+        "tokens": [
+          "banana",
+          "leaves",
+          "turning",
+          "yellow"
+        ]
+      }
+    },
+    {
+      "id": "B5",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "which crop should I grow after samba paddy in the Cauvery delta",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "rice"
+        ],
+        "districts": [],
+        "tokens": [
+          "crop",
+          "grow",
+          "after",
+          "samba",
+          "paddy",
+          "cauvery",
+          "delta"
+        ]
+      }
+    },
+    {
+      "id": "B6",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how to store harvested groundnut to avoid aflatoxin",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "groundnut"
+        ],
+        "districts": [],
+        "tokens": [
+          "store",
+          "harvested",
+          "groundnut",
+          "avoid",
+          "aflatoxin"
+        ]
+      }
+    },
+    {
+      "id": "B7",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "how do I file a crop insurance claim under PMFBY",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [],
+        "districts": [],
+        "tokens": [
+          "file",
+          "crop",
+          "insurance",
+          "claim",
+          "under",
+          "pmfby"
+        ]
+      }
+    },
+    {
+      "id": "B8",
+      "kind": "advisory",
+      "lang": "en",
+      "query": "neem oil spray dose for tomato fruit borer",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "tomato",
+          "neem"
+        ],
+        "districts": [],
+        "tokens": [
+          "neem",
+          "oil",
+          "spray",
+          "dose",
+          "tomato",
+          "fruit",
+          "borer"
+        ]
+      }
+    },
+    {
+      "id": "B9",
+      "kind": "advisory",
+      "lang": "ta",
+      "query": "நெல் இலை மஞ்சள் ஆகிறது என்ன செய்வது",
+      "embedMs": null,
+      "queryMs": 1,
+      "hits": [],
+      "rowTextOnly": [],
+      "rawHits": [],
+      "analysis": {
+        "intent": "advisory",
+        "crops": [
+          "rice"
+        ],
+        "districts": [],
+        "tokens": []
+      }
+    }
+  ],
+  "limitations": [
+    "The corpus is district-level agricultural STATISTICS (CSV/XLS tables) plus a Tamil Nadu KML geography file; it contains no agronomic advisory text, so advisory questions cannot be grounded in it whatever the retriever does.",
+    "Relevance labels come from an author-written mechanical rule (filename pattern + term match), not human relevance judgements; a chunk can contain the district name and still not hold the requested number (chunking splits tables).",
+    "Embeddings are English-only (embed-english-v3.0); the Tamil queries are included to show the effect, n=2.",
+    "~20 queries; rates have wide uncertainty.",
+    "Local exact search, not the production HNSW index; the parity check (scripts/live/ragParity.js) shows whether local search reproduces the production baseline."
+  ]
+}

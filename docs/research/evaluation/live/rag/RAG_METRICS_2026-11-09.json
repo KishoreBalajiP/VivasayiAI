@@ -1,0 +1,416 @@
+{
+  "name": "ragMechanicalMetrics",
+  "date": "2026-11-09",
+  "groundTruth": "frozen author-defined mechanical rule; answerable queries only (n=13); NOT human relevance",
+  "conditions": [
+    {
+      "name": "frozen-baseline",
+      "source": "docs/research/evaluation/live/rag_retrieval_2026-10-16.json",
+      "runSha256": "7572a51b53a46e97f55a858f32f5f47bcc9ea5b28ad24f182d6335e8a05d0d22",
+      "condition": "frozen-baseline",
+      "specSha256": null,
+      "indexManifestSha256": null,
+      "queryVectorsSha256": null,
+      "retrieval": null,
+      "relevantTotals": null,
+      "metrics": {
+        "n": 13,
+        "hit1": {
+          "k": 1,
+          "n": 13
+        },
+        "hit3": {
+          "k": 2,
+          "n": 13
+        },
+        "hit5": {
+          "k": 2,
+          "n": 13
+        },
+        "precision3": 0.05128205128205128,
+        "precision5": 0.06153846153846154,
+        "recall3": null,
+        "recall5": null,
+        "mrr": 0.10256410256410256,
+        "queriesWithNoRelevant": null
+      }
+    },
+    {
+      "name": "snapshot-dense",
+      "source": "docs/research/evaluation/live/rag/rag_retrieval_2026-11-09_prod-snapshot-dense.json",
+      "runSha256": "6a05fab6d1208cebd1fea333b8c706be7303caaf97cece0ab655320781f5561b",
+      "condition": "prod-snapshot-dense",
+      "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+      "indexManifestSha256": "1bc2f3e1f99e6f0dc609e952894030905c419430dbff79edf4396ca0c59f3e9d",
+      "queryVectorsSha256": "b5118c904aa53ac6ee5ff24889b787229210e4e8687b1a88b1e9cd880afbb585",
+      "retrieval": {
+        "mode": "dense"
+      },
+      "relevantTotals": {
+        "A1": 2,
+        "A2": 1,
+        "A3": 1,
+        "A4": 0,
+        "A5": 2,
+        "A6": 2,
+        "A7": 2,
+        "A8": 3,
+        "A9": 0,
+        "A10": 2,
+        "A11": 1,
+        "A12": 13,
+        "A13": 2
+      },
+      "metrics": {
+        "n": 13,
+        "hit1": {
+          "k": 1,
+          "n": 13
+        },
+        "hit3": {
+          "k": 2,
+          "n": 13
+        },
+        "hit5": {
+          "k": 2,
+          "n": 13
+        },
+        "precision3": 0.05128205128205128,
+        "precision5": 0.06153846153846154,
+        "recall3": 0.05244755244755244,
+        "recall5": 0.06643356643356645,
+        "mrr": 0.10256410256410256,
+        "queriesWithNoRelevant": [
+          "A4",
+          "A9"
+        ]
+      }
+    },
+    {
+      "name": "snapshot-evidence",
+      "source": "docs/research/evaluation/live/rag/rag_retrieval_2026-11-09_prod-snapshot-evidence.json",
+      "runSha256": "76fc7ed7afae328f8e0442f866232155892bef67dd7127ec63a3ef19144a9abc",
+      "condition": "prod-snapshot-evidence",
+      "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+      "indexManifestSha256": "1bc2f3e1f99e6f0dc609e952894030905c419430dbff79edf4396ca0c59f3e9d",
+      "queryVectorsSha256": "b5118c904aa53ac6ee5ff24889b787229210e4e8687b1a88b1e9cd880afbb585",
+      "retrieval": {
+        "mode": "evidence",
+        "version": "evidence-v1",
+        "candidateK": 100,
+        "weights": {
+          "district": 0.3,
+          "statsCrop": 0.15,
+          "statsLexical": 0.1,
+          "advisoryCrop": 0.2,
+          "advisoryCropMismatch": -0.2,
+          "advisoryLexical": 0.15
+        }
+      },
+      "relevantTotals": {
+        "A1": 2,
+        "A2": 1,
+        "A3": 1,
+        "A4": 0,
+        "A5": 2,
+        "A6": 2,
+        "A7": 2,
+        "A8": 3,
+        "A9": 0,
+        "A10": 2,
+        "A11": 1,
+        "A12": 13,
+        "A13": 2
+      },
+      "metrics": {
+        "n": 13,
+        "hit1": {
+          "k": 10,
+          "n": 13
+        },
+        "hit3": {
+          "k": 11,
+          "n": 13
+        },
+        "hit5": {
+          "k": 11,
+          "n": 13
+        },
+        "precision3": 0.43589743589743585,
+        "precision5": 0.3076923076923077,
+        "recall3": 0.7634032634032635,
+        "recall5": 0.822843822843823,
+        "mrr": 0.8076923076923077,
+        "queriesWithNoRelevant": [
+          "A4",
+          "A9"
+        ]
+      }
+    },
+    {
+      "name": "tablev1-dense",
+      "source": "docs/research/evaluation/live/rag/rag_retrieval_2026-11-09_tablev1-cap100-dense.json",
+      "runSha256": "af57ab84a92624bbeb751b9eea28c180493bd69e55c7e37d1f9804ca13908c5d",
+      "condition": "tablev1-cap100-dense",
+      "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+      "indexManifestSha256": "53f317efe1d8f16d9b39a5e50744d591a9e3619eb7501bb47af1422310ea72e4",
+      "queryVectorsSha256": "b5118c904aa53ac6ee5ff24889b787229210e4e8687b1a88b1e9cd880afbb585",
+      "retrieval": {
+        "mode": "dense"
+      },
+      "relevantTotals": {
+        "A1": 2,
+        "A2": 1,
+        "A3": 1,
+        "A4": 0,
+        "A5": 2,
+        "A6": 2,
+        "A7": 1,
+        "A8": 2,
+        "A9": 0,
+        "A10": 1,
+        "A11": 1,
+        "A12": 34,
+        "A13": 2
+      },
+      "metrics": {
+        "n": 13,
+        "hit1": {
+          "k": 8,
+          "n": 13
+        },
+        "hit3": {
+          "k": 10,
+          "n": 13
+        },
+        "hit5": {
+          "k": 10,
+          "n": 13
+        },
+        "precision3": 0.358974358974359,
+        "precision5": 0.24615384615384614,
+        "recall3": 0.7352941176470588,
+        "recall5": 0.7406417112299465,
+        "mrr": 0.6923076923076923,
+        "queriesWithNoRelevant": [
+          "A4",
+          "A9"
+        ]
+      }
+    },
+    {
+      "name": "tablev1+advisory-dense",
+      "source": "docs/research/evaluation/live/rag/rag_retrieval_2026-11-09_tablev1-advisory-dense.json",
+      "runSha256": "d2a9d00f97bc187af7d80261994bb10ea2933e3893312ac74053e085b242fe26",
+      "condition": "tablev1-advisory-dense",
+      "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+      "indexManifestSha256": "20170b2caa107368dd2f384133e583827ec2ec59ef2d3c93dccabfe0438cccf3",
+      "queryVectorsSha256": "b5118c904aa53ac6ee5ff24889b787229210e4e8687b1a88b1e9cd880afbb585",
+      "retrieval": {
+        "mode": "dense"
+      },
+      "relevantTotals": {
+        "A1": 2,
+        "A2": 1,
+        "A3": 1,
+        "A4": 0,
+        "A5": 2,
+        "A6": 2,
+        "A7": 1,
+        "A8": 2,
+        "A9": 0,
+        "A10": 1,
+        "A11": 1,
+        "A12": 34,
+        "A13": 2
+      },
+      "metrics": {
+        "n": 13,
+        "hit1": {
+          "k": 7,
+          "n": 13
+        },
+        "hit3": {
+          "k": 10,
+          "n": 13
+        },
+        "hit5": {
+          "k": 10,
+          "n": 13
+        },
+        "precision3": 0.358974358974359,
+        "precision5": 0.24615384615384614,
+        "recall3": 0.7352941176470588,
+        "recall5": 0.7406417112299465,
+        "mrr": 0.641025641025641,
+        "queriesWithNoRelevant": [
+          "A4",
+          "A9"
+        ]
+      }
+    },
+    {
+      "name": "tablev1+advisory-evidence",
+      "source": "docs/research/evaluation/live/rag/rag_retrieval_2026-11-09_tablev1-advisory-evidence.json",
+      "runSha256": "022c526d973e0659fa9362f0ac1809972e08a07d4c7b8bda1d7aa0afd2af6b7b",
+      "condition": "tablev1-advisory-evidence",
+      "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+      "indexManifestSha256": "20170b2caa107368dd2f384133e583827ec2ec59ef2d3c93dccabfe0438cccf3",
+      "queryVectorsSha256": "b5118c904aa53ac6ee5ff24889b787229210e4e8687b1a88b1e9cd880afbb585",
+      "retrieval": {
+        "mode": "evidence",
+        "version": "evidence-v1",
+        "candidateK": 100,
+        "weights": {
+          "district": 0.3,
+          "statsCrop": 0.15,
+          "statsLexical": 0.1,
+          "advisoryCrop": 0.2,
+          "advisoryCropMismatch": -0.2,
+          "advisoryLexical": 0.15
+        }
+      },
+      "relevantTotals": {
+        "A1": 2,
+        "A2": 1,
+        "A3": 1,
+        "A4": 0,
+        "A5": 2,
+        "A6": 2,
+        "A7": 1,
+        "A8": 2,
+        "A9": 0,
+        "A10": 1,
+        "A11": 1,
+        "A12": 34,
+        "A13": 2
+      },
+      "metrics": {
+        "n": 13,
+        "hit1": {
+          "k": 11,
+          "n": 13
+        },
+        "hit3": {
+          "k": 11,
+          "n": 13
+        },
+        "hit5": {
+          "k": 11,
+          "n": 13
+        },
+        "precision3": 0.41025641025641024,
+        "precision5": 0.27692307692307694,
+        "recall3": 0.8262032085561497,
+        "recall5": 0.8315508021390374,
+        "mrr": 0.8461538461538461,
+        "queriesWithNoRelevant": [
+          "A4",
+          "A9"
+        ]
+      }
+    }
+  ],
+  "paired": [
+    {
+      "reference": "frozen-baseline",
+      "candidate": "snapshot-dense",
+      "k": 3,
+      "b": 0,
+      "c": 0,
+      "n": 0,
+      "pValue": 1,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "snapshot-dense",
+      "k": 5,
+      "b": 0,
+      "c": 0,
+      "n": 0,
+      "pValue": 1,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "snapshot-evidence",
+      "k": 3,
+      "b": 9,
+      "c": 0,
+      "n": 9,
+      "pValue": 0.00390625,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "snapshot-evidence",
+      "k": 5,
+      "b": 9,
+      "c": 0,
+      "n": 9,
+      "pValue": 0.00390625,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "tablev1-dense",
+      "k": 3,
+      "b": 8,
+      "c": 0,
+      "n": 8,
+      "pValue": 0.0078125,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "tablev1-dense",
+      "k": 5,
+      "b": 8,
+      "c": 0,
+      "n": 8,
+      "pValue": 0.0078125,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "tablev1+advisory-dense",
+      "k": 3,
+      "b": 8,
+      "c": 0,
+      "n": 8,
+      "pValue": 0.0078125,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "tablev1+advisory-dense",
+      "k": 5,
+      "b": 8,
+      "c": 0,
+      "n": 8,
+      "pValue": 0.0078125,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "tablev1+advisory-evidence",
+      "k": 3,
+      "b": 9,
+      "c": 0,
+      "n": 9,
+      "pValue": 0.00390625,
+      "underpowered": true
+    },
+    {
+      "reference": "frozen-baseline",
+      "candidate": "tablev1+advisory-evidence",
+      "k": 5,
+      "b": 9,
+      "c": 0,
+      "n": 9,
+      "pValue": 0.00390625,
+      "underpowered": true
+    }
+  ]
+}

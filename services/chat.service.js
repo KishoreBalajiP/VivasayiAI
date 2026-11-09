@@ -19,6 +19,7 @@ import { cleanupResponse } from "../src/ai/ResponseCleanup.js";
 import AIConfig from "../src/ai/AIConfig.js";
 import { assembleContext, renderContextBlock } from "./context.service.js";
 import { INTENTS } from "../src/ai/Intent.js";
+import { retrieveEvidence } from "../rag/retrieve.js";
 
 validateEnv(CHAT_REQUIRED);
 
@@ -120,6 +121,20 @@ async function performRAG(userMessage) {
   try {
     const coll = await ensureCollection();
     const messageEmbedding = await embeddings.embedQuery(userMessage);
+    // Evidence-aware retrieval is opt-in until the re-ingested collection is approved for production.
+    if (process.env.RAG_RETRIEVAL_MODE === "evidence") {
+      const { hits } = await retrieveEvidence(coll, { queryText: userMessage, vector: messageEmbedding, topK: AIConfig.ragTopK });
+      const seenFiles = new Set();
+      const hitSources = [];
+      for (const { metadata } of hits) {
+        const filename = metadata.filename || (metadata.source ? String(metadata.source).split("/").pop() : null);
+        if (filename && !seenFiles.has(filename)) {
+          seenFiles.add(filename);
+          hitSources.push({ filename: String(filename).slice(0, 120) });
+        }
+      }
+      return { context: hits.length ? hits.map((hit) => hit.document).join("\n\n") : null, sourceCount: hits.length, sources: hitSources };
+    }
     const results = await coll.query({
       queryEmbeddings: [messageEmbedding],
       nResults: AIConfig.ragTopK,
