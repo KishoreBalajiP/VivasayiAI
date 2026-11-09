@@ -1,0 +1,211 @@
+{
+  "name": "ragParity",
+  "date": "2026-11-09",
+  "tag": "prod-snapshot",
+  "verdict": "FAIL",
+  "baseline": {
+    "path": "docs\\research\\evaluation\\live\\rag_retrieval_2026-10-16.json",
+    "sha256": "c5a5ec4c7cfdd4f5a03f66927e601d7cdfa2f47e8659908485a9ed4778f1d8c0"
+  },
+  "candidate": {
+    "path": "docs\\research\\evaluation\\live\\rag\\rag_retrieval_2026-11-09_prod-snapshot-dense.json",
+    "sha256": "6a05fab6d1208cebd1fea333b8c706be7303caaf97cece0ab655320781f5561b",
+    "backend": "json",
+    "condition": "prod-snapshot-dense",
+    "specSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+    "indexManifestSha256": "1bc2f3e1f99e6f0dc609e952894030905c419430dbff79edf4396ca0c59f3e9d",
+    "queryVectorsSha256": "b5118c904aa53ac6ee5ff24889b787229210e4e8687b1a88b1e9cd880afbb585"
+  },
+  "specSha256Now": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specMatchesCandidate": true,
+  "pinnedSpecSha256": "fbefacaddcc0fb72ffec1a9a53da9efbadf1b60daac955dcd20bf078d5179b55",
+  "specMatchesPin": true,
+  "pass": false,
+  "tolerance": 0.001,
+  "k": 5,
+  "diffs": [
+    {
+      "id": "A2",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.1119,
+      "candidate": 1.1131,
+      "delta": 0.0011999999999998678
+    },
+    {
+      "id": "A3",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.1138,
+      "candidate": 1.1121,
+      "delta": 0.0016999999999998128
+    },
+    {
+      "id": "A3",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.2562,
+      "candidate": 1.2551,
+      "delta": 0.0010999999999998789
+    },
+    {
+      "id": "A10",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 0.987,
+      "candidate": 0.9883,
+      "delta": 0.0012999999999999678
+    },
+    {
+      "id": "B5",
+      "rank": 1,
+      "field": "distance",
+      "baseline": 1.1027,
+      "candidate": 1.1005,
+      "delta": 0.0021999999999999797
+    },
+    {
+      "id": "B8",
+      "rank": 2,
+      "field": "distance",
+      "baseline": 1.2976,
+      "candidate": 1.2964,
+      "delta": 0.0012000000000000899
+    },
+    {
+      "id": "B8",
+      "rank": 5,
+      "field": "distance",
+      "baseline": 1.3138,
+      "candidate": 1.3126,
+      "delta": 0.0012000000000000899
+    }
+  ],
+  "queries": [
+    {
+      "id": "A1",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A2",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A3",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A4",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A5",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A6",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A7",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A8",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A9",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A10",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A11",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A12",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "A13",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B1",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B2",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B3",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B4",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B5",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B6",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B7",
+      "identical": true,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B8",
+      "identical": false,
+      "sameSetAnyOrder": true
+    },
+    {
+      "id": "B9",
+      "identical": true,
+      "sameSetAnyOrder": true
+    }
+  ],
+  "summaries": [
+    {
+      "name": "summaryAtProductionTopK",
+      "equal": true
+    },
+    {
+      "name": "summaryAtK5",
+      "equal": true
+    }
+  ],
+  "corpus": {
+    "chunksEqual": true,
+    "chunksByFileEqual": true
+  },
+  "note": "If ranks or distances drift because Cohere query embeddings are not bit-for-bit deterministic, the diffs show it; conditions (ii) and (iii) are only comparable with the baseline when the verdict is PASS."
+}

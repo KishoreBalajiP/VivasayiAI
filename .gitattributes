@@ -1,0 +1,4 @@
+# Pinned evaluation sources and fixtures hash over LF; keep them LF on every platform.
+scripts/live/lib/ragEvalSpec.js text eol=lf
+scripts/live/lib/legacyChunker.e9b779d.js text eol=lf
+tests/fixtures/rag/** text eol=lf

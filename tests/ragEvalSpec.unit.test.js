@@ -47,7 +47,7 @@ describe("frozen RAG evaluation spec", () => {
     // to its pin, so only the whole-file pin catches it. config/, src/ and rag/ are the real ones.
     const work = mkdtempSync(join(tmpdir(), "rag-spec-pin-"));
     cpSync(join(root, "scripts", "live"), join(work, "scripts", "live"), { recursive: true });
-    for (const dir of ["config", "src", "rag"]) symlinkSync(join(root, dir), join(work, dir), "dir");
+    for (const dir of ["config", "src", "rag"]) symlinkSync(join(root, dir), join(work, dir), process.platform === "win32" ? "junction" : "dir"); // junctions need no Windows privilege
     writeFileSync(join(work, "package.json"), '{ "type": "module" }\n');
     const specCopy = join(work, SPEC_PATH);
     writeFileSync(specCopy, `${readFileSync(specCopy, "utf8")}\n// an edit outside the frozen blocks\n`);
@@ -173,5 +173,22 @@ describe("frozen RAG evaluation spec", () => {
     expect(report.errors).toEqual([]);
     expect(report).toMatchObject({ ok: true, git: { available: true, checked: true } });
     for (const block of report.blocks) expect(block).toMatchObject({ ok: true, spec: block.pinned, git: block.pinned });
+  });
+});
+
+describe("frozen RAG spec under CRLF checkouts", () => {
+  it("RS-4: CRLF line endings hash to the pin, but a content change still fails", () => {
+    const work = mkdtempSync(join(tmpdir(), "rag-spec-crlf-"));
+    cpSync(join(root, "scripts", "live", "lib"), join(work, "scripts", "live", "lib"), { recursive: true });
+    const specCopy = join(work, SPEC_PATH);
+    const lf = readFileSync(specCopy, "utf8").replace(/\r\n/g, "\n");
+    for (const text of [lf, lf.replace(/\n/g, "\r\n")]) {
+      writeFileSync(specCopy, text);
+      expect(verifyRagSpec({ useGit: false, base: work })).toMatchObject({ ok: true, errors: [] });
+    }
+    writeFileSync(specCopy, lf.replace(/\n/g, "\r\n").replace('erode: ["erode"]', 'erode: ["erode", "irode"]'));
+    const report = verifyRagSpec({ useGit: false, base: work });
+    expect(report.ok).toBe(false);
+    expect(report.errors).toContainEqual("block T does not match its pin");
   });
 });

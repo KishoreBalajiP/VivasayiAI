@@ -1,0 +1,838 @@
+{
+  "format": "vivasayi-rag-local-index/1",
+  "name": "ragLocalIndex",
+  "tag": "table-v1-cap100-advisory-2026-11-09",
+  "createdAt": "2026-11-09T04:39:33.334Z",
+  "commit": "587a24e",
+  "dirty": true,
+  "model": "embed-english-v3.0",
+  "inputType": "search_document",
+  "chunker": "table-v1+advisory-v1",
+  "corpus": "csv+advisory",
+  "base": {
+    "tag": "table-v1-cap100-2026-11-09",
+    "manifestSha256": "53f317efe1d8f16d9b39a5e50744d591a9e3619eb7501bb47af1422310ea72e4",
+    "count": 534
+  },
+  "advisory": {
+    "corpusTag": "advisory-2026-11-09",
+    "documents": [
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/Index.html",
+        "sha256": "3eb34dbf77695f1b379510c44cde68e5734e03deb5a714d877dd2af4b9a97f0d",
+        "title": "Expert System for Paddy",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/Botany.html",
+        "sha256": "5783f3020a20d7ba5bac0fa3020d152861191259f7e7dc5caa18c344c8a7a969",
+        "title": "Botany of Paddy",
+        "status": "chunked",
+        "chunks": 16
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/seasonvariety.html",
+        "sha256": "c4a9d0c210517fc80820977c17e2d02ad314c37c19307d45fd8ed6b58cc350e7",
+        "title": "Season and Varieties",
+        "status": "chunked",
+        "chunks": 18
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/riceecosystem.html",
+        "sha256": "5b119109f0467ec1765ba420c0949bbaeb14b29f46a71f3baabd99dcea61e2c2",
+        "title": "Rice Ecosystem",
+        "status": "chunked",
+        "chunks": 54
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/nurserymgmt.html",
+        "sha256": "fa7dd3b1c711c3d3a5d0c425050848e8934a6ab01b198eee7508381d910e0a97",
+        "title": "Nursery Management",
+        "status": "chunked",
+        "chunks": 22
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cultivationpractices.html",
+        "sha256": "4b52aa014e7808283f65ad45f49c8a30d0a2092db5b611d4b2db99242654873f",
+        "title": "Cultivation Practices",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/nutrientmanagement.html",
+        "sha256": "1951095415cd7acabece5928db476caa4fe626b2e3f41b7fb55a17a7f19fdf54",
+        "title": "Nutrient Management",
+        "status": "chunked",
+        "chunks": 40
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cropprotection.html",
+        "sha256": "413d0bc0c98b5d17dd32d5fcc83a2415db496d94b0456caa8e664d28a90b6dad",
+        "title": "Crop Protection",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/farmimplements.html",
+        "sha256": "68c9aa3fd4d8e368dab4ed50cb1726c4b64cf3708ce822eadd2084d91d189d82",
+        "title": "Farm Implements",
+        "status": "chunked",
+        "chunks": 16
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/phtc.html",
+        "sha256": "746e4ffc9f08564b4eb96175e02382717a828170aadd7ab93f2a768f6f3c9929",
+        "title": "Post Harvest Technology",
+        "status": "chunked",
+        "chunks": 30
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/schemeinstt.html",
+        "sha256": "ff4b13daed49db1117160f59a5cea3d34e4f84b0b41a6ab5746bd3a29f9b5cc2",
+        "title": "Schemes and Institutes",
+        "status": "chunked",
+        "chunks": 3
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/climate.html",
+        "status": "failed_http",
+        "chunks": 0
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/season.html",
+        "sha256": "f29475bd06ca77a7668c255bbc334e0a3370236f40bcef5d5f2b1e3104625018",
+        "title": "Planting Seasons",
+        "status": "chunked",
+        "chunks": 6
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/varieties.html",
+        "sha256": "3c03b5818879b6b78e6b99030620eb541ae6af432ce42c677e1197cb6e6adf29",
+        "title": "Varieties",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cultivationpractices1.html",
+        "sha256": "371b528f81b9a264607d4635f73123984a0d7570345a8fc1b0429c87b5b53955",
+        "title": "Cultivation Practices >> Main field Preparation",
+        "status": "chunked",
+        "chunks": 15
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cultivationpractices2.html",
+        "sha256": "7d5a13c081c36392a121104966be0e6d6098ba156f2ee78d60eba8dac134ebad",
+        "title": "Cultivation Practices >> Crop Stand Establishment",
+        "status": "chunked",
+        "chunks": 13
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cultivationpractices3.html",
+        "sha256": "ab04478cd59042973473157fb5b229239480b224a2adddfd1117edd6620046ce",
+        "title": "Cultivation Practices >> Water Management",
+        "status": "chunked",
+        "chunks": 17
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cultivationpractices4.html",
+        "sha256": "86e85e2d65d2a85a807d8e38255f7d2a2d09958141dcfaaabb92ccca4aa4a3f6",
+        "title": "Cultivation Practices",
+        "status": "chunked",
+        "chunks": 15
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cultivationpractices5.html",
+        "sha256": "ace1ba739d8691e347f332782462edf548cf108b70d166b97885ba344aef4593",
+        "title": "Cultivation Practices",
+        "status": "chunked",
+        "chunks": 9
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cppests.html",
+        "sha256": "d59b669812432b5f5a4fbfa49f1b44486be0f3147da63f607e18f25900d6266e",
+        "title": "Crop Protection",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cpdiseases.html",
+        "sha256": "741a7f337edd4c8932f7187ed177738c500dffafd194ec6785d0931788e45178",
+        "title": "Crop Protection",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/cpnoninsectpests.html",
+        "sha256": "a21ada945cf61fb5c69ff3cb87dedec1b3a1b3afa5788273bb61ba34f8ca81cb",
+        "title": "Crop Protection",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/paddy/institutes.html",
+        "sha256": "4bb4351448c70995444ebd39b3874bc2ed9f7fce2592d9b5091b77bfa5621136",
+        "title": "Institutes",
+        "status": "chunked",
+        "chunks": 34
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/index.html",
+        "sha256": "94c9158ed732889b09fa12851f7f71c0251ac625d277f030b3c20e81bab26ded",
+        "title": "Expert System for Sugarcane",
+        "status": "no_answer_text",
+        "chunks": 0
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/botany&climate.html",
+        "sha256": "01187912bc9b402f04d2214595c1b2777bb9d8d222dc3c1e03ab1894366c1868",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 13
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/season&varieties.html",
+        "sha256": "dd5d4b8844505a0ba195c3aba0ff5f75c6fd975fbd9baf9239d44c438373331b",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 23
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/nurserymanagement.html",
+        "sha256": "bdc44c229c6484f21cd70a3bf775e98942a5794c30f200e5b6b00b9026609c3b",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 8
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/cultivationpractices.html",
+        "sha256": "275de20d51b33c9ffc0ac5b1d67eb76ba3c4e0e48ce3cf299227b72f3f733791",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 44
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/ssi.html",
+        "sha256": "7bcb5fd950aeca9bee51e79c60f8fdbf39edaeb1d4de5b4329b286a828235f97",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 23
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/irrigationmanagement.html",
+        "sha256": "fad0097558e4f95104b85e1d322d3d81c5b9a113b9663f2869f56c598aad834c",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 20
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/nutrientmanagement.html",
+        "sha256": "eb694c7ef483817787294d6c63dce6af5b33a57ee4b5eec08467b7460ffc9306",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 28
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/cropprotection.html",
+        "sha256": "00033b2f4fda30fe2bb06b6e7c6c06ca636f539a954f5a871da712d6426dc86f",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 43
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/farmimplements.html",
+        "sha256": "8ea0217dcaebcdeda61003f0cd2481425b23e518399bb321bfe9b6ecde4bc4eb",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 13
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/harvesting.html",
+        "sha256": "15b6cdb5a15f3bfb2837daedc3179edd1752c7d7a55264acf2156198b64f71f5",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 26
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/sugar/ratoon.html",
+        "sha256": "c989b77ccefe615e3b570329e2a01b5bda027a57c059bc3d94d12f958aae06b0",
+        "title": "Expert System for Sugarcane",
+        "status": "chunked",
+        "chunks": 12
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/index.html",
+        "sha256": "9d587c140aea27a8be11ce055f8915d4d0e1e817accb347a845dd86ed9ee5398",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 2
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/precision.html",
+        "sha256": "d9127fb094686bbddcd3540d6eb97e0ea04602ad676ae9d21cb1c1a0bc5fec8e",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 42
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/botany.html",
+        "sha256": "1ec6eb85a9c8186dc306e4c29afad4e1ddded09290b2bcc54a4592e98f91d605",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 9
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/cli.html",
+        "sha256": "dd29a77a6c7a0c1843707c5d01b79b8047ea5115a5cd65e842844fd6c3cb75cf",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 6
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/season&variety.html",
+        "sha256": "e66cd2c3d50810209d8ee139c477c68a1bec4cb2207e1827d950f281540cbaa5",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 67
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/plantingmaterial.html",
+        "sha256": "8c4eeddbcdd088b4cd695a4cc001da705ce666a0030be6281c8bd07f1db1a2c4",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 40
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/cultivation.html",
+        "sha256": "e5c6a217dd6e1b5f66fb74a16bfc13297c900ab28686e190c9376f128cfb53b0",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 100
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/irrigationmanagement.html",
+        "sha256": "53487cda3cdf228aa348b707afddbb7bc8ea95ee237eb6c6336190784575cbda",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 43
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/Nutrientmgmt.html",
+        "sha256": "5615eb98cc82819b9e13e24e6c9805c14d5bc2af4e6984d889adae3f82a12d02",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 61
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/cropprotection.html",
+        "sha256": "50647dd072318c4279d6b48a65dc036a07d6cf90f2f8fbce59232260c2d391ec",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 105
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/farmimp.html",
+        "sha256": "99f4a612a7eca57381d2b0bca0f701270ef2c997f70b70889d71aeb8ef45f0df",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 31
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/banana/harvest&post.html",
+        "sha256": "cfe4f595c3e93c62f9c3bd44c1f3520dfd27b5a334100fbbb18fa0ab7148d962",
+        "title": "Banana Expert System",
+        "status": "chunked",
+        "chunks": 37
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/index.html",
+        "sha256": "890f45dc2e86b048f0c23252488b3926cc917d89a8d8f885fca783fa28b78d9d",
+        "title": "Ragi Expert System",
+        "status": "chunked",
+        "chunks": 4
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/botany.html",
+        "sha256": "aa92edf8701753491225855e3d9f3d0b4967063213c93209c48ce992162846c6",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 11
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/climate.html",
+        "sha256": "78c0cb255fc8f6d000f952cfd15c5f9882805870d62d640d521bdac3e4742eb3",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 7
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/season_varieties.html",
+        "sha256": "a71dc54aa5d2caf7c6da6029dc741c5b48d9a93dd735ed24f4e46e16fff7c983",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 14
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/cultivationsystem.html",
+        "sha256": "340db31540284a1694c934be4a4e616d06ec05038c0f49c9916ed99723d37725",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 25
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/nurserymanagement.html",
+        "sha256": "7486bcf3486a71ae1babc4ee2d1e9858ae0f80b7de554f3d3aa9092f6a800f3b",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 16
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/cultivationpractices.html",
+        "sha256": "9c99eccaddc05de6405ae4e4001d6c1648bd9cbb022cb2ff11cd049041e3e64b",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 35
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/nutrientmanagement.html",
+        "sha256": "c843fa439b152ac7ee9277f86cea4163eb1320dbc56758e4c4c102cd3bb8b4bc",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 65
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/cropprotection.html",
+        "sha256": "bdc4219535763fe70789cdc7c33a6781ce4a4addd7aff7469ec9aa28d837650b",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 67
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/farmimplements.html",
+        "sha256": "a126c214f2c1ce2e9cb09dc662c59d5474568fee43e4b252ff8ca33b8a4906c1",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 27
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/ragi/postharvest.html",
+        "sha256": "5c1018680f31ab5c4f6c65ca02d248bb1851827769be486ed4f8dbd14111bc46",
+        "title": "Garden Website Design, Free CSS Template",
+        "status": "chunked",
+        "chunks": 51
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/index.html",
+        "sha256": "987c860dff8af864782edbe9cfc734a4b378c17bfb20bc47ff41a8ea9be54698",
+        "title": "Knowledge Based Information on Coconut :: Home",
+        "status": "no_answer_text",
+        "chunks": 0
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_planting_seasons.html",
+        "sha256": "e4966512c0b4ad475ca375e86fff557f7ad6d2635fa5b924d4a9302a8923736c",
+        "title": "Knowledge Based Information on Coconut :: Planting Seasons & Climate",
+        "status": "chunked",
+        "chunks": 7
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_varieties.html",
+        "sha256": "544c4db70396812fa9f269fc2fb778226a795fce7526c2543f931889e68d1ec8",
+        "title": "Knowledge Based Information on Coconut :: Coconut Varieties",
+        "status": "chunked",
+        "chunks": 16
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_motherpalmselection_nurserymngt.html",
+        "sha256": "0d8d053b7ebe45f3b8ea3e9e2e67b27a7b746283149afff265af7353afdb0fb6",
+        "title": "Knowledge Based Information on Coconut :: Coconut Mother Palm Selection & Nursery Management",
+        "status": "chunked",
+        "chunks": 27
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_mainfield.html",
+        "sha256": "5ac29dd29eeec1c9683fa693ef616a98cfed9d82c81af15783ac6aa4e20b58b8",
+        "title": "Knowledge Based Information on Coconut ::Main Field",
+        "status": "chunked",
+        "chunks": 30
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_irrigation_management.html",
+        "sha256": "880cb8b2326e92231525dc7a77ec393215fab7d3c5dc3b3f1cf1fc2f8c5d8357",
+        "title": "Knowledge Based Information on Coconut :: Irrigation Management",
+        "status": "chunked",
+        "chunks": 13
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_nutrient_management.html",
+        "sha256": "8887c86018b7384da8b542f3bdfe18fc6effa1952328b67fc081d1105afb3f2c",
+        "title": "Knowledge Based Information on Coconut :: Irrigation Management",
+        "status": "chunked",
+        "chunks": 37
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_pest%20and_diseases.html",
+        "sha256": "9ac547d3e0edd0a5dd4e85e46965b1151091b469faa012bae0a8a7885df8390b",
+        "title": "Knowledge Based Information on Coconut :: Planting Seasons & Climate",
+        "status": "chunked",
+        "chunks": 69
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_farm_implements.html",
+        "sha256": "092fcfee963316f81a39ce6f655be253a5d83a8d6bfd36ad998f5091b36af79a",
+        "title": "Knowledge Based Information on Coconut :: Farm Implements",
+        "status": "chunked",
+        "chunks": 28
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_harvest_postharvest.html",
+        "sha256": "ac4ff84aeba2cdd682a48da9cc26b78a44c5cffa90adc5dace0d545620af67e0",
+        "title": "Knowledge Based Information on Coconut :: Harvest and Post Harvest",
+        "status": "chunked",
+        "chunks": 15
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_processing.html",
+        "sha256": "d295cf7db42d07c83d321e06bc9c11b34e53076889a29e432660f3816d8693b8",
+        "title": "Knowledge Based Information on Coconut :: Coconut Processing",
+        "status": "chunked",
+        "chunks": 44
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_statistics.html",
+        "sha256": "ab4818f01a82a9e96beea8c413b34a7307b08b4bf7bc5cb069588791c547f01f",
+        "title": "Knowledge Based Information on Coconut :: Harvest and Post Harvest",
+        "status": "chunked",
+        "chunks": 43
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_dos_donts.html",
+        "sha256": "5c7bcb5bc5cd99357b2c66851c97344964cec60438c6a20c6b41b73d52d0f32f",
+        "title": "Knowledge Based Information on Coconut :: DOs and DON'Ts",
+        "status": "chunked",
+        "chunks": 3
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/expert_system/coconut/coconut/coconut_cost_of_cultivation.html",
+        "sha256": "74e47c76da7bcd606c1bec3a79d61c2ea33a7c14effd0f3299e286fd8c83b500",
+        "title": "Knowledge Based Information on Coconut :: Coconut Cost of Cultivation",
+        "status": "chunked",
+        "chunks": 8
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_cropproduction_oilseeds%20index%20ground%20nut.html",
+        "sha256": "c854027fbfab51b85b5ce194823d4403c561156bb0ffc1d698b6427e2d964c5b",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_index.html",
+        "sha256": "a50a67f9fde55470256f3ad8353bbe69b52bfc65a0f10b6567dc70c36c87aded",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/crop_production_varieties.html",
+        "sha256": "8e9b4bf3b67a9034e2ce54685f0294dc5169914ae2a27bfecc48a1ea3e412908",
+        "title": "Crop Production :: Season & Varieties",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_tillage_index.html",
+        "sha256": "14703e8d778cb130b90129bb0f63333d5d0d1e789d9df9f46a6d9a2c6de97c6a",
+        "title": "Agriculture :: Tillage",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_nutrientmgt.html",
+        "sha256": "1f3a48be1360360ee03493b45f593b1328f58fd1ac086e6fc74b94ce4122328a",
+        "title": "Nutrient Management",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_irrigationmgt.html",
+        "sha256": "9954ac8bda27f5625b096f9e91b1045a140d59ff4182b100ed6b0f9e0d9d91e5",
+        "title": "Irrigation Management",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_weedmgt.html",
+        "sha256": "5edce5a8f5a3b25cc99243676067c33ad065c7d21ea6bf2f76cf2e7481a5cbe7",
+        "title": "Weed Management ::",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_costofcultivation_indexpage12.html",
+        "sha256": "ba3f082cae7c6260faa2604edd990a0d3c9ffd71e89437b9f54abbbf466ab7c7",
+        "title": "Agriculture :: Cost of Cultivation (Rs./ha)",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_photobank.html",
+        "sha256": "8c77eb54144af1a359bdf0257f2f84f75e8d623d8f3056303f7ccf73e7de0998",
+        "title": "Agriculture :: Home",
+        "status": "no_answer_text",
+        "chunks": 0
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/Crop-improvement%20-1.html",
+        "sha256": "d85a582a95330d94aae3e1b360a79fc3671ca5a344c78ff6dc2eb85e264f9b17",
+        "title": "Crop Production :: Oil Seeds:: Gingelly",
+        "status": "chunked",
+        "chunks": 6
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_cropproduction_irrigation_groundnut.html",
+        "sha256": "cc86b87aa86a65e27d27ce8956b0822b91c0cb6b3af5da3c5de79e6b3f03721e",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_cropproduction_rainfed_groundnut.html",
+        "sha256": "6fb38d9a2d26a2795ce3f73b7d6c3d88ad9a2549ec860127de826958834e513c",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/crop_prot_groundnut.html",
+        "sha256": "8719e4135249c3796a1ca0c7b06febab3c41703e32d0f46c4794ebe54b7e3139",
+        "title": "TNAU Agritech Portal :: Crop Protection",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_min_fldcrops_oilseeds_Groundnut%20index.html",
+        "sha256": "38dc3acfd8f2b1e07631999a393ba802106e04138aba5f57a77c9e4e20789edc",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agriengg_farm_mech_grounnut_index.html",
+        "sha256": "151134ac9849d8c57b6e65c48ff09b88e44c713b412e094cf6c5cbf1cfb5bbfc",
+        "title": "agriengg:Home Page",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/postharvest/pht_groundnut.html",
+        "sha256": "3b60b0927f8a9c1a5565d7be01ac6f4c87d8c225871e758d046dde4d6ae310ab",
+        "title": "TNAU Agritech Portal :: Post Harvest Technology",
+        "status": "chunked",
+        "chunks": 2
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/agri_costofcultivation_groundnut2012.html",
+        "sha256": "ea88f3c3e33c08a8c6038e828d5599ae623f42ec51f7945431925392fc6df078",
+        "title": "Cost of Cultivation :: Groundnut",
+        "status": "chunked",
+        "chunks": 2
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Oilseeds/oilseeds_gingelly.html",
+        "sha256": "f83b3f93f71a1fcd02bd1b8266e4065344f17d39b47e87092885c32cf2cf2b27",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 13
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Oilseeds/oilseeds_groundnut.html",
+        "status": "failed_http",
+        "chunks": 0
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Oilseeds/oilseeds_niger.html",
+        "sha256": "5b37945b3968c4fb4f5756c98f2150c3070fdccd206213b871560fa35268ab6c",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 3
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Oilseeds/oilseeds_oilpalm.html",
+        "sha256": "1ff0cf131f64b0ae36594581af0bb7de4b50037e2b5fa7568ba1fdfdad5a77a6",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 34
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Oilseeds/oilseeds_safflower.html",
+        "sha256": "607394da7ccde76ec5d33741d3aa7db9b71cd3eec779b0c0a13bc943ed570d24",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 4
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Oilseeds/oilseeds_sunflower.html",
+        "sha256": "62219f33ef4841a7f01ceeceaf2048450d048d1a28d20808191e46302a005676",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 10
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/postharvest/pht_groundnut.html",
+        "sha256": "75e97b80adeaadb88819dbe06a8983d792cccb04e183e56428215dcfd3e087d8",
+        "title": "TNAU Agritech Portal :: Post Harvest Technology",
+        "status": "chunked",
+        "chunks": 2
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/postharvest/pht_oilseeds.html",
+        "sha256": "88b67c118bfae71542b325f1f14ac2b753f39375fd5c5a2a78e56c6020f86c7d",
+        "title": "TNAU Agritech Portal :: Post Harvest Technology",
+        "status": "chunked",
+        "chunks": 2
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/crop_protection/tomato/tomato_1.html",
+        "sha256": "93e6fcd34c5e29de0e0f279af36b4a51716522f41924b15eaeaca63bd940f7b0",
+        "title": "TNAU Agritech Portal :: Crop Protection",
+        "status": "chunked",
+        "chunks": 3
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/pulses_index.html",
+        "sha256": "15a88a378e5a7ee59b2ae2b0ac51b1ddd63fbb05086bc846004c26875027b835",
+        "title": "Agriculture :: Crop Production :: Pulses",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/agri_cropproduction_pluses_blackgram_index.html",
+        "sha256": "d1ace3289c11142f81da909aa83eead61641b115abde732b321193a3d6c1419f",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/agri_cropproduction_pulses%20_%20index_green%20gram.html",
+        "sha256": "c148baaf29582ddd1ab62b952dcae1e1dd4d5a0a6f0a3d541584ce3797b6e902",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/pulses_cowpea.html",
+        "sha256": "a833010adfd611cdd43eda87c594bf25961c4f2c6535a201fcd0c5dcd6d96e1c",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 7
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/pulses_gardenlablab.html",
+        "sha256": "62f67a2ccf6ce91598e296c11aa8fe9f559640d28885afcd776aa74ccc314892",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 8
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/pulses_fieldlablab.html",
+        "sha256": "670614fcc7fb7a2b0a1aa120d2efebebdd79893ade39349b3f4a3e23148d40fc",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 4
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/pulses_bengalgram.html",
+        "sha256": "9c564ed110ff4634658dcfe1787dabe8350680240ff75be0564525fa89339739",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 4
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/pulses_horsegram.html",
+        "sha256": "572b293b465a0c887cd0dd5a7f15171c42d65a33252e8794cf3179b2fc23f0c0",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 2
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/pulses_redgram.html",
+        "sha256": "b900cb52434a69900ea6a63418319f733e74f137953fff67ac393f317e06f405",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 14
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/pulses_soybean.html",
+        "sha256": "7f40e2a5e8beba4c85a8425b4d212f2793d7f15521d64c623fb5ece2aa17402b",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 8
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/CropProduction/Pulses/pulses_swordbean.html",
+        "sha256": "67bf0cee835aa6958910e2fa5c7ad6fa0fb938f5c3d2f2739e3d8a179eb49b44",
+        "title": "Agriculture :: Home",
+        "status": "chunked",
+        "chunks": 2
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/agriculture/crop_prot.html",
+        "status": "failed_http",
+        "chunks": 0
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/crop_insurance/crop_ins.html",
+        "sha256": "8b48fa2a6942e71e90972ea6ee8df11e02ca4a665ee821c4bafa54bb2669177a",
+        "title": "TNAU Agritech Portal :: Crop Insurance",
+        "status": "chunked",
+        "chunks": 1
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/crop_insurance/crop_mnais.html",
+        "sha256": "4cfc0b5389621b4459304483b88b9910704a08c3937e52befd6a807813e96a13",
+        "title": "TNAU Agritech Portal :: Crop Insurance",
+        "status": "chunked",
+        "chunks": 23
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/crop_insurance/crop_wbcis.html",
+        "sha256": "8bb63a5e14bacf63670734e5f13e4b0564b6cff653a8904a5391bdcf98e1dd48",
+        "title": "TNAU Agritech Portal :: Crop Insurance",
+        "status": "chunked",
+        "chunks": 23
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/crop_insurance/crop_cpis.html",
+        "sha256": "03505e5e7299cde490994af337acc18320064c012087b6aebbe721da105313e1",
+        "title": "TNAU Agritech Portal :: Crop Insurance",
+        "status": "chunked",
+        "chunks": 4
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/crop_insurance/crop_insurance_scheme.html",
+        "sha256": "69a6e34955e1e05a76202e0c2767fa69e44d410ab232c06f6da8c980217711be",
+        "title": "TNAU Agritech Portal :: Crop Insurance",
+        "status": "chunked",
+        "chunks": 4
+      },
+      {
+        "url": "https://agritech.tnau.ac.in/pdf/pmfby.pdf",
+        "sha256": "724b51cde9486b0918b792e741bd605833145f5516067bdf87b6edb5fc11ba4b",
+        "title": "pmfby.pdf",
+        "status": "chunked",
+        "chunks": 72
+      }
+    ],
+    "chunked": 110,
+    "advisoryChunks": 2046,
+    "byStatus": {
+      "chunked": 110,
+      "failed_http": 3,
+      "no_answer_text": 3
+    }
+  },
+  "count": 2580,
+  "dimension": 1024,
+  "distance": "squared_l2"
+}

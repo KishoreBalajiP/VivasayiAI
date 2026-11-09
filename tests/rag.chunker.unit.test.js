@@ -28,7 +28,7 @@ const CSV_FIXTURES = ["production_of_rice_in_2017_18.csv", "Tamilnadu agricultur
 const SIZES = [1000, 400, 250];
 const BASELINE = join(root, "docs", "research", "evaluation", "live", "rag_retrieval_2026-10-16.json");
 
-const fixture = (name) => readFileSync(join(FIXTURES, name), "utf8");
+const fixture = (name) => readFileSync(join(FIXTURES, name), "utf8").replace(/\r\n/g, "\n"); // CRLF checkouts: fixtures are committed LF
 const sha256 = (text) => createHash("sha256").update(text).digest("hex");
 const chunked = (name, options = {}) => chunkFile({ key: name, text: fixture(name), bucket: "fixture-bucket", ...options });
 const dataRows = (name) => parseCsv(fixture(name)).slice(1);
@@ -56,7 +56,7 @@ const runScript = (script, args) => {
 };
 const fileSha256 = (path) => sha256(readFileSync(path));
 // Source with whole-line comments removed, so prose about a method never counts as a call.
-const codeOf = (rel) => readFileSync(join(root, rel), "utf8").split("\n").filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join("\n");
+const codeOf = (rel) => readFileSync(join(root, rel), "utf8").replace(/\r\n/g, "\n").split("\n").filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join("\n");
 
 const everyChunk = async (fn) => {
   for (const name of CSV_FIXTURES) {
@@ -117,7 +117,7 @@ describe("table-v1 chunker", () => {
   });
 
   it("RC-4: chunk metadata is scalar and carries district, crop, rows, chunker and the file hash", async () => {
-    const keys = ["source", "filename", "chunk_index", "row_start", "row_end", "row_count", "file_kind", "district", "crop", "chunker", "oversizeRow", "fileSha256"];
+    const keys = ["source", "filename", "chunk_index", "row_start", "row_end", "row_count", "row_numbers", "file_kind", "evidence_type", "district", "crop", "chunker", "oversizeRow", "fileSha256"];
     await everyChunk((chunk, { name }) => {
       expect(Object.keys(chunk.metadata).sort()).toEqual([...keys].sort());
       for (const value of Object.values(chunk.metadata)) expect(["string", "number", "boolean"]).toContain(typeof value);
@@ -275,7 +275,7 @@ describe("legacy chunker (e9b779d copy, evaluation only)", () => {
 
   it.skipIf(!gitHasLegacy)("RC-10: the legacy text block is a verbatim copy of e9b779d:rag/ingest.js lines 54-64", () => {
     const original = execFileSync("git", ["show", "e9b779d:rag/ingest.js"], { cwd: root }).toString().split("\n").slice(53, 64).join("\n");
-    const copy = readFileSync(join(root, "scripts", "live", "lib", "legacyChunker.e9b779d.js"), "utf8");
+    const copy = readFileSync(join(root, "scripts", "live", "lib", "legacyChunker.e9b779d.js"), "utf8").replace(/\r\n/g, "\n");
     const block = copy.split("// <verbatim:e9b779d:rag/ingest.js:54-64>\n")[1].split("\n// </verbatim:e9b779d:rag/ingest.js:54-64>")[0];
     expect(original).toContain("index < 100");
     expect(block).toBe(original.replace("index < 100", "index < limit"));

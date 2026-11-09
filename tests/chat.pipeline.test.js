@@ -116,6 +116,31 @@ describe("text chat pipeline", () => {
     expect(prompt).not.toContain("Banana");
   });
 
+  it("PL-13: RAG_RETRIEVAL_MODE=evidence keeps the response shape, grounds advice in advisory text and never in statistics", async () => {
+    const query = vi.fn(async ({ where }) => {
+      const hits = where && where.evidence_type === "advisory"
+        ? { documents: [["Source: TNAU\nDrain the field before applying the recommended measure."]], metadatas: [[{ filename: "tnau_paddy.html", evidence_type: "advisory", crop: "rice" }]], distances: [[0.8]], ids: [["adv"]] }
+        : { documents: [[]], metadatas: [[]], distances: [[]], ids: [[]] };
+      return hits;
+    });
+    mocks.getCollection.mockResolvedValue({ query });
+    process.env.RAG_RETRIEVAL_MODE = "evidence";
+    try {
+      const user = newUser("evidence");
+      await seedProfile(user);
+      const result = await generateResponse({ message: "how to control stem borer in paddy", cognitoSub: user });
+      expect(result).toMatchObject({ hasContext: true, sourceCount: 1, sources: [{ filename: "tnau_paddy.html" }] });
+      expect(query.mock.calls[0][0].where).toEqual({ evidence_type: "advisory" });
+      expect(systemPrompt()).toContain("Drain the field");
+
+      query.mockResolvedValue({ documents: [[]], metadatas: [[]], distances: [[]], ids: [[]] });
+      const none = await generateResponse({ message: "how to control stem borer in paddy", cognitoSub: user });
+      expect(none).toMatchObject({ hasContext: false, sourceCount: 0, sources: [] });
+    } finally {
+      delete process.env.RAG_RETRIEVAL_MODE;
+    }
+  });
+
   it("PL-9: the conversation is persisted for the caller, and a Chroma outage still answers", async () => {
     mocks.getCollection.mockRejectedValue(new Error("chroma down"));
     const user = newUser("persist");

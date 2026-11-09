@@ -88,6 +88,7 @@ export const sha256Hex = (data) => createHash("sha256").update(data).digest("hex
 
 export const CHUNKERS = Object.freeze({ TABLE_V1: "table-v1", LEGACY_E9B779D: "legacy-e9b779d" });
 export const DEFAULT_MAX_CHARS = 1000;
+export const EVIDENCE_TYPES = Object.freeze({ STATISTICS: "statistics", ADVISORY: "advisory" });
 
 export const basenameOf = (key) => String(key || "").split("/").pop();
 
@@ -209,7 +210,10 @@ export const tableToChunks = ({ key, headers, rows, maxChars = DEFAULT_MAX_CHARS
         row_start: Math.min(...numbers),
         row_end: Math.max(...numbers),
         row_count: chunkEntries.length,
+        // Exactly which data rows this chunk holds (1-based, file order): row-level provenance.
+        row_numbers: numbers.join(","),
         file_kind: "csv_statistics",
+        evidence_type: EVIDENCE_TYPES.STATISTICS,
         district: unique(chunkEntries.map((entry) => entry.district)).join(", "),
         crop: cropColumn >= 0 ? unique(chunkEntries.map((entry) => entry.crop)).join(", ") : fileCrop,
         chunker: CHUNKERS.TABLE_V1,
@@ -226,6 +230,71 @@ export const tableToChunks = ({ key, headers, rows, maxChars = DEFAULT_MAX_CHARS
 export const preambleDistrictMentions = (preamble, districtNames) => {
   const text = String(preamble || "").toLowerCase();
   return unique(districtNames.filter((name) => name && text.includes(String(name).toLowerCase())));
+};
+
+// ---------- advisory-v1 chunker ----------
+// Agronomic advisory text: each chunk is a "Source/Title/Section" preamble followed by body lines from
+// one section. A section whose body is shorter than MIN_ADVISORY_BODY_CHARS is dropped, so a heading or
+// navigation fragment can never become a chunk (the advisory form of the header-only defect).
+export const ADVISORY_CHUNKER = "advisory-v1";
+export const MIN_ADVISORY_BODY_CHARS = 120;
+
+const splitLongLine = (line, room) => {
+  if (line.length <= room) return [line];
+  const parts = [];
+  let rest = line;
+  while (rest.length > room) {
+    const window = rest.slice(0, room);
+    const stop = Math.max(window.lastIndexOf(". "), window.lastIndexOf("; "));
+    const cut = stop > room / 2 ? stop + 1 : room;
+    parts.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) parts.push(rest);
+  return parts;
+};
+
+export const advisoryToChunks = ({ docId, text, title = "", issuer = "", url = "", crop = "", retrievedAt = "", fileSha256 = "", maxChars = DEFAULT_MAX_CHARS }) => {
+  const preambleFor = (section) => [`Source: ${issuer}`, `Title: ${title}`, ...(section ? [`Section: ${section}`] : [])].join("\n");
+  const blocks = [];
+  let section = "";
+  let body = [];
+  const close = () => {
+    if (body.join(" ").length >= MIN_ADVISORY_BODY_CHARS) blocks.push({ section, body });
+    body = [];
+  };
+  for (const line of String(text || "").split("\n")) {
+    if (line.startsWith("# ")) {
+      close();
+      section = line.slice(2).trim();
+    } else if (line.trim()) body.push(line.trim());
+  }
+  close();
+
+  const pieces = [];
+  for (const block of blocks) {
+    const preamble = preambleFor(block.section);
+    let current = [];
+    let length = preamble.length;
+    const flush = () => {
+      if (current.join(" ").length >= MIN_ADVISORY_BODY_CHARS) pieces.push({ section: block.section, text: [preamble, ...current].join("\n") });
+      current = [];
+      length = preamble.length;
+    };
+    for (const raw of block.body) {
+      for (const part of splitLongLine(raw, Math.max(200, maxChars - preamble.length - 1))) {
+        if (current.length && length + 1 + part.length > maxChars) flush();
+        current.push(part);
+        length += 1 + part.length;
+      }
+    }
+    flush();
+  }
+  return pieces.map((piece, index) => ({
+    id: chunkId({ key: docId, index, text: piece.text }),
+    text: piece.text,
+    metadata: { source: url, filename: docId, chunk_index: index, file_kind: "advisory_text", evidence_type: EVIDENCE_TYPES.ADVISORY, chunker: ADVISORY_CHUNKER, title: title.slice(0, 160), section: piece.section.slice(0, 160), issuer, crop, retrieved_at: retrievedAt, fileSha256 },
+  }));
 };
 
 export default { shouldIngestKey, parseCsv, csvToText, chunkId, sha256Hex, tableToChunks, CHUNKERS };

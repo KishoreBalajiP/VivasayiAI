@@ -32,6 +32,10 @@ export const FROZEN_BLOCKS = Object.freeze([
 
 export const sha256 = (data) => createHash("sha256").update(data).digest("hex");
 
+// Git may check text files out with CRLF (core.autocrlf on Windows). The pins are over the committed LF
+// form, so CRLF line endings are normalised before hashing or parsing. Every other byte still counts.
+export const toLf = (text) => String(text).replace(/\r\n/g, "\n");
+
 // A block is the lines strictly between its markers, joined with "\n", with no trailing newline.
 export const extractFrozenBlocks = (text) => {
   const blocks = new Map();
@@ -55,8 +59,8 @@ export const extractFrozenBlocks = (text) => {
   return blocks;
 };
 
-export const readSpec = (base = root) => readFileSync(join(base, SPEC_PATH), "utf8");
-export const specSha256 = (base = root) => sha256(readFileSync(join(base, SPEC_PATH)));
+export const readSpec = (base = root) => toLf(readFileSync(join(base, SPEC_PATH), "utf8"));
+export const specSha256 = (base = root) => sha256(readSpec(base));
 export const readProvenance = (base = root) => JSON.parse(readFileSync(join(base, PROVENANCE_PATH), "utf8"));
 
 const git = (args, base) => execFileSync("git", args, { cwd: base, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 16 * 1024 * 1024 }).toString();

@@ -162,8 +162,13 @@ export const loadLocalIndex = (dir) => {
         include,
       };
     },
-    async query({ queryEmbeddings, nResults = 10, include = ["documents", "metadatas", "distances"] }) {
-      const results = queryEmbeddings.map((query) => rankBySquaredL2(matrix, count, dimension, query, nResults));
+    // `where`: Chroma-style equality filter on metadata, e.g. { evidence_type: "advisory" }.
+    async query({ queryEmbeddings, nResults = 10, include = ["documents", "metadatas", "distances"], where }) {
+      const allowed = where ? rows.map((row) => Object.entries(where).every(([key, value]) => (row.metadata || {})[key] === value)) : null;
+      const results = queryEmbeddings.map((query) => {
+        if (!allowed) return rankBySquaredL2(matrix, count, dimension, query, nResults);
+        return rankBySquaredL2(matrix, count, dimension, query, count).filter(({ index }) => allowed[index]).slice(0, Math.max(0, nResults));
+      });
       return {
         ids: results.map((hits) => hits.map(({ index }) => rows[index].id)),
         documents: pick(include, "documents", results.map((hits) => hits.map(({ index }) => rows[index].document))),
