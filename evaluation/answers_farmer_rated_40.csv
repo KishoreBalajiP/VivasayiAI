@@ -1,0 +1,41 @@
+﻿no,question,language,topic,farmer1,farmer2,consensus,llm_judge
+1,Which paddy variety is suitable for samba season in Thanjavur?,English,Crop choice,Partly correct,Partly correct,Partly correct,Wrong
+2,When should I sow groundnut in Dindigul district?,English,Sowing time,Correct,Correct,Correct,Correct
+3,How much urea should I apply for one acre of paddy?,English,Fertilizer,Partly correct,Partly correct,Partly correct,Partly correct
+4,My tomato leaves are curling and turning yellow. What is the reason?,English,Pest / disease,Partly correct,Partly correct,Partly correct,Partly correct
+5,How to control fall armyworm in maize?,English,Pest / disease,Partly correct,Partly correct,Partly correct,Correct
+6,Will it rain in Madurai this week? Should I irrigate now?,English,Weather,Partly correct,Partly correct,Partly correct,Wrong
+7,Which crop is good for one acre with less water?,English,Crop choice,Partly correct,Wrong,Wrong,Wrong
+8,How many days does banana take from planting to harvest?,English,Crop duration,Correct,Correct,Correct,Partly correct
+9,What is the spacing for sugarcane planting?,English,Cultivation,Partly correct,Correct,Partly correct,Partly correct
+10,How to treat paddy seeds before sowing?,English,Seed treatment,Partly correct,Partly correct,Partly correct,Correct
+11,What causes blast disease in paddy and how to control it?,English,Pest / disease,Partly correct,Partly correct,Partly correct,Correct
+12,Can I grow cotton in black soil in Virudhunagar?,English,Soil / crop,Correct,Correct,Correct,Correct
+13,How often should I water coconut trees in summer?,English,Irrigation,Partly correct,Partly correct,Partly correct,Wrong
+14,What is the best time to harvest turmeric?,English,Harvest,Correct,Correct,Correct,Correct
+15,How to make jeevamirtham for organic farming?,English,Organic farming,Partly correct,Correct,Partly correct,Partly correct
+16,My chilli plants have white flies. What should I spray?,English,Pest / disease,Partly correct,Partly correct,Partly correct,Correct
+17,Which millets can I grow in Ramanathapuram?,English,Crop choice,Wrong,Wrong,Wrong,Wrong
+18,How to improve soil with low organic matter?,English,Soil,Correct,Partly correct,Partly correct,Correct
+19,What fertilizer schedule is recommended for brinjal?,English,Fertilizer,Wrong,Partly correct,Wrong,Wrong
+20,Is drip irrigation useful for onion?,English,Irrigation,Correct,Correct,Correct,Correct
+21,How to identify nitrogen deficiency in crops?,English,Nutrients,Partly correct,Correct,Partly correct,Correct
+22,Heavy rain is expected tomorrow. What should I do for my standing paddy?,English,Weather,Partly correct,Correct,Partly correct,Correct
+23,How to control rats in paddy fields?,English,Pest / disease,Wrong,Partly correct,Wrong,Correct
+24,What is the seed rate for black gram per acre?,English,Sowing,Correct,Correct,Correct,Correct
+25,How to store harvested paddy safely?,English,Post-harvest,Correct,Correct,Correct,Correct
+26,What intercrop can I grow with coconut?,English,Crop choice,Correct,Wrong,Wrong,Wrong
+27,When should I apply potash for banana?,English,Fertilizer,Partly correct,Partly correct,Partly correct,Partly correct
+28,How to control weeds in groundnut without much labour?,English,Weeds,Correct,Partly correct,Partly correct,Partly correct
+29,What is the yield of ragi per acre under rainfed conditions?,English,Yield,Correct,Wrong,Wrong,Wrong
+30,How to prevent fruit drop in mango?,English,Pest / disease,Correct,Partly correct,Partly correct,Partly correct
+31,தஞ்சாவூரில் சம்பா பருவத்துக்கு எந்த நெல் ரகம் நல்லது?,Tamil,Crop choice,Correct,Partly correct,Partly correct,Partly correct
+32,நிலக்கடலை எப்போது விதைக்க வேண்டும்?,Tamil,Sowing time,Correct,Correct,Correct,Correct
+33,ஒரு ஏக்கர் நெல்லுக்கு எவ்வளவு யூரியா போட வேண்டும்?,Tamil,Fertilizer,Wrong,Wrong,Wrong,Wrong
+34,"தக்காளி இலை சுருண்டு மஞ்சளாகிறது, என்ன காரணம்?",Tamil,Pest / disease,Wrong,Partly correct,Wrong,Correct
+36,இந்த வாரம் மதுரையில் மழை வருமா?,Tamil,Weather,Correct,Correct,Correct,Wrong
+39,நெல் விதை நேர்த்தி எப்படி செய்வது?,Tamil,Seed treatment,Correct,Wrong,Wrong,Partly correct
+40,நெல்லில் குலை நோய் வந்தால் என்ன செய்வது?,Tamil,Pest / disease,Correct,Partly correct,Partly correct,Partly correct
+44,ராமநாதபுரத்தில் எந்த சிறுதானியங்கள் வளர்க்கலாம்?,Tamil,Crop choice,Correct,Correct,Correct,Correct
+48,உளுந்துக்கு ஒரு ஏக்கருக்கு எவ்வளவு விதை தேவை?,Tamil,Sowing,Correct,Correct,Correct,Correct
+49,அறுவடை செய்த நெல்லை எப்படி பாதுகாப்பாக சேமிப்பது?,Tamil,Post-harvest,Correct,Correct,Correct,Correct

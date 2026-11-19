@@ -1,0 +1,29 @@
+﻿no,question,language,topic,answer,followup,has_context,sources,chat_id,http_status,seconds,rating,judge_comment
+1,Which paddy variety is suitable for samba season in Thanjavur?,English,Crop choice,"For Samba season in Thanjavur, some excellent paddy varieties are generally chosen for their good yield and suitability to the local conditions.
+
+You can consider these varieties:
+1.  **CR 1009 (Ponni):** This is a very popular and widely grown variety for the Samba season, known for its good quality rice and stable yield.
+2.  **BPT 5204 (Samba Mahsuri):** Another well-known variety that performs well during the Samba season.
+3.  **ADT 43 and ADT 45:** These are also good options developed by Tamil Nadu Agricultural University, suitable for the Samba season.
+
+It's always a good idea to check with your local agricultural officer or the nearest Krishi Vigyan Kendra (KVK) for the latest recommended varieties, as new, improved strains are often introduced, and they can provide specific advice based on current local conditions and pest/disease resistance.
+
+Wishing you a healthy harvest!",no,True,production_of_rice_in_2017_18.csv; Tamilnadu agriculture yield data.csv; area_irrigated_by_wells_by_districts_in_tn_2018_19.csv,6afea557ca822648f43e6a6f,200,7.4,,
+2,When should I sow groundnut in Dindigul district?,English,Sowing time,"For groundnut cultivation in Tamil Nadu, there are usually two main sowing seasons:
+
+1.  **Rainfed (Kharif) season:** This typically falls between June and July, coinciding with the South-West monsoon.
+2.  **Irrigated (Rabi/Summer) season:** This is usually from December to January or January to February, after the North-East monsoon.
+
+Since the best sowing time can vary slightly based on the specific rainfall patterns, soil type, and irrigation facilities in your exact area within Dindigul, I recommend consulting with your local agricultural officer or the Krishi Vigyan Kendra (KVK) in Dindigul. They will have the most precise recommendations tailored to your local conditions.
+
+Wishing you a healthy harvest!",no,True,Tamilnadu agriculture yield data.csv,6afea562ca822648f43e6a74,200,6.9,,
+3,How much urea should I apply for one acre of paddy?,English,Fertilizer,"For one acre of paddy, you can generally apply about 80 to 90 kg of urea. It's usually best to apply this in split doses for better plant uptake and reduced loss.
+
+Here's a common way to split the application:
+1.  **First Dose:** Apply about 35-40 kg of urea after transplanting, around 10-15 days.
+2.  **Second Dose:** Apply another 35-40 kg of urea during the tillering stage, about 30-35 days after transplanting.
+3.  **Third Dose (Optional, based on crop vigor):** A smaller dose of about 10-15 kg can be applied during the panicle initiation stage.
+
+Remember, the exact amount can vary slightly depending on your soil type and previous soil test results. If you haven't done a soil test recently, it's a good idea to get one to understand your field's specific nutrient needs.
+
+Wishing you a healthy harvest!",no,True,timeseriesdata_prodtyandproduction_2.csv; production_of_rice_in_2017_18.csv,6afea56cca822648f43e6a79,200,4.6,,

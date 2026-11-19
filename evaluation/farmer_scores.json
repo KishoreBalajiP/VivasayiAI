@@ -1,0 +1,359 @@
+{
+ "note": "Ratings supplied by the project author as given by two farmers; farmer 2 mapped from sheet numbers. Rater names/villages not recorded here.",
+ "farmer1": {
+  "n": 40,
+  "correct": 20,
+  "partly": 15,
+  "wrong": 5,
+  "strict_accuracy": 50.0,
+  "lenient_accuracy": 87.5,
+  "correct_by_language": {
+   "English": "12/30",
+   "Tamil": "8/10"
+  }
+ },
+ "farmer2": {
+  "n": 40,
+  "correct": 16,
+  "partly": 18,
+  "wrong": 6,
+  "strict_accuracy": 40.0,
+  "lenient_accuracy": 85.0,
+  "correct_by_language": {
+   "English": "11/30",
+   "Tamil": "5/10"
+  }
+ },
+ "consensus_stricter_on_disagreement": {
+  "n": 40,
+  "correct": 12,
+  "partly": 19,
+  "wrong": 9,
+  "strict_accuracy": 30.0,
+  "lenient_accuracy": 77.5,
+  "correct_by_language": {
+   "English": "7/30",
+   "Tamil": "5/10"
+  }
+ },
+ "agreement_farmer1_vs_farmer2": {
+  "exact_agreement": 60.0,
+  "cohen_kappa": 0.347
+ },
+ "agreement_farmer1_vs_llm": {
+  "exact_agreement": 47.5,
+  "cohen_kappa": 0.164
+ },
+ "agreement_farmer2_vs_llm": {
+  "exact_agreement": 60.0,
+  "cohen_kappa": 0.383
+ },
+ "disagreements_farmer1_vs_farmer2": {
+  "7": [
+   "Partly correct",
+   "Wrong"
+  ],
+  "9": [
+   "Partly correct",
+   "Correct"
+  ],
+  "15": [
+   "Partly correct",
+   "Correct"
+  ],
+  "18": [
+   "Correct",
+   "Partly correct"
+  ],
+  "19": [
+   "Wrong",
+   "Partly correct"
+  ],
+  "21": [
+   "Partly correct",
+   "Correct"
+  ],
+  "22": [
+   "Partly correct",
+   "Correct"
+  ],
+  "23": [
+   "Wrong",
+   "Partly correct"
+  ],
+  "26": [
+   "Correct",
+   "Wrong"
+  ],
+  "28": [
+   "Correct",
+   "Partly correct"
+  ],
+  "29": [
+   "Correct",
+   "Wrong"
+  ],
+  "30": [
+   "Correct",
+   "Partly correct"
+  ],
+  "31": [
+   "Correct",
+   "Partly correct"
+  ],
+  "34": [
+   "Wrong",
+   "Partly correct"
+  ],
+  "39": [
+   "Correct",
+   "Wrong"
+  ],
+  "40": [
+   "Correct",
+   "Partly correct"
+  ]
+ },
+ "per_question": {
+  "1": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Wrong"
+  },
+  "2": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "3": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "4": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "5": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Correct"
+  },
+  "6": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Wrong"
+  },
+  "7": {
+   "farmer1": "Partly correct",
+   "farmer2": "Wrong",
+   "consensus": "Wrong",
+   "llm": "Wrong"
+  },
+  "8": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Partly correct"
+  },
+  "9": {
+   "farmer1": "Partly correct",
+   "farmer2": "Correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "10": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Correct"
+  },
+  "11": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Correct"
+  },
+  "12": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "13": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Wrong"
+  },
+  "14": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "15": {
+   "farmer1": "Partly correct",
+   "farmer2": "Correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "16": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Correct"
+  },
+  "17": {
+   "farmer1": "Wrong",
+   "farmer2": "Wrong",
+   "consensus": "Wrong",
+   "llm": "Wrong"
+  },
+  "18": {
+   "farmer1": "Correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Correct"
+  },
+  "19": {
+   "farmer1": "Wrong",
+   "farmer2": "Partly correct",
+   "consensus": "Wrong",
+   "llm": "Wrong"
+  },
+  "20": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "21": {
+   "farmer1": "Partly correct",
+   "farmer2": "Correct",
+   "consensus": "Partly correct",
+   "llm": "Correct"
+  },
+  "22": {
+   "farmer1": "Partly correct",
+   "farmer2": "Correct",
+   "consensus": "Partly correct",
+   "llm": "Correct"
+  },
+  "23": {
+   "farmer1": "Wrong",
+   "farmer2": "Partly correct",
+   "consensus": "Wrong",
+   "llm": "Correct"
+  },
+  "24": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "25": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "26": {
+   "farmer1": "Correct",
+   "farmer2": "Wrong",
+   "consensus": "Wrong",
+   "llm": "Wrong"
+  },
+  "27": {
+   "farmer1": "Partly correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "28": {
+   "farmer1": "Correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "29": {
+   "farmer1": "Correct",
+   "farmer2": "Wrong",
+   "consensus": "Wrong",
+   "llm": "Wrong"
+  },
+  "30": {
+   "farmer1": "Correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "31": {
+   "farmer1": "Correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "32": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "33": {
+   "farmer1": "Wrong",
+   "farmer2": "Wrong",
+   "consensus": "Wrong",
+   "llm": "Wrong"
+  },
+  "34": {
+   "farmer1": "Wrong",
+   "farmer2": "Partly correct",
+   "consensus": "Wrong",
+   "llm": "Correct"
+  },
+  "36": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Wrong"
+  },
+  "39": {
+   "farmer1": "Correct",
+   "farmer2": "Wrong",
+   "consensus": "Wrong",
+   "llm": "Partly correct"
+  },
+  "40": {
+   "farmer1": "Correct",
+   "farmer2": "Partly correct",
+   "consensus": "Partly correct",
+   "llm": "Partly correct"
+  },
+  "44": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "48": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  },
+  "49": {
+   "farmer1": "Correct",
+   "farmer2": "Correct",
+   "consensus": "Correct",
+   "llm": "Correct"
+  }
+ }
+}

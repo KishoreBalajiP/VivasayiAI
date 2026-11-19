@@ -17,6 +17,18 @@ import LossClaim from "../models/LossClaim.js";
 import * as farmProfileService from "./farmProfile.service.js";
 import { CONTEXT_NEEDS, INTENTS, classifyIntent } from "../src/ai/Intent.js";
 import { assessSufficiency, buildFollowUpInstruction } from "../src/ai/ContextSufficiency.js";
+import { analyzeQuery } from "../rag/retrieve.js";
+import { districtReference } from "../config/districts.js";
+
+// A district named in the message itself ("Which millets can I grow in Ramanathapuram?"), in English
+// or Tamil, with common alternative spellings (rag/retrieve.js). Only an unambiguous single mention
+// counts. Returns the reference spelling (config/districts.js) or null.
+export const detectDistrict = (message) => {
+  const found = analyzeQuery(message).districts;
+  if (found.length !== 1) return null;
+  const reference = districtReference.find((d) => d.name.toLowerCase() === found[0]);
+  return reference ? reference.name : found[0].charAt(0).toUpperCase() + found[0].slice(1);
+};
 
 // A small set of the dominant Tamil Nadu crops used only to detect an explicit crop mention
 // (matches the legacy {{crop_name}} placeholder intent). This is NOT a soil/crop reference
@@ -167,6 +179,14 @@ export const assembleContext = async ({ district, cognitoSub, userMessage, parce
     };
     snapshot.slots.crop = resolveCropSlot({ messageCrop, parcel: parcel.selected, profileCrops: profile.crops });
     snapshot.crop = snapshot.slots.crop.value || "unknown";
+  }
+
+  // A district the farmer names in this message is what the question is about: it takes precedence
+  // over the request and the profile district for this answer only (the profile is not changed).
+  const messageDistrict = detectDistrict(userMessage);
+  if (messageDistrict) {
+    snapshot.district = messageDistrict;
+    snapshot.slots.district = slot(messageDistrict, "user_provided", "message");
   }
 
   const effectiveDistrict = snapshot.slots.district.value;

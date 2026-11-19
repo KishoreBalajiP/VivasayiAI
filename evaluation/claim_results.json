@@ -1,0 +1,25 @@
+{
+  "policy": "v2-components",
+  "groundTruth": "design rule from scripts/eval/fusion.eval.js (author-defined), NOT real claims",
+  "counts": {
+    "scenarios": 192,
+    "validClaims": 2,
+    "invalidOrInflatedClaims": 190,
+    "validApproved": 2,
+    "validNotApproved": 0,
+    "inflatedStopped": 150,
+    "heldForOfficerReview": 40,
+    "heldThatWereInflated": 40,
+    "inflatedWronglyApproved": 0,
+    "correctAutomaticDecisions": 152,
+    "accuracyAsInReport": "152/192 = 79.2%"
+  },
+  "outcomeDispositionCounts": {
+    "more_evidence_required/decide": 30,
+    "null/hold": 40,
+    "verified/decide": 2,
+    "duplicate_area/decide": 48,
+    "rejected/decide": 72
+  },
+  "createdAt": "2026-11-19T07:30:52.881Z"
+}
