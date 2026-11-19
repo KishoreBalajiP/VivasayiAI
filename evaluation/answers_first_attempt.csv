@@ -1,0 +1,269 @@
+﻿no,question,language,topic,answer,followup,has_context,sources,chat_id,http_status,seconds,rating,judge_comment
+1,Which paddy variety is suitable for samba season in Thanjavur?,English,Crop choice,"For the Samba season in Thanjavur, selecting the right paddy variety is very important. Our current information mainly provides production data and doesn't list specific paddy varieties.
+
+However, generally, for the Samba season in Thanjavur, farmers often prefer varieties that are long-duration and high-yielding, suitable for the region's climate and soil. Some common types often recommended in delta regions include improved traditional varieties or modern high-yielding varieties that can withstand local conditions and offer good grain quality.
+
+To get the most accurate and up-to-date recommendation tailored to your specific farm's conditions, I strongly advise you to consult your local agricultural officer or the Krishi Vigyan Kendra (KVK) in Thanjavur. They will be able to suggest the best suitable paddy varieties for the current Samba season, considering factors like seed availability, pest and disease resistance, and market demand.
+
+Wishing you a healthy harvest!",no,True,production_of_rice_in_2017_18.csv; Tamilnadu agriculture yield data.csv; area_irrigated_by_wells_by_districts_in_tn_2018_19.csv,6afea57bca822648f43e6a7e,200,5.6,,
+2,When should I sow groundnut in Dindigul district?,English,Sowing time,"For groundnut cultivation in Dindigul district, farmers generally follow two main sowing seasons, depending on the availability of rain and irrigation:
+
+1.  **Kharif Season:** This is usually from **June to July**, coinciding with the Southwest monsoon. This period is suitable if you are relying on rain-fed farming.
+2.  **Rabi Season (or Winter Season):** Sowing can also be done from **October to November**, benefiting from the Northeast monsoon. If you have irrigation facilities, you can also consider a summer crop around **January to February**.
+
+The best time can vary slightly based on local rainfall patterns and water availability in your specific area within Dindigul.
+
+For the most accurate and precise advice tailored to your farm's conditions, please consult your local agricultural officer in Dindigul. They can provide recommendations based on the latest weather forecasts and local soil conditions.
+
+Wishing you a healthy harvest!",no,True,Tamilnadu agriculture yield data.csv,6afea583ca822648f43e6a83,200,9.6,,
+3,How much urea should I apply for one acre of paddy?,English,Fertilizer,"For one acre of paddy, you should generally apply about **100 to 110 kg of urea**.
+
+It's very important to apply this in **split doses** rather than all at once, to ensure the plants get the nutrients when they need them most and to avoid losses.
+
+Here’s a common way to split the application:
+1.  **First Dose:** Apply about **35-40 kg of urea** as a basal application (at the time of planting or within a week after transplanting).
+2.  **Second Dose:** Apply another **35-40 kg of urea** during the tillering stage (around 20-25 days after transplanting), when the plants are growing many side shoots.
+3.  **Third Dose:** Apply the remaining **30 kg of urea** at the panicle initiation stage (when the flower heads start to form inside the plant, usually around 45-50 days after transplanting).
+
+Remember, the exact amount can also depend on your specific soil fertility and the variety of paddy you are growing. For precise advice tailored to your farm, it's always good to consult your local agricultural officer.
+
+Wishing you a healthy harvest!",no,True,timeseriesdata_prodtyandproduction_2.csv; production_of_rice_in_2017_18.csv,6afea590ca822648f43e6a88,200,6.4,,
+4,My tomato leaves are curling and turning yellow. What is the reason?,English,Pest / disease,"It sounds like your tomato plants are facing a common problem. When tomato leaves curl and turn yellow, it can be due to a few reasons:
+
+1.  **Nutrient Deficiency:**
+- **Nitrogen deficiency:** This is often the most common cause for yellowing, especially in older, lower leaves. The plant isn't getting enough nitrogen to produce chlorophyll.
+- **Potassium deficiency:** Can also cause yellowing at the edges of leaves and sometimes curling.
+
+2.  **Water Stress:**
+- **Underwatering:** If the plant doesn't get enough water, leaves might curl upwards to reduce water loss and can turn yellow.
+- **Overwatering:** Too much water can also cause roots to rot, making it hard for the plant to absorb nutrients, leading to yellowing and curling. Check if the soil is waterlogged.
+
+3.  **Pest Infestation:**
+- Tiny pests like **whiteflies, thrips, or spider mites** often feed on the underside of leaves, sucking out the sap. This can cause leaves to curl, distort, and turn yellow. Inspect the underside of the leaves closely for any small insects or webs.
+
+4.  **Viral Diseases:**
+- **Tomato Leaf Curl Virus** is a serious disease that causes severe curling, yellowing, and stunted growth. This virus is usually spread by whiteflies.
+
+**What you can do:**
+- **Check Soil Moisture:** Feel the soil a few inches deep. If it's very dry, water thoroughly. If it's constantly wet, reduce irrigation to prevent root rot. Ensure your soil has good drainage.
+- **Look for Pests:** Carefully check both the top and underside of the leaves for any small insects, sticky residue, or tiny webs.
+- **Consider Fertilizing:** If you suspect nutrient deficiency, you can apply a balanced liquid fertilizer or a compost tea. For yellowing (possible nitrogen deficiency), a light application of urea or a nitrogen-rich organic fertilizer might help.
+
+If the problem is widespread, severe, or you can't identify the cause, it's best to consult your local agricultural officer. They can examine your plants directly and give specific advice.
+
+Wishing you a healthy harvest!",no,True,RICE_PestPredictionKnowledgeBase.csv,6afea59aca822648f43e6a8d,200,8.1,,
+5,How to control fall armyworm in maize?,English,Pest / disease,"The fall armyworm is a very serious pest for maize, and it can cause a lot of damage if not controlled properly. Here is how you can manage it:
+
+**1. Early Detection and Monitoring:**
+- Regularly check your maize plants, especially the young ones, for any signs of damage or caterpillars. Look for small holes in the leaves or 'frass' (caterpillar droppings) in the whorl of the plant.
+- The caterpillars are usually dark and can be identified by an inverted 'Y' shape on their head and four distinct spots on their second-to-last body segment.
+
+**2. Cultural Control Methods:**
+- **Deep Ploughing:** Before planting, deep ploughing can expose and kill pupae in the soil.
+- **Timely Sowing:** Try to sow maize early or at the recommended time for your region, as late-sown crops are often more affected.
+- **Hand Picking:** In small fields, you can hand-pick and destroy the caterpillars, especially in the early stages of infestation.
+- **Ash/Sand Application:** You can apply a mixture of sand and ash into the whorl of the maize plants. This can suffocate or irritate young caterpillars.
+
+**3. Biological Control Methods:**
+- **Natural Enemies:** Encourage natural enemies like birds, predatory insects, and parasitic wasps that feed on fall armyworm.
+- **Neem Oil:** Spraying neem oil (Azadirachtin 1500 ppm at 5 ml/liter of water) can deter the caterpillars and reduce feeding, especially in the early stages of infestation. Apply it in the evening.
+
+**4. Chemical Control Methods (if infestation is severe):**
+- If the infestation is high and other methods are not enough, you may need to use insecticides.
+- **Emamectin benzoate 5% SG:** Use at a rate of 80-100 grams per acre.
+- **Chlorantraniliprole 18.5% SC:** Use at a rate of 80 ml per acre.
+- **Spinetoram 11.7% SC:** Use at a rate of 0.5 ml per liter of water.
+- When spraying, make sure the insecticide reaches the whorl of the plant where the caterpillars hide and feed. Always follow the instructions on the pesticide label carefully.
+
+**Important points:**
+- Always rotate insecticides with different modes of action to prevent the worms from becoming resistant.
+- Spray in the evening for better results, as the caterpillars are more active then.
+
+For specific recommendations tailored to your local conditions, please consult your local agricultural officer.
+
+Wishing you a healthy harvest!",no,True,production_of_maize_in_2017_18.csv; RICE_PestPredictionKnowledgeBase.csv,6afea5a5ca822648f43e6a92,200,7.2,,
+6,Will it rain in Madurai this week? Should I irrigate now?,English,Weather,"I cannot predict specific rainfall for Madurai this week. For the latest weather updates, please check your local weather forecast from reliable sources.
+
+Regarding irrigation, the need for water depends a lot on the crop you are growing and its stage of growth.
+
+Could you please tell me which crop you are cultivating? This will help me give you more accurate advice.
+
+Wishing you a healthy harvest!",no,True,area_irrigated_by_canals_by_districts_in_tn_2018_19.csv; area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv; area_irrigated_by_tanks_by_districts_in_tn_2018_19.csv,6afea5afca822648f43e6a97,200,4.1,,
+7,Which crop is good for one acre with less water?,English,Crop choice,"To suggest the best crop for one acre with less water, I need to know which district your farm is located in. Knowing your district will help me recommend crops that are suitable for that region's climate and soil, and also require less water.
+
+Please tell me your district.
+Wishing you a healthy harvest!",no,True,total_area_irrigated_by_the_sources_by_districts_in_tn_2018_19.csv,6afea5b6ca822648f43e6a9c,200,4.1,,
+8,How many days does banana take from planting to harvest?,English,Crop duration,"For banana, it usually takes about **9 to 12 months** from planting to the first harvest. This can vary a little depending on the variety of banana you have planted and the growing conditions.
+
+Wishing you a healthy harvest!",no,True,Tamilnadu agriculture yield data.csv,6afea5bdca822648f43e6aa1,200,3.6,,
+9,What is the spacing for sugarcane planting?,English,Cultivation,"For sugarcane planting, the most common and recommended spacing in Tamil Nadu is to have rows 75 to 90 cm (about 2.5 to 3 feet) apart.
+
+If you are using the trench method, the trenches are usually spaced 90 cm apart. For wider spacing varieties or specific farming practices, it can go up to 120 cm (4 feet) between rows.
+
+Always consider your specific soil type, the sugarcane variety you are planting, and your irrigation method, as these can slightly influence the best spacing for your farm.
+
+Wishing you a healthy harvest!",no,True,RICE_PestPredictionKnowledgeBase.csv,6afea5c4ca822648f43e6aa6,200,5.3,,
+10,How to treat paddy seeds before sowing?,English,Seed treatment,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea5ccca822648f43e6aab,503,1.6,,
+11,What causes blast disease in paddy and how to control it?,English,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea5d1ca822648f43e6aaf,503,1.1,,
+12,Can I grow cotton in black soil in Virudhunagar?,English,Soil / crop,"Yes, you can grow cotton in black soil in Virudhunagar. Black soil is very suitable for cotton cultivation because it can hold water and nutrients well, which is important for cotton. Virudhunagar district is also known for cotton farming.
+
+When growing cotton in black soil:
+- Ensure good drainage, as black soil can sometimes become waterlogged if not managed properly.
+- Prepare the land thoroughly to create a fine tilth for better root development.
+- Follow recommended fertilizer schedules based on soil tests to ensure proper nutrition.
+
+Wishing you a healthy harvest!",no,True,area_irrigated_by_wells_by_districts_in_tn_2018_19.csv; Soil data.csv,6afea5d5ca822648f43e6ab3,200,4.0,,
+13,How often should I water coconut trees in summer?,English,Irrigation,"During summer, coconut trees need regular watering to ensure good growth and yield, as the soil tends to dry out faster.
+
+For mature coconut trees, you should water them at least once every 4 to 7 days, depending on how quickly your soil dries. Each tree would generally need about 50 to 75 litres of water per irrigation. Younger trees, especially those recently planted, might need more frequent watering, perhaps every 2-3 days, in smaller amounts.
+
+A good way to check if your tree needs water is to feel the soil around the base of the tree. If the top few inches of soil feel dry, it's time to water. Using drip irrigation is also a very efficient method as it delivers water directly to the root zone and saves water.
+
+Please consult your local agricultural officer if you need more specific advice tailored to your farm's soil type and local weather conditions.
+
+Wishing you a healthy harvest!",no,True,coconut_2016_17.csv; Tamilnadu agriculture yield data.csv; area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv,6afea5dcca822648f43e6ab8,200,5.8,,
+14,What is the best time to harvest turmeric?,English,Harvest,"For turmeric, the best time to harvest is usually around **7 to 9 months** after planting, depending on the variety you have grown.
+
+You can tell the turmeric is ready for harvest when the leaves start to turn yellow and dry up. This is a good sign that the rhizomes (the underground stems) have fully developed.
+
+When harvesting, you can carefully dig up the rhizomes.
+
+Wishing you a healthy harvest!",no,True,Tamilnadu agriculture yield data.csv,6afea5e5ca822648f43e6abd,200,3.8,,
+15,How to make jeevamirtham for organic farming?,English,Organic farming,"To make Jeevamirtham for organic farming, you will need a few simple ingredients and a drum for mixing. It's a very good natural fertilizer that helps improve soil health and microbial activity.
+
+Here's how you can prepare it:
+
+**Ingredients needed:**
+1.  **Fresh Cow Dung:** 10 kg (from native cow breeds is best)
+2.  **Cow Urine:** 5 to 10 litres (fresh)
+3.  **Jaggery (Gud):** 1 kg (crushed)
+4.  **Gram Flour (Besan):** 1 kg
+5.  **Soil:** A handful (about 50-100 grams) from your farm or under a banyan tree (this soil has many beneficial microbes)
+6.  **Water:** 200 litres
+
+**Steps to prepare Jeevamirtham:**
+1.  Take a large plastic drum or container (200-litre capacity).
+2.  Add 200 litres of water to the drum.
+3.  Add 10 kg of fresh cow dung and 5 to 10 litres of cow urine to the water. Mix it well.
+4.  Then, add 1 kg of jaggery (crushed) and 1 kg of gram flour to the mixture. Stir thoroughly until everything is well dissolved.
+5.  Finally, add a handful of soil to the drum and mix again.
+6.  Cover the drum with a wet gunny bag or cloth to protect it from direct sunlight and rain, but allow air circulation. Keep it in a shady place.
+7.  For the next 2 to 7 days, stir the mixture gently two times a day (morning and evening) in a clockwise direction.
+8.  Your Jeevamirtham will be ready to use when you notice a fermented, sweet smell. It usually takes 2-7 days depending on the weather; in warmer weather, it ferments faster.
+
+**How to use Jeevamirtham:**
+- You can use 100 to 200 litres of Jeevamirtham per acre, diluted with water, and apply it directly to the soil near the roots of your crops.
+- You can also apply it with irrigation water.
+- It should be used within 7 to 10 days of preparation.
+
+Wishing you a healthy harvest!",no,True,Tamilnadu agriculture yield data.csv,6afea5ecca822648f43e6ac2,200,6.8,,
+16,My chilli plants have white flies. What should I spray?,English,Pest / disease,"White flies are a common problem in chilli plants, and they can cause damage by sucking sap from the leaves and also spreading viral diseases.
+
+Here are some steps you can take:
+
+1.  **Neem Oil Spray (Organic Option):** For early stages of infestation, spray neem oil. Mix about 5 ml of neem oil with 1 litre of water and a small amount of mild soap (to help it stick to the leaves). Spray thoroughly on both the top and underside of the leaves, preferably in the evening. Repeat every 5-7 days if needed.
+
+2.  **Chemical Control (If severe):** If the infestation is heavy, you might need to use a chemical insecticide. Look for insecticides containing **Imidacloprid (17.8% SL)** at a dosage of about 0.5 ml per litre of water, or **Thiamethoxam (25% WG)** at about 0.2 grams per litre of water. Always read the label instructions carefully for the correct dosage and safety precautions. Spray evenly over the plants.
+
+3.  **Crop Rotation and Cleanliness:** After harvesting, it's good practice to remove old chilli plants and rotate your crops to break the pest cycle. Keep your farm area clean from weeds, as they can also host white flies.
+
+If the problem persists or worsens, please consult your local agricultural officer. They can inspect your plants directly and give you more specific advice.
+
+Wishing you a healthy harvest!",no,True,RICE_PestPredictionKnowledgeBase.csv,6afea5f5ca822648f43e6ac7,200,6.7,,
+17,Which millets can I grow in Ramanathapuram?,English,Crop choice,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea5ffca822648f43e6acc,503,2.3,,
+18,How to improve soil with low organic matter?,English,Soil,"To improve soil with low organic matter, you can follow these simple and effective methods:
+
+1.  **Add Farmyard Manure (FYM) or Compost:** This is one of the best ways. Before planting, spread well-decomposed farmyard manure or compost uniformly over your field. Around 5-10 tonnes per acre can significantly improve organic matter over time.
+2.  **Grow Green Manure Crops:** Plant crops like sunnhemp, daincha, or sesbania. Let them grow for 45-60 days, and then plough them back into the soil while they are still green. This adds a lot of organic matter and nutrients.
+3.  **Incorporate Crop Residues:** Instead of burning crop stubble and residues after harvest, chop them into smaller pieces and mix them into the soil. This slowly decomposes and enriches the soil.
+4.  **Use Vermicompost:** Vermicompost, made using earthworms, is rich in organic matter and beneficial microbes. You can apply 2-3 tonnes per acre, especially during land preparation.
+5.  **Practice Crop Rotation:** Rotate different crops on your field. Including legumes (like groundnut, black gram, green gram) in your rotation helps fix nitrogen and improves soil health and organic content.
+6.  **Mulching:** Cover the soil surface with organic materials like straw, dry leaves, or crop residues. This protects the soil, reduces water evaporation, and as it breaks down, adds organic matter.
+
+These practices will help increase the soil's organic matter, which improves its water-holding capacity, nutrient availability, and overall structure.
+
+Wishing you a healthy harvest!",no,True,Soil data.csv,6afea605ca822648f43e6ad0,200,5.5,,
+19,What fertilizer schedule is recommended for brinjal?,English,Fertilizer,"For brinjal, a good fertilizer schedule helps in healthy growth and better yield. Here is a general recommendation:
+
+1.  **At the time of planting/transplanting:**
+- **Farmyard Manure (FYM):** Apply 10-15 tonnes per acre and mix it well into the soil. This provides good organic matter.
+- **NPK (Basal Dose):** Apply a balanced NPK fertilizer like 50 kg Nitrogen, 50 kg Phosphorus, and 30 kg Potassium per acre. You can use DAP (Diammonium Phosphate) and MOP (Muriate of Potash) along with some Urea. Mix these into the soil before planting.
+
+2.  **After transplanting (Top Dressing):**
+- **First Top Dressing (20-30 days after transplanting):** Apply 25 kg Nitrogen and 20 kg Potassium per acre. You can use Urea and MOP.
+- **Second Top Dressing (40-50 days after transplanting, during flowering):** Apply another 25 kg Nitrogen and 20 kg Potassium per acre to support flowering and fruit setting. Again, use Urea and MOP.
+- **Subsequent applications (during fruiting, if needed):** If you see reduced growth or fewer fruits, you can apply a small dose of 15-20 kg Nitrogen and Potassium every 30 days.
+
+It is always best to do a soil test to know your soil's exact nutrient levels, which will help in getting more precise fertilizer recommendations.
+
+Please consult your local agricultural officer for confirmation, as they can provide advice tailored to your specific farm conditions and brinjal variety.
+
+Wishing you a healthy harvest!",no,True,Tamilnadu agriculture yield data.csv,6afea60dca822648f43e6ad5,200,6.4,,
+20,Is drip irrigation useful for onion?,English,Irrigation,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea617ca822648f43e6ada,503,1.9,,
+21,How to identify nitrogen deficiency in crops?,English,Nutrients,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea61cca822648f43e6ade,503,1.1,,
+22,Heavy rain is expected tomorrow. What should I do for my standing paddy?,English,Weather,"Heavy rain can affect standing paddy, so it's good that you are preparing for it.
+
+Here are a few things you can do:
+
+1.  **Ensure Proper Drainage:** Check your field bunds and drainage channels. Make sure they are clear so that excess water can drain out quickly. Waterlogging for too long can harm your paddy roots and lead to diseases.
+2.  **Inspect Your Crop:** Before the rain, quickly check your paddy plants for any signs of lodging (plants falling over) or existing pest issues. If plants are leaning, you might consider reinforcing bunds if possible.
+3.  **After the Rain:** Once the heavy rain stops, walk through your field to check for any plant lodging, damage, or water accumulation. Remove any debris that might have washed into the field. Also, check for new pest attacks or diseases that might appear due to increased humidity.
+
+To give you more specific advice, could you please tell me which district your farm is in?
+
+Wishing you a healthy harvest!",no,True,RICE_PestPredictionKnowledgeBase.csv,6afea620ca822648f43e6ae2,200,3.7,,
+23,How to control rats in paddy fields?,English,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea626ca822648f43e6ae7,503,1.7,,
+24,What is the seed rate for black gram per acre?,English,Sowing,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea62bca822648f43e6aeb,503,1.0,,
+25,How to store harvested paddy safely?,English,Post-harvest,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea62fca822648f43e6aef,503,0.9,,
+26,What intercrop can I grow with coconut?,English,Crop choice,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea633ca822648f43e6af3,503,1.0,,
+27,When should I apply potash for banana?,English,Fertilizer,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea637ca822648f43e6af7,503,0.9,,
+28,How to control weeds in groundnut without much labour?,English,Weeds,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea63bca822648f43e6afb,503,0.9,,
+29,What is the yield of ragi per acre under rainfed conditions?,English,Yield,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea63fca822648f43e6aff,503,0.9,,
+30,How to prevent fruit drop in mango?,English,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea643ca822648f43e6b03,503,0.9,,
+31,தஞ்சாவூரில் சம்பா பருவத்துக்கு எந்த நெல் ரகம் நல்லது?,Tamil,Crop choice,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea647ca822648f43e6b07,503,0.9,,
+32,நிலக்கடலை எப்போது விதைக்க வேண்டும்?,Tamil,Sowing time,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea64bca822648f43e6b0b,503,0.9,,
+33,ஒரு ஏக்கர் நெல்லுக்கு எவ்வளவு யூரியா போட வேண்டும்?,Tamil,Fertilizer,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea64fca822648f43e6b0f,503,1.0,,
+34,"தக்காளி இலை சுருண்டு மஞ்சளாகிறது, என்ன காரணம்?",Tamil,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea653ca822648f43e6b13,503,0.9,,
+35,மக்காச்சோளத்தில் படைப்புழுவை எப்படி கட்டுப்படுத்துவது?,Tamil,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea657ca822648f43e6b17,503,0.9,,
+36,இந்த வாரம் மதுரையில் மழை வருமா?,Tamil,Weather,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea65bca822648f43e6b1b,503,0.9,,
+37,குறைந்த தண்ணீரில் எந்த பயிர் வளர்க்கலாம்?,Tamil,Crop choice,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea65fca822648f43e6b1f,503,1.2,,
+38,வாழை நடவு செய்து எத்தனை நாளில் அறுவடை செய்யலாம்?,Tamil,Crop duration,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea663ca822648f43e6b23,503,0.9,,
+39,நெல் விதை நேர்த்தி எப்படி செய்வது?,Tamil,Seed treatment,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea667ca822648f43e6b27,503,0.9,,
+40,நெல்லில் குலை நோய் வந்தால் என்ன செய்வது?,Tamil,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea66bca822648f43e6b2b,503,1.0,,
+41,கோடையில் தென்னைக்கு எத்தனை நாளுக்கு ஒரு முறை தண்ணீர் விட வேண்டும்?,Tamil,Irrigation,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea66fca822648f43e6b2f,503,0.9,,
+42,ஜீவாமிர்தம் எப்படி தயாரிப்பது?,Tamil,Organic farming,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea673ca822648f43e6b33,503,1.0,,
+43,மிளகாய் செடியில் வெள்ளை ஈ வந்தால் என்ன தெளிக்க வேண்டும்?,Tamil,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea677ca822648f43e6b37,503,0.9,,
+44,ராமநாதபுரத்தில் எந்த சிறுதானியங்கள் வளர்க்கலாம்?,Tamil,Crop choice,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea67bca822648f43e6b3b,503,0.9,,
+45,மண்ணின் வளத்தை எப்படி அதிகரிப்பது?,Tamil,Soil,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea67fca822648f43e6b3f,503,0.9,,
+46,வெங்காயத்துக்கு சொட்டு நீர் பாசனம் பயனுள்ளதா?,Tamil,Irrigation,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea683ca822648f43e6b43,503,1.2,,
+47,"நாளை கனமழை வரும், நிற்கும் நெல் பயிருக்கு என்ன செய்ய வேண்டும்?",Tamil,Weather,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea687ca822648f43e6b47,503,0.9,,
+48,உளுந்துக்கு ஒரு ஏக்கருக்கு எவ்வளவு விதை தேவை?,Tamil,Sowing,"ஒரு ஏக்கர் உளுந்து சாகுபடிக்கு, பொதுவாக 8 முதல் 10 கிலோ விதைகள் தேவைப்படும். நீங்கள் வரிசை முறையில் விதைத்தால், 6 முதல் 8 கிலோ விதைகள் போதுமானதாக இருக்கும்.
+
+விதைகளை விதைப்பதற்கு முன், விதை நேர்த்தி செய்வது நல்ல மகசூலுக்கு உதவும்.
+
+உங்கள் பயிர் நன்றாக வளரட்டும்!",no,True,production_of_rice_in_2017_18.csv; area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv; area_irrigated_by_wells_by_districts_in_tn_2018_19.csv,6afea68bca822648f43e6b4b,200,3.2,,
+49,அறுவடை செய்த நெல்லை எப்படி பாதுகாப்பாக சேமிப்பது?,Tamil,Post-harvest,"அறுவடை செய்த நெல்லை பாதுகாப்பாக சேமிப்பது மிகவும் முக்கியம். இதனால் நெல்லின் தரம் கெடாமல் நீண்ட நாட்களுக்கு இருக்கும். இதோ சில எளிய வழிமுறைகள்:
+
+1.  **சுத்தம் செய்தல்:** அறுவடை செய்த நெல்லில் உள்ள கற்கள், காய்ந்த இலைகள், களைகள் மற்றும் பிற கழிவுகளை முதலில் நீக்கிவிடுங்கள். சுத்தமான நெல் சேமிப்பிற்கு மிகவும் நல்லது.
+
+2.  **உலர்த்துதல்:** நெல்லை நன்கு உலர்த்துவது மிக முக்கியம். ஈரப்பதம் அதிகமாக இருந்தால் பூஞ்சைகள் உருவாகி நெல்லை கெடுத்துவிடும். நெல்லின் ஈரப்பதம் 12% முதல் 14% வரை இருப்பது சேமிப்பிற்கு ஏற்றது. இதை சூரிய ஒளியிலோ அல்லது இயந்திரங்கள் மூலமாகவோ உலர்த்தலாம். உலர்த்திய பின், சூடாக இருக்கும் நெல்லை உடனே சேமிக்காமல், சிறிது நேரம் ஆற விடவும்.
+
+3.  **சேமிப்பு இடம்:**
+- சேமிப்பு அறை அல்லது கிடங்கு சுத்தமாகவும், உலர்ந்ததாகவும், காற்றோட்ட வசதியுடனும் இருக்க வேண்டும்.
+- தரையிலிருந்து சுமார் 1 அடி உயரத்திலும், சுவரிலிருந்து 2 அடி தூரத்திலும் நெல் மூட்டைகளை அடுக்கி வைக்க வேண்டும். இதனால் காற்றோட்டம் கிடைக்கும், தரை மற்றும் சுவரில் இருந்து ஈரப்பதம் ஏறாது.
+- கூரை அல்லது மேற்கூரை நீர் கசியாமல் பார்த்துக் கொள்ளுங்கள்.
+
+4.  **பூச்சி மற்றும் எலி கட்டுப்பாடு:**
+- சேமிக்கும் இடத்தைச் சுற்றி சுத்தமாக வைத்து, எலிகள் மற்றும் பூச்சிகள் வராமல் பார்த்துக்கொள்ளுங்கள்.
+- நெல்லுக்குள் வேப்ப இலைகளைக் கலந்து வைப்பது பூச்சித் தாக்குதலைக் குறைக்க உதவும்.
+- அலுமினியம் பாஸ்பைடு மாத்திரைகளை வேளாண் துறை அலுவலர் ஆலோசனைப்படி பயன்படுத்தலாம்.
+- எலிப்பொறிகள் அல்லது எலி மருந்துகளையும் பயன்படுத்தலாம்.
+
+5.  **கொள்கலன்கள்:** நெல்லை கோணிப்பைகளில் சேமித்தால், பைகள் சுத்தமாகவும், கிழிசல் இல்லாமலும் இருக்க வேண்டும். தேவைப்பட்டால், பெரிய கொள்கலன்களில் அல்லது சிமெண்ட் தொட்டிகளிலும் சேமிக்கலாம்.
+
+6.  **தொடர்ச்சியான ஆய்வு:** சேமித்த நெல்லை அவ்வப்போது பரிசோதித்து, பூச்சி அல்லது பூஞ்சை தாக்குதல் ஏதேனும் இருக்கிறதா என்று கண்காணியுங்கள். சிறிய அளவில் பிரச்சனை தோன்றினாலும் உடனே சரிசெய்ய வேண்டும்.
+
+இந்த வழிமுறைகளைப் பின்பற்றுவதன் மூலம் உங்கள் நெல்லை நீண்ட காலத்திற்கு பாதுகாப்பாக சேமிக்கலாம்.
+
+உங்கள் பயிர் நன்றாக வளரட்டும்!",no,True,area_irrigated_by_wells_by_districts_in_tn_2018_19.csv; area_irrigated_by_other_sources_by_districts_in_tn_2018_19.csv; tamil-nadu.kml,6afea691ca822648f43e6b50,200,10.1,,
+50,மாம்பழம் உதிர்வதை எப்படி தடுப்பது?,Tamil,Pest / disease,"ERROR 503: {""statusCode"":503,""message"":""AI service is busy. Please try again later."",""data"":{}}",no,,,6afea69fca822648f43e6b55,503,2.3,,

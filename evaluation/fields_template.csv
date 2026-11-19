@@ -1,0 +1,3 @@
+field_id,lat,lon,event_date,label,source
+F01,13.0827,80.2707,2023-12-04,damaged,"EXAMPLE ROW - replace: visited field, photo + GPS"
+F02,13.1000,79.9000,2023-12-04,not_damaged,"EXAMPLE ROW - replace: control field outside flood area"

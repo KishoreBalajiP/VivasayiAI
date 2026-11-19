@@ -1,0 +1,166 @@
+{
+ "judge": "LLM-as-a-judge: Claude (claude-opus-5-5), 2026-11-19, from model knowledge of TNAU Crop Production Guide practice; NOT a human expert",
+ "ratings": {
+  "1": [
+   "Wrong",
+   "Names no variety; TNAU samba options for Thanjavur (e.g. CR 1009, CR 1009 Sub1, ADT 46, CO 50) not given, only 'consult officer'"
+  ],
+  "2": [
+   "Correct",
+   "Matches TNAU groundnut seasons: Adipattam Jun-Jul (rainfed), Karthigai Oct-Nov, irrigated Dec-Jan/Jan-Feb"
+  ],
+  "3": [
+   "Partly correct",
+   "100-110 kg urea/acre fits ~120 kg N/ha (short duration) but TNAU splits N in 4 equal doses incl. heading; no duration or LCC/soil-test adjustment"
+  ],
+  "4": [
+   "Partly correct",
+   "Lists leaf curl virus (whitefly-borne), the classic cause of curling+yellowing, but leads with nitrogen deficiency and gives no virus management (rogueing, whitefly control)"
+  ],
+  "5": [
+   "Correct",
+   "Doses match TNAU FAW advice: emamectin benzoate 5 SG ~80 g/acre, chlorantraniliprole 18.5 SC ~80 ml/acre, azadirachtin 1500 ppm 5 ml/L, whorl application"
+  ],
+  "6": [
+   "Wrong",
+   "Gives no forecast or irrigation advice although Madurai is named; only asks for the crop"
+  ],
+  "7": [
+   "Wrong",
+   "No answer: only asks for the district (follow-up only, no crop suggested)"
+  ],
+  "8": [
+   "Partly correct",
+   "9-12 months is low for TN varieties: Poovan/Robusta ~11-14 months, Red banana 15-18 months; no variety distinction"
+  ],
+  "9": [
+   "Partly correct",
+   "75-90 cm rows is the normal ridge spacing (TNAU ~80 cm) but omits TNAU wide-row/SSI 150 cm (5 ft) spacing"
+  ],
+  "12": [
+   "Correct",
+   "Yes; black cotton soil suits cotton and Virudhunagar is a rainfed cotton district; advice on drainage is sound"
+  ],
+  "13": [
+   "Wrong",
+   "50-75 L every 4-7 days is far below TNAU guidance (drip ~65 L per palm per DAY in summer)"
+  ],
+  "14": [
+   "Correct",
+   "7-9 months after planting, when leaves yellow and dry, matches TNAU"
+  ],
+  "15": [
+   "Partly correct",
+   "Standard recipe uses 2 kg jaggery and 2 kg pulse flour per 200 L with ~48 h fermentation; answer halves both and says 2-7 days"
+  ],
+  "16": [
+   "Correct",
+   "Neem 5 ml/L and imidacloprid/thiamethoxam at label-range doses are accepted whitefly options; misses yellow sticky traps"
+  ],
+  "18": [
+   "Correct",
+   "FYM/compost, green manures (sunnhemp, daincha), residue incorporation, vermicompost, legumes, mulching: standard practice"
+  ],
+  "19": [
+   "Wrong",
+   "Gives 50:50:30 kg NPK per ACRE plus top dressings; TNAU varietal brinjal is ~50:50:30 basal per HECTARE (+50 kg N top), so doses are ~2.5x too high"
+  ],
+  "22": [
+   "Correct",
+   "Drainage through bunds/channels, inspecting for lodging and post-rain pest/disease checks is appropriate"
+  ],
+  "48": [
+   "Correct",
+   "TNAU black gram seed rate 20 kg/ha = 8 kg/acre; answer 8-10 (6-8 line sown) matches"
+  ],
+  "49": [
+   "Correct",
+   "Dry to ~12-14% moisture, clean, dunnage off floor/walls, neem leaves, fumigation only on officer advice: matches standard practice"
+  ],
+  "10": [
+   "Correct",
+   "Salt-water flotation to remove light seed, wash, then carbendazim/bio-agent seed treatment: matches TNAU seed treatment practice"
+  ],
+  "11": [
+   "Correct",
+   "Correct pathogen (Pyricularia/Magnaporthe oryzae), weather and excess-N risk factors, resistant varieties and fungicide control"
+  ],
+  "17": [
+   "Wrong",
+   "No answer: asks for the district although Ramanathapuram is in the question"
+  ],
+  "20": [
+   "Correct",
+   "Yes; drip saves water and improves bulb uniformity and yield in onion, as TNAU recommends"
+  ],
+  "21": [
+   "Correct",
+   "Older-leaf yellowing first, pale plant, stunting, thin stems: correct nitrogen-deficiency symptoms"
+  ],
+  "23": [
+   "Correct",
+   "Sanitation, bund burrow destruction, traps, 2% zinc phosphide bait (25 g in 975 g = 2.5%, close) and anticoagulant baits: standard rodent control"
+  ],
+  "24": [
+   "Correct",
+   "8-10 kg/acre matches TNAU 20 kg/ha (8 kg/acre)"
+  ],
+  "25": [
+   "Correct",
+   "Dry to 12-14% moisture, clean, cool, dunnage, clean bags away from walls, neem leaves: standard practice"
+  ],
+  "26": [
+   "Wrong",
+   "No answer: only asks for the district; no intercrop (e.g. banana, cocoa, pepper, pulses) suggested"
+  ],
+  "27": [
+   "Partly correct",
+   "Split application timing is right, but 200-300 g MoP/plant/year is low; TNAU ~330 g K2O/plant (~550 g MoP) in splits"
+  ],
+  "28": [
+   "Partly correct",
+   "Pendimethalin pre-emergence ~1 L/acre is right; imazethapyr 75-100 ml/acre is well below the TNAU rate (~0.1 kg a.i./ha = ~400 ml/acre of 10 SL)"
+  ],
+  "29": [
+   "Wrong",
+   "Gives no yield figure (TNAU rainfed ragi ~1-1.5 t/ha, roughly 400-600 kg/acre); only 'consult officer'"
+  ],
+  "30": [
+   "Partly correct",
+   "Irrigation, boron/zinc sprays and hopper/powdery mildew control are relevant but omits the standard NAA 20 ppm spray"
+  ],
+  "31": [
+   "Partly correct",
+   "CR 1009 (Savithri) is right for samba, but durations are wrong: ADT 39 and CO 51 are short-duration (~105-125 d), not 155-160 / 130-135 d"
+  ],
+  "32": [
+   "Correct",
+   "Jun-Jul, Oct-Nov and irrigated Jan-Feb groundnut seasons match TNAU (season names loosely used)"
+  ],
+  "33": [
+   "Wrong",
+   "45-50 kg urea/acre is about half the TNAU recommendation (~100-130 kg/acre) and contradicts the English answer to the same question (Q3)"
+  ],
+  "34": [
+   "Correct",
+   "Identifies whitefly-borne tomato leaf curl virus as a main cause, with sucking pests and nutrient/water causes, and advises checking for whiteflies"
+  ],
+  "36": [
+   "Wrong",
+   "Says it has no rain information although the system has a district weather service"
+  ],
+  "39": [
+   "Partly correct",
+   "Carbendazim 2 g/kg is right, but Pseudomonas (TNAU 10 g/kg) and Trichoderma (4 g/kg) rates are swapped and 200 g Azospirillum per kg seed is far too high"
+  ],
+  "40": [
+   "Partly correct",
+   "Correct symptoms and N/water management; tricyclazole 75 WP 125 g/acre is below the TNAU ~200 g/acre (500 g/ha)"
+  ],
+  "44": [
+   "Correct",
+   "Pearl millet, sorghum, ragi, kodo and barnyard millet suit dry Ramanathapuram"
+  ]
+ },
+ "note": "Q1-Q9,Q12-Q16,Q18,Q19,Q22,Q48,Q49 answered in the first run; the other answered rows in the retry runs. All 40 answers from gemini-2.5-flash. 10 rows not answered (Gemini free-tier quota)."
+}

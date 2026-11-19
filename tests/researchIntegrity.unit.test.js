@@ -33,7 +33,7 @@ import { POLICY_IDS, resolvePolicy } from "../config/verificationPolicy.js";
 // without secrets. Nothing here calls a live provider; the satellite tests use a stubbed run.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const read = (rel) => readFileSync(join(root, rel), "utf8");
+const read = (rel) => readFileSync(join(root, rel), "utf8").replace(/\r\n/g, "\n"); // CRLF checkouts: compare the committed LF form
 const sha256 = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
 const scratch = mkdtempSync(join(tmpdir(), "vivasayi-research-integrity-"));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
@@ -112,7 +112,7 @@ describe("frozen 16 October 2026 results", () => {
     for (const path of required) expect(Object.keys(frozen.files)).toContain(path);
     for (const [path, expected] of Object.entries(frozen.files)) {
       expect(existsSync(join(root, path)), path).toBe(true);
-      expect(sha256(join(root, path)), path).toBe(expected);
+      expect(createHash("sha256").update(read(path)).digest("hex"), path).toBe(expected);
     }
     expect(checkFrozenHashes(frozen)).toEqual([]);
     const tampered = { files: { [required[0]]: "0".repeat(64) } };

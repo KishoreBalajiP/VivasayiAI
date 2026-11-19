@@ -38,7 +38,9 @@ export const buildFollowUpInstruction = (sufficiency) => {
   if (reason === "ambiguous") {
     return `Follow-up policy: the farmer has several options for "${slot}" (${options.join(", ")}) and the answer depends on which. Ask ONE short question asking which they mean, and nothing else.`;
   }
-  return `Follow-up policy: the "${slot}" is not known and the answer depends on it. Ask ONE short question about the ${slot}, and nothing else. Do not ask about anything else.`;
+  // Answer first: a farmer who gets only a question back has no answer at all. Give the general Tamil
+  // Nadu answer, say it is general, then ask the one question that would make it specific.
+  return `Follow-up policy: the "${slot}" is not known and the best answer depends on it. First give a short GENERAL answer that holds for Tamil Nadu and say it is general. Then ask ONE short question about the ${slot} so you can make it specific. Do not ask about anything else.`;
 };
 
 export default { assessSufficiency, buildFollowUpInstruction };

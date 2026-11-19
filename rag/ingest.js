@@ -138,15 +138,26 @@ export const collectChunks = async ({ s3, bucket, keys, chunker, maxRows = 0, ma
 };
 
 // Cohere `search_document` embeddings, the input type the production collection was built with.
-export const embedChunks = async (texts, { embeddings, batch = 480, onProgress } = {}) => {
+export const embedChunks = async (texts, { embeddings, batch = Number(process.env.RAG_EMBED_BATCH) || 480, delayMs = Number(process.env.RAG_EMBED_DELAY_MS) || 0, onProgress } = {}) => {
   const model = embeddings || new CohereEmbeddings({ apiKey: env.cohereApiKey, model: AIConfig.embeddingModel });
   const vectors = [];
   for (let start = 0; start < texts.length; start += batch) {
     const part = texts.slice(start, start + batch);
-    const result = await model.embedDocuments(part);
+    // A trial key hits per-minute token limits: wait out a 429 instead of losing the whole build.
+    let result;
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        result = await model.embedDocuments(part);
+        break;
+      } catch (error) {
+        if (delayMs <= 0 || attempt >= 6 || !/429|too ?many/i.test(String(error && (error.message || error.name)) + String(error && error.statusCode))) throw error;
+        await new Promise((done) => setTimeout(done, 65000));
+      }
+    }
     if (!Array.isArray(result) || result.length !== part.length) throw new Error(`Embedding returned ${result ? result.length : 0} vectors for ${part.length} texts`);
     vectors.push(...result);
     if (onProgress) onProgress(vectors.length, texts.length);
+    if (delayMs > 0 && vectors.length < texts.length) await new Promise((done) => setTimeout(done, delayMs)); // provider rate limits
   }
   return vectors;
 };
