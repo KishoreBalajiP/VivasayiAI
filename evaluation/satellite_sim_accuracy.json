@@ -1,0 +1,286 @@
+{
+  "source": "docs/research/evaluation/results/satelliteSimulation.json",
+  "groundTruth": "the simulation's own known parameters (simulated NDVI responses); NOT real satellite imagery or field-verified damage",
+  "cells": [
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": 0,
+      "noChange": 400,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": 5,
+      "noChange": 395,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": 50,
+      "noChange": 350,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": 199,
+      "noChange": 201,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": 366,
+      "noChange": 34,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": 399,
+      "noChange": 1,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.9,
+      "supportsLoss": 400,
+      "noChange": 0,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": 0,
+      "noChange": 400,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": 3,
+      "noChange": 397,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": 39,
+      "noChange": 361,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": 196,
+      "noChange": 204,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": 361,
+      "noChange": 39,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": 400,
+      "noChange": 0,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.7,
+      "supportsLoss": 400,
+      "noChange": 0,
+      "inconclusive": 0,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.5,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.05,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.1,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.15,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.2,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.3,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    },
+    {
+      "trueNdviDrop": 0.4,
+      "validPixelFractionAfter": 0.3,
+      "supportsLoss": 0,
+      "noChange": 0,
+      "inconclusive": 400,
+      "n": 400
+    }
+  ],
+  "primary": {
+    "truthRule": "trueNdviDrop > 0 = damaged; 0 = not damaged (as requested)",
+    "trials": 11200,
+    "decided": 5600,
+    "inconclusive": 5600,
+    "inconclusiveRate": 0.5,
+    "confusionMatrix": {
+      "true damaged": {
+        "pred damaged": 2818,
+        "pred not_damaged": 1982
+      },
+      "true not_damaged": {
+        "pred damaged": 0,
+        "pred not_damaged": 800
+      }
+    },
+    "accuracy": 0.6461,
+    "precision": 1,
+    "recall": 0.5871,
+    "f1": 0.7398,
+    "kappa": 0.2889,
+    "excludedCells": []
+  },
+  "sensitivity": {
+    "truthRule": "only trueNdviDrop >= 0.15 (the rule's threshold) = damaged; 0 = not damaged; 0 < drop < 0.15 excluded",
+    "trials": 8000,
+    "decided": 4000,
+    "inconclusive": 4000,
+    "inconclusiveRate": 0.5,
+    "confusionMatrix": {
+      "true damaged": {
+        "pred damaged": 2721,
+        "pred not_damaged": 479
+      },
+      "true not_damaged": {
+        "pred damaged": 0,
+        "pred not_damaged": 800
+      }
+    },
+    "accuracy": 0.8803,
+    "precision": 1,
+    "recall": 0.8503,
+    "f1": 0.9191,
+    "kappa": 0.6944,
+    "excludedCells": [
+      0.05,
+      0.1,
+      0.05,
+      0.1,
+      0.05,
+      0.1,
+      0.05,
+      0.1
+    ]
+  },
+  "createdAt": "2026-11-19T09:05:35.444Z"
+}

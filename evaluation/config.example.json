@@ -1,0 +1,10 @@
+{
+  "api_base": "http://localhost:8000",
+  "token": "PASTE_ACCESS_TOKEN_HERE (or leave and use token_command)",
+  "token_command": ["node", "evaluation/make_token.mjs"],
+  "token_refresh_s": 600,
+  "chat_path": "/chat",
+  "new_session_path": "/chatsessions/new",
+  "timeout_s": 90,
+  "pause_s": 3
+}
